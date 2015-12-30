@@ -1,6 +1,8 @@
 # pwm-formula
 Salt formula for deploying PWM
 
+when using with SimpleAD requires unsupported schema extension and dsacls adjustment - details coming
+
 to be used with systemprep
 
 need to add /srv/salt/formulas/pwm-formula to /etc/salt/minion file_roots section and 'service restart salt-minion'
