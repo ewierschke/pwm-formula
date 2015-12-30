@@ -1,5 +1,5 @@
 include:
-  - pwm
+  - pwm/pwm
 
 pwmconfig:
   file.managed:
@@ -8,4 +8,4 @@ pwmconfig:
     - source_hash: md5=93b10c35b8a0cb6f79ad28074e26cb3b
     - makedirs: True
     - require:
-      - sls: pwm
+      - sls: pwm/pwm

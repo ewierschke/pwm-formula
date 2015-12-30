@@ -77,9 +77,3 @@ runtomcatservice:
 
 service tomcat restart:
   cmd.run
-
-minionconfig:
-  file.append:
-    - name: /etc/salt/minion
-    - text: 's3.role_arn: arn:aws:iam::701759196663:role/pwmconfig'
-
