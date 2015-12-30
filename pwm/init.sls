@@ -1,3 +1,3 @@
 include:
   - pwm.pwm
-  - pwm.pwmconfig
+  - pwm.pwmconfigfile
