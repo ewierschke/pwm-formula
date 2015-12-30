@@ -8,3 +8,10 @@ need to add /srv/salt/formulas/pwm-formula to /etc/salt/minion file_roots sectio
 need to append /srv/salt/states/base/top.sls with '    - pwm'
 
 clone this formula to /srv/salt/formulas/
+
+--
+
+# need to work on
+
+change detection for config file with action to put back to s3 and update hash in local salt state (triggering put of salt state to s3)
+-potentially use incrontab or look at salt state
