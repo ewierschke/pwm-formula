@@ -17,3 +17,7 @@ clone this formula to /srv/salt/formulas/
 
 change detection for config file with action to put back to s3 and update hash in local salt state (triggering put of salt state to s3)
 -potentially use incrontab or look at salt state
+
+securing tomcat
+
+redirects from root to pwm webapp
