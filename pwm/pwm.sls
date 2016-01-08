@@ -77,3 +77,6 @@ runtomcatservice:
 
 service tomcat restart:
   cmd.run
+  
+sleep 5:
+  cmd.run
