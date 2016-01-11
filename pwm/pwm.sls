@@ -4,6 +4,9 @@ java_pkg:
       - java-1.8.0-openjdk
       - wget
       - unzip
+      - httpd
+      - incron
+      - s3cmd
 
 /usr/local/apache-tomcat-7.0.67.tar.gz:
   archive.extracted:
@@ -80,3 +83,57 @@ service tomcat restart:
   
 sleep 5:
   cmd.run
+
+/etc/httpd/conf.d/pwm.conf:
+  file.append:
+    - text: |
+        ProxyRequests Off
+        <Proxy *>
+                Order allow,deny
+                Allow from all
+        </Proxy>
+        
+        ProxyPass /pwm/admin !
+        ProxyPass /pwm/config !
+        
+        ProxyPass /pwm http://localhost:8080/pwm
+        
+        ProxyPassReverse /pwm http://localhost:8080/pwm
+        
+        <Location />
+                Order allow,deny
+                Allow from all
+                ProxyPass http://localhost:8080/pwm/ flushpackets=on
+                ProxyPassReverse http://localhost:8080/pwm/
+                ProxyPassReverseCookiePath /pwm/ /
+        </Location>
+
+runhttpdservice:
+  service.running:
+    - name: httpd
+    - enable: True
+
+/usr/local/bin/selinuxproxy.sh:
+  file.managed:
+    - mode: 777
+  file.append:
+    - text: |
+        # Gotta make SELinux happy...
+        if [[ $(getenforce) = "Enforcing" ]] || [[ $(getenforce) = "Permissive" ]]
+        then
+            chcon -R --reference=/var/lib/tomcat7/webapps \
+                /var/lib/tomcat7/webapps/guacamole.war
+            if [[ $(getsebool httpd_can_network_relay | \
+                cut -d ">" -f 2 | sed 's/[ ]*//g') = "off" ]]
+            then
+                log "Enabling httpd-based proxying within SELinux"
+                setsebool -P httpd_can_network_relay=1
+            fi
+        fi
+
+chmod 777 /usr/local/bin/selinuxproxy.sh:
+  cmd.run
+
+run selinuxproxy script:
+  cmd.run:
+    - name: /usr/local/bin/selinuxproxy.sh
