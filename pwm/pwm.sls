@@ -119,8 +119,8 @@ runhttpdservice:
         # Gotta make SELinux happy...
         if [[ $(getenforce) = "Enforcing" ]] || [[ $(getenforce) = "Permissive" ]]
         then
-            chcon -R --reference=/var/lib/tomcat7/webapps \
-                /var/lib/tomcat7/webapps/guacamole.war
+            chcon -R --reference=/usr/local/tomcat7/apache-tomcat-7.0.67/webapps \
+                /usr/local/tomcat7/apache-tomcat-7.0.67/webapps/pwm.war
             if [[ $(getsebool httpd_can_network_relay | \
                 cut -d ">" -f 2 | sed 's/[ ]*//g') = "off" ]]
             then
