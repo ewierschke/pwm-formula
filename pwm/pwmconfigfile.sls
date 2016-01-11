@@ -6,8 +6,6 @@ pwmconfig:
     - name: /usr/local/tomcat7/apache-tomcat-7.0.67/webapps/pwm/WEB-INF/PwmConfiguration.xml
     - source: s3://dicelab-pwmconfig/PwmConfiguration.xml
     - source_hash: https://s3.amazonaws.com/dicelab-pwmconfig/PwmConfiguration.xml.md5
-    - require:
-      - sls: pwm/pwm
 
 service tomcat stop:
   cmd.run
