@@ -124,7 +124,7 @@ runhttpdservice:
             if [[ $(getsebool httpd_can_network_relay | \
                 cut -d ">" -f 2 | sed 's/[ ]*//g') = "off" ]]
             then
-                log "Enabling httpd-based proxying within SELinux"
+                logger "Enabling httpd-based proxying within SELinux"
                 setsebool -P httpd_can_network_relay=1
             fi
         fi
