@@ -114,8 +114,6 @@ runhttpdservice:
     - enable: True
 
 /usr/local/bin/selinuxproxy.sh:
-  file.managed:
-    - mode: 777
   file.append:
     - text: |
         # Gotta make SELinux happy...
