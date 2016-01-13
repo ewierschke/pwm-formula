@@ -5,8 +5,9 @@ java_pkg:
       - wget
       - unzip
       - httpd
-      - incron
+      - inotify-tools
       - s3cmd
+      - at
 
 /usr/local/apache-tomcat-7.0.67.tar.gz:
   archive.extracted:
@@ -111,6 +112,11 @@ sleep 5:
 runhttpdservice:
   service.running:
     - name: httpd
+    - enable: True
+
+runatdservice:
+  service.running:
+    - name: atd
     - enable: True
 
 /usr/local/bin/selinuxproxy.sh:
