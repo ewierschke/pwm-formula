@@ -41,7 +41,7 @@ service tomcat start:
         #!/bin/sh
         while inotifywait -e modify -e create -e delete -o /var/log/inotify --format '%w%f-%e' /usr/local/tomcat7/apache-tomcat-7.0.67/webapps/pwm/WEB-INF/; do
             /usr/local/bin/pwmconfmgmt
-        done > /dev/null &
+        done
         
 
 pwmconfmgmtmode:
