@@ -20,7 +20,7 @@ service tomcat start:
   file.append:
     - text: | 
         /usr/local/tomcat7/apache-tomcat-7.0.67/webapps/pwm/WEB-INF/PwmConfiguration.xml IN_CLOSE_WRITE /usr/local/bin/pwmconfmgmt
-		
+
 /usr/local/bin/pwmconfmgmt:
   file.append:
     - text: |
