@@ -94,8 +94,8 @@ sleep 5:
                 Allow from all
         </Proxy>
         
-        ProxyPass /pwm/admin !
-        ProxyPass /pwm/config !
+        #ProxyPass /pwm/admin !
+        #ProxyPass /pwm/config !
         
         ProxyPass /pwm http://localhost:8080/pwm
         
