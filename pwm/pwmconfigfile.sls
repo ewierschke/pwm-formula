@@ -66,10 +66,10 @@ runinotifyscript:
 
 postfixconf:
   file.managed:
-    - name /usr/local/bin/postfix_conf.sh
+    - name: /usr/local/bin/postfix_conf.sh
     - mode: 777
     - source: s3://dicelab-pwmconfig/postfix_conf.sh
-    - source_hash: https://s3.amazonaws.com/dicelab-pwmconfig/PwmConfiguration.xml.md5
+    - source_hash: https://s3.amazonaws.com/dicelab-pwmconfig/postfix_conf.sh.md5
 
 runpostfixconf:
   cmd.run:
