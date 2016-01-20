@@ -1,4 +1,4 @@
-java_pkg:
+pkginstall:
   pkg.installed:
     - names:
       - java-1.8.0-openjdk
@@ -8,6 +8,8 @@ java_pkg:
       - inotify-tools
       - s3cmd
       - at
+      - postfix
+      - cyrus-sasl-plain
 
 /usr/local/apache-tomcat-7.0.67.tar.gz:
   archive.extracted:

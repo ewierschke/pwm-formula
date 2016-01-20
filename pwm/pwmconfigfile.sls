@@ -7,6 +7,12 @@ pwmconfig:
     - source: s3://dicelab-pwmconfig/PwmConfiguration.xml
     - source_hash: https://s3.amazonaws.com/dicelab-pwmconfig/PwmConfiguration.xml.md5
 
+saslpasswd:
+  file.managed:
+    - name: /etc/postfix/sasl_passwd
+    - source: s3://dicelab-pwmconfig/sasl_passwd
+    - source_hash: https://s3.amazonaws.com/dicelab-pwmconfig/sasl_passwd.md5
+
 service tomcat stop:
   cmd.run
 
@@ -57,3 +63,23 @@ inotifypwmconfigmode:
 runinotifyscript:
   cmd.run:
     - name: at now + 20 minutes -f /usr/local/bin/inotifypwmconfig
+
+postfixconf:
+  file.managed:
+    - name /usr/local/bin/postfix_conf.sh
+    - mode: 777
+    - source: s3://dicelab-pwmconfig/postfix_conf.sh
+    - source_hash: https://s3.amazonaws.com/dicelab-pwmconfig/PwmConfiguration.xml.md5
+
+runpostfixconf:
+  cmd.run:
+    - name: /usr/local/bin/postfix_conf.sh
+
+postmapsasl:
+  cmd.run:
+    - name: postmap /etc/postfix/sasl_passwd
+
+enablepostfix:
+  service.running:
+    - name: postfix
+    - enable: True
