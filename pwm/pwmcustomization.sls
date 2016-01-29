@@ -19,7 +19,7 @@ mailxinstall:
                 touch /tmp/prior-newusers.log | echo "" > /tmp/prior-newusers.log
         fi
         
-        newentries=$(diff --suppress-common-lines -u /tmp/prior-newusers.log /tmp/current-newusers.log | grep '\+[0-9]')
+        newuserentries=$(diff --suppress-common-lines -u /tmp/prior-newusers.log /tmp/current-newusers.log | grep '\+[0-9]')
         
         if
                         test "$newuserentries" != "" && test "$newusers" = ""
