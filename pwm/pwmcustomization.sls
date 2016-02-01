@@ -27,7 +27,7 @@ mailxinstall:
                         logger "no new users"
                 elif
                         test "$newuserentries" != ""
-                        then echo "$newusers" | mailx -s "WARNING: New User Created" -r "pwm@dicelab.net" erik.wierschke@plus3it.com
+                        then echo "$newuserentries" | mailx -s "WARNING: New DIACELAB User Created" -r "pwm@dicelab.net" erik.wierschke@plus3it.com
                         echo "$newusers" > /tmp/prior-newusers.log
                         logger "emailed list of new users"
         fi
