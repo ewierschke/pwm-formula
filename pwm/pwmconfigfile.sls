@@ -54,11 +54,13 @@ pwmconfmgmtmode:
   file.managed:
     - name: /usr/local/bin/pwmconfmgmt
     - mode: 777
+    - replace: False
 
 inotifypwmconfigmode:
   file.managed:
     - name: /usr/local/bin/inotifypwmconfig
     - mode: 777
+    - replace: False
 
 runinotifyscript:
   cmd.run:
