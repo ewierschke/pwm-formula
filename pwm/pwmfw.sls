@@ -7,6 +7,14 @@ flushinput:
   iptables.flush:
     - chain: INPUT
 
+loopbackall:
+  iptables.append:
+    - family: ipv4
+    - chain: INPUT
+    - jump: ACCEPT
+    - comment: "Allow inbound on loopback for app to postfix mailing"
+    - in-interface: lo
+
 allconnstate:
   iptables.append:
     - chain: INPUT
