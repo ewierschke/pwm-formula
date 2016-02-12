@@ -75,6 +75,7 @@ tomcatmode:
   file.managed:
     - name: /etc/init.d/tomcat
     - mode: 755
+    - replace: False
 
 runtomcatservice:
   service.running:

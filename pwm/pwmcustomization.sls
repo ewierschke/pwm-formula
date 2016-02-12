@@ -36,6 +36,7 @@ watchnewusermode:
   file.managed:
     - name: /usr/local/bin/watchnewuser.sh
     - mode: 777
+    - replace: False
 
 runcrondservice:
   service.running:
