@@ -1,3 +1,6 @@
+include:
+  - pwm/pwmfw
+
 pkginstall:
   pkg.installed:
     - names:
