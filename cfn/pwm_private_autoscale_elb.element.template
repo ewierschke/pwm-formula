@@ -1,0 +1,269 @@
+{
+    "AWSTemplateFormatVersion" : "2010-09-09",
+    "Description" : "This template deploys a PWM instance from launch config in an autoscale group behind an ELB using snippets from pwmstrap. (Feb AMIs)",
+    "Parameters" : {
+        "BootstrapURL" : {
+            "Description" : "URL to the SystemPrep Bootstrapper",
+            "Type" : "String",
+            "Default" : "https://s3.amazonaws.com/systemprep/BootStrapScripts/SystemPrep-Bootstrap--Linux.sh"
+        },
+        "KeyPairName" : {
+            "Description" : "Public/private key pairs allow you to securely connect to your instance after it launches",
+            "Type" : "AWS::EC2::KeyPair::KeyName"
+        },
+        "InstanceType" : {
+            "Description" : "Amazon EC2 instance type for the PWM Instance",
+            "Type" : "String",
+            "Default" : "t2.micro",
+            "AllowedValues" : ["t1.micro",
+                "t2.micro",
+                "t2.small",
+                "m1.small"]
+        },
+        "DesiredCapacity" : {
+            "Description" : "The number of instances the autoscale group will spin up initially",
+            "Type" : "String",
+            "MinLength" : "1",
+            "Default" : "1"
+        },
+        "MinCapacity" : {
+            "Description" : "The minimum number of instances for the autoscale group",
+            "Type" : "String",
+            "MinLength" : "1",
+            "Default" : "1"
+        },
+        "MaxCapacity" : {
+            "Description" : "The maximum number of instances for the autoscale group",
+            "Type" : "String",
+            "MinLength" : "1",
+            "Default" : "1"
+        },
+        "PWMElbName" : {
+            "Description" : "Name of the PWM Elastic Load Balancer",
+            "Type" : "String",
+            "MinLength" : "1"
+        },
+        "DomainDNSName" : {
+            "Description" : "Fully qualified domain name (FQDN) of the forest root domain e.g. example.com (future use)",
+            "Type" : "String",
+            "Default" : "example.com",
+            "MinLength" : "3",
+            "MaxLength" : "25",
+            "AllowedPattern" : "[a-zA-Z0-9]+\\..+"
+        },
+        "PrivateSubnetIDs" : {
+            "Description" : "Private Subnet ID where the PWM instance(s) will run. (only select one, load balancing not tested)",
+            "Type" : "AWS::EC2::Subnet::Id"
+        },
+        "SecurityGroupIdPWMInstance" : {
+            "Description" : "ID of the security group for PWM instances",
+            "Type" : "AWS::EC2::SecurityGroup::Id"
+        }
+    },
+    "Mappings" : {
+        "AWSInstanceType2VirtType" : {
+            "t1.micro" : {
+                "InstanceVirtType" : "Pvm"
+            },
+            "t2.micro" : {
+                "InstanceVirtType" : "Hvm"
+            },
+            "t2.small" : {
+                "InstanceVirtType" : "Hvm"
+            },
+            "m1.small" : {
+                "InstanceVirtType" : "Pvm"
+            }
+        },
+        "AWSRegion2InstanceType2Ami" : {
+            "us-east-1" : {
+                "Pvm" : "ami-8799b2ed",
+                "Hvm" : "ami-0b9bb061"
+            }
+        }
+    },
+    "Resources" : {
+        "PWMInstanceProfile" : {
+            "Type" : "AWS::IAM::InstanceProfile",
+            "Properties" : {
+                "Path" : "/",
+                "Roles" : ["pwmconfig"]
+            }
+        },
+        "PWMAutoScalingGroup" : {
+            "Type" : "AWS::AutoScaling::AutoScalingGroup",
+            "Properties" : {
+                "VPCZoneIdentifier" : [ { "Ref" : "PrivateSubnetIDs" } ],
+                "LaunchConfigurationName" : { "Ref" : "PWMLaunchConfig" },
+                "LoadBalancerNames" : [ { "Ref" : "PWMElbName" } ],
+                "MinSize" : { "Ref" : "MinCapacity" },
+                "MaxSize" : { "Ref" : "MaxCapacity" },
+                "DesiredCapacity" : { "Ref" : "DesiredCapacity" },
+                "HealthCheckGracePeriod" : "3600",
+                "HealthCheckType" : "ELB",
+                "Tags" : [
+                    {
+                        "Key" : "Name",
+                        "Value" : { "Fn::Join" : ["", [
+                            "pwm-",
+                            { "Ref" : "AWS::StackName" }
+                        ]]},
+                        "PropagateAtLaunch" : "true"
+                    }
+                ]
+            }
+        },
+        "PWMLaunchConfig" : {
+            "Type" : "AWS::AutoScaling::LaunchConfiguration",
+            "Metadata" : {
+                "AWS::CloudFormation::Init" : {
+                    "configSets" : {
+                    "config" : [
+                        "bootstrap",
+                        "finalize"
+                     ]
+                },
+                    "bootstrap" : {
+                        "commands" : {
+                            "1-bootstrap" : {
+                                "command" : {
+                                    "Fn::Join" : ["",
+                                        ["curl --silent --show-error --retry 5 -L ", 
+                                        { "Ref" : "BootstrapURL" }, " | sed -e 's/^NOREBOOT.*/NOREBOOT=\"True\"/' | bash", 
+                                        "\n"]
+                                    ]
+                                }
+                            },
+                            "2-installepel": {
+                                "command" : {
+                                    "Fn::Join" : ["",
+                                        ["yum -y install http://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm",
+                                        "\n"]
+                                    ]
+                                }
+                            },
+                            "3-installgit" :{
+                                "command" : {
+                                    "Fn::Join" : ["",
+                                        ["yum -y install git",
+                                        "\n"]
+                                    ]
+                                }
+                            },
+                            "4-clonepwmformula": {
+                                "command" : {
+                                    "Fn::Join" : ["",
+                                        ["git clone https://github.com/ewierschke/pwm-formula /srv/salt/formulas/pwm-formula",
+                                        "\n"]
+                                    ]
+                                }
+                            },
+                            "5-editminionconf" : {
+                                "command" : {
+                                    "Fn::Join" : ["",
+                                        ["sed -i '/scc-formula/a \\    - /srv/salt/formulas/pwm-formula' /etc/salt/minion && service salt-minion restart",
+                                        "\n"]
+                                    ]
+                                }
+                            },
+                            "6-applypwmstate" :{
+                                "command" : {
+                                    "Fn::Join" : ["",
+                                    ["salt-call --local state.apply pwm",
+                                    "\n"]
+                                    ]
+                                },
+                                "ignoreErrors" : "false"
+                            }
+                        }
+                    },
+                    "finalize" : {
+                        "commands" : {
+                            "10-signal-success" : {
+                                "command" : {
+                                    "Fn::Join" : ["",
+                                        ["/usr/bin/cfn-signal -e 0 ",
+                                        "   --stack ", { "Ref" : "AWS::StackName" },
+                                        "   --resource PWMAutoScalingGroup",
+                                        "   --region ", { "Ref" : "AWS::Region" },
+                                        ";sleep 60;reboot now\n"]
+                                    ]
+                                },
+                                "ignoreErrors" : "true"
+                            }
+                        }
+                    }
+                }
+            },
+            "Properties" : {
+                "ImageId" : {
+                    "Fn::FindInMap" : [
+                        "AWSRegion2InstanceType2Ami", {
+                            "Ref" : "AWS::Region"
+                        }, 
+                        { "Fn::FindInMap" : [
+                            "AWSInstanceType2VirtType", {
+                                "Ref" : "InstanceType"
+                             },
+                        "InstanceVirtType"]
+                        }
+                    ]
+                },
+                "InstanceType" : {
+                    "Ref" : "InstanceType"
+                },
+                "KeyName" : {
+                    "Ref" : "KeyPairName"
+                },
+                "BlockDeviceMappings" : [
+                    {
+                        "DeviceName" : "/dev/sda1",
+                        "Ebs"        : {
+                            "VolumeSize" : "20",
+                            "VolumeType" : "gp2",
+                            "DeleteOnTermination" : "true"
+                        }
+                    }
+                ],
+                "SecurityGroups" : [
+                    { "Ref" : "SecurityGroupIdPWMInstance" }
+                ],
+                "IamInstanceProfile" : "pwmconfig",
+                "UserData" : {
+                    "Fn::Base64" : {
+                        "Fn::Join" : [
+                            "",
+                            ["#!/bin/bash -xe\n",
+                            "# Get pip\n",
+                            "curl https://bootstrap.pypa.io/get-pip.py | python\n",
+                            "hash pip 2> /dev/null || PATH=\"${PATH}:/usr/local/bin\"\n",
+                            "# Upgrade setuptools\n",
+                            "pip install --upgrade setuptools\n",
+                            "# Fix python urllib3 warnings\n",
+                            "yum -y install gcc python-devel libffi-devel openssl-devel\n",
+                            "pip install pyopenssl ndg-httpsclient pyasn1\n",
+                            "# Get cfn scripts\n",
+                            "pip install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\n",
+                            "chmod 775 /usr/init/redhat/cfn-hup\n",
+                            "ln -s /usr/init/redhat/cfn-hup /etc/init.d/cfn-hup\n",
+                            "ln -s /usr/bin/cfn-hup /opt/aws/bin/cfn-hup\n",
+                            "chkconfig --add cfn-hup\n",
+                            "chkconfig cfn-hup on\n",
+                            "#yum -y install aws-cfn-bootstrap\n",
+                            "# Execute cfn-init\n",
+                            "/usr/bin/cfn-init -v -c config ",
+                            "    --stack ", {
+                            "Ref" : "AWS::StackName"
+                            },
+                            "    --resource PWMLaunchConfig",
+                            "    --region ", {
+                            "Ref" : "AWS::Region"
+                            },
+                            "\n"]
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}

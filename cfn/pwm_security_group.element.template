@@ -1,0 +1,129 @@
+{
+    "AWSTemplateFormatVersion" : "2010-09-09",
+    "Description" : "This templates creates one security group for PWM instances, and one for their load balancer",
+    "Parameters" : {
+        "UseELB" : {
+            "Description" : "Set to true if using an ELB in front of PWM; otherwise set to false",
+            "Type" : "String",
+            "Default" : "true",
+            "AllowedValues" : [ "true", "false" ]
+        },
+        "VPC" : {
+            "Description" : "VPC ID",
+            "Type" : "AWS::EC2::VPC::Id"
+        }
+    },
+    "Conditions" : {
+        "UseELB" : { "Fn::Equals" : [ { "Ref" : "UseELB" }, "true" ] },
+        "NoELB": { "Fn::Equals" : [ { "Ref" : "UseELB" }, "false" ] }
+    },
+    "Resources" : {
+        "PWMSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "Enable PWM access from ELB",
+                "VpcId" : {
+                    "Ref" : "VPC"
+                },
+                "Tags" : [
+                    {
+                        "Key" : "Name",
+                        "Value" : { "Fn::Join" : ["", [
+                            "pwm-",
+                            { "Ref" : "AWS::StackName" }
+                        ]]}
+                    }
+                ]
+            }
+        },
+        "ElbToPWMIngressTcp80" : {
+            "Type" : "AWS::EC2::SecurityGroupIngress",
+            "Condition" : "UseELB",
+            "Properties" : {
+                "GroupId" :  { "Ref": "PWMSecurityGroup" },
+                "IpProtocol" : "tcp",
+                "FromPort" : "80",
+                "ToPort" : "80",
+                "SourceSecurityGroupId" : { "Ref": "PWMElbSecurityGroup" }
+            }
+        },
+        "ElbToPWMIngressTcp8080" : {
+            "Type" : "AWS::EC2::SecurityGroupIngress",
+            "Condition" : "UseELB",
+            "Properties" : {
+                "GroupId" :  { "Ref": "PWMSecurityGroup" },
+                "IpProtocol" : "tcp",
+                "FromPort" : "8080",
+                "ToPort" : "8080",
+                "SourceSecurityGroupId" : { "Ref": "PWMElbSecurityGroup" }
+            }
+        },
+        "PWMElbSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Condition" : "UseELB",
+            "Properties" : {
+                "GroupDescription" : "Enable PWM ELB access from the Internet",
+                "VpcId" : {
+                    "Ref" : "VPC"
+                },
+                "Tags" : [
+                    {
+                        "Key" : "Name",
+                        "Value" : { "Fn::Join" : ["", [
+                            "pwm-elb-",
+                            { "Ref" : "AWS::StackName" }
+                        ]]}
+                    }
+                ]
+            }
+        },
+        "PublicToElbIngressTcp443" : {
+            "Type" : "AWS::EC2::SecurityGroupIngress",
+            "Condition" : "UseELB",
+            "Properties" : {
+                "GroupId" :  { "Ref": "PWMElbSecurityGroup" },
+                "IpProtocol" : "tcp",
+                "FromPort" : "443",
+                "ToPort" : "443",
+                "CidrIp" : "0.0.0.0/0"
+            }
+        },
+        "ElbToPWMEgressTcp80" : {
+            "Type" : "AWS::EC2::SecurityGroupEgress",
+            "Condition" : "UseELB",
+            "Properties" : {
+                "GroupId" :  { "Ref": "PWMElbSecurityGroup" },
+                "IpProtocol" : "tcp",
+                "FromPort" : "80",
+                "ToPort" : "80",
+                "DestinationSecurityGroupId" : { "Ref": "PWMSecurityGroup" }
+            }
+        },
+        "ElbToPWMEgressTcp8080" : {
+            "Type" : "AWS::EC2::SecurityGroupEgress",
+            "Condition" : "UseELB",
+            "Properties" : {
+                "GroupId" :  { "Ref": "PWMElbSecurityGroup" },
+                "IpProtocol" : "tcp",
+                "FromPort" : "8080",
+                "ToPort" : "8080",
+                "DestinationSecurityGroupId" : { "Ref": "PWMSecurityGroup" }
+            }
+        }
+    },
+    "Outputs" : {
+        "PWMSecurityGroupId" : {
+            "Value" : {
+                "Ref" : "PWMSecurityGroup"
+            },
+            "Description" : "Security Group ID for the PWM instances"
+        },
+        "PWMElbSecurityGroupId" : {
+            "Condition" : "UseELB",
+            "Value" : {
+                "Ref" : "PWMElbSecurityGroup"
+            },
+            "Description" : "Security Group ID for the PWM Elastic Load Balancer"
+        }
+    }
+}
