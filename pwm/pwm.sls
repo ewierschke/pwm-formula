@@ -39,8 +39,8 @@ tomcat-users.xml:
 pwm_v1.7.1:
   archive.extracted:
     - name: /usr/local/tomcat7/apache-tomcat-7.0.67/temp/pwm/
-    - source: 'https://s3.amazonaws.com/dicelab-pwm/pwm_v1.7.1.zip'
-    - source_hash: 'https://s3.amazonaws.com/dicelab-pwm/pwm_v1.7.1.zip.md5'
+    - source: 'https://s3.amazonaws.com/dicelab-pwm/pwm-1.8.0-SNAPSHOT-2016-02-05T18-09-31Z-pwm-bundle.zip'
+    - source_hash: 'https://s3.amazonaws.com/dicelab-pwm/pwm-1.8.0-SNAPSHOT-2016-02-05T18-09-31Z-pwm-bundle.zip.md5'
     - archive_format: zip
 
 /usr/local/tomcat7/apache-tomcat-7.0.67/webapps/pwm.war:
