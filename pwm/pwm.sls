@@ -147,3 +147,12 @@ chmod 777 /usr/local/bin/selinuxproxy.sh:
 run selinuxproxy script:
   cmd.run:
     - name: /usr/local/bin/selinuxproxy.sh
+
+pwmrepolocation:
+  file.blockreplace:
+    - name: /usr/local/tomcat7/apache-tomcat-7.0.67/webapps/pwm/WEB-INF/web.xml
+    - marker_start: "        <param-name>applicationPath</param-name>"
+    - marker_end: "    </context-param>"
+    - content: "        <param-value>/usr/local/tomcat/7/apache-tomcat-7.0.67/webapps/pwm/WEB-INF</param-value>"
+    - show_changes: True
+    - backup: '.bak'

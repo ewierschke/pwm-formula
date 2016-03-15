@@ -83,7 +83,7 @@ adddicelabtexttologin-{{ myvar }}-accumulated1:
   file.accumulated:
     - filename: /usr/local/tomcat7/apache-tomcat-7.0.67/webapps/pwm/WEB-INF/jsp/login.jsp
     - name: my-accumulator-{{ myvar }}
-    - text: '        <% } %>'
+    - text: '        </pwm:if>'
     - require_in:
       - file: adddicelabtexttologin-{{ myvar }}
 
