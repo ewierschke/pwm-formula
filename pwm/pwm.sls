@@ -17,8 +17,8 @@ pkginstall:
 /usr/local/apache-tomcat-7.0.67.tar.gz:
   archive.extracted:
     - name: /usr/local/tomcat7/
-    - source: 'http://mirror.cc.columbia.edu/pub/software/apache/tomcat/tomcat-7/v7.0.67/bin/apache-tomcat-7.0.67.tar.gz'
-    - source_hash: 'https://www.apache.org/dist/tomcat/tomcat-7/v7.0.67/bin/apache-tomcat-7.0.67.tar.gz.md5'
+    - source: 'https://archive.apache.org/dist/tomcat/tomcat-7/v7.0.67/bin/apache-tomcat-7.0.67.tar.gz'
+    - source_hash: 'https://archive.apache.org/dist/tomcat/tomcat-7/v7.0.67/bin/apache-tomcat-7.0.67.tar.gz.md5'
     - archive_format: tar
     - tar_options: xzf
 
