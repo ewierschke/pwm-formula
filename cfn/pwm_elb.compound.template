@@ -68,7 +68,7 @@
         "PWMSecurityGroupStack" : {
             "Type" : "AWS::CloudFormation::Stack",
             "Properties" : {
-                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/pwm_security_group.element.template",
+                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/branch/pwm_security_group.element.template",
                 "Parameters"  : {
                     "VPC" : {
                         "Ref" : "VPC"
@@ -81,7 +81,7 @@
             "Type" : "AWS::CloudFormation::Stack",
             "DependsOn" : "PWMSecurityGroupStack",
             "Properties" : {
-                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/pwm_elb_public_ssl_443.element.template",
+                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/branch/pwm_elb_public_ssl_443.element.template",
                 "Parameters"  : {
                     "SslCertificateName" : {
                         "Ref" : "ElbSslCertificateName"
@@ -110,7 +110,7 @@
             "Type" : "AWS::CloudFormation::Stack",
             "DependsOn" : "PWMElbStack",
             "Properties" : {
-                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/pwm_private_autoscale_elb.element.template",
+                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/branch/pwm_private_autoscale_elb.element.template",
                 "Parameters"  : {
                     "KeyPairName" : {
                         "Ref" : "KeyPairName"
