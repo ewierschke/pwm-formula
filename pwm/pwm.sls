@@ -148,7 +148,7 @@ run selinuxproxy script:
   cmd.run:
     - name: /usr/local/bin/selinuxproxy.sh
 
-pwmrepolocation:
+pwmapppath:
   file.blockreplace:
     - name: /usr/local/tomcat7/apache-tomcat-7.0.67/webapps/pwm/WEB-INF/web.xml
     - marker_start: "        <param-name>applicationPath</param-name>"
