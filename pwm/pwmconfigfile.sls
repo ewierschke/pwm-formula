@@ -4,8 +4,8 @@ include:
 pwmconfig:
   file.managed:
     - name: /usr/local/tomcat7/apache-tomcat-7.0.67/webapps/pwm/WEB-INF/PwmConfiguration.xml
-    - source: s3://dicelab-pwmconfig/PwmConfiguration.xml
-    - source_hash: https://s3.amazonaws.com/dicelab-pwmconfig/PwmConfiguration.xml.md5
+    - source: s3://dicelab-pwmconfig/18branch/PwmConfiguration.xml
+    - source_hash: https://s3.amazonaws.com/dicelab-pwmconfig/18branch/PwmConfiguration.xml.md5
 
 saslpasswd:
   file.managed:
