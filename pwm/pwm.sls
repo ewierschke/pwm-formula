@@ -4,7 +4,11 @@ include:
 pkginstall:
   pkg.installed:
     - names:
+      - http://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
       - java-1.8.0-openjdk
+      - tomcat
+      - tomcat-admin-webapps
+      - tomcat-webapps
       - wget
       - unzip
       - httpd
@@ -14,17 +18,9 @@ pkginstall:
       - postfix
       - cyrus-sasl-plain
 
-/usr/local/apache-tomcat-7.0.67.tar.gz:
-  archive.extracted:
-    - name: /usr/local/tomcat7/
-    - source: 'https://archive.apache.org/dist/tomcat/tomcat-7/v7.0.67/bin/apache-tomcat-7.0.67.tar.gz'
-    - source_hash: 'https://archive.apache.org/dist/tomcat/tomcat-7/v7.0.67/bin/apache-tomcat-7.0.67.tar.gz.md5'
-    - archive_format: tar
-    - tar_options: xzf
-
 tomcat-users.xml:
   file.blockreplace:
-    - name: /usr/local/tomcat7/apache-tomcat-7.0.67/conf/tomcat-users.xml
+    - name: /usr/share/tomcat/conf/tomcat-users.xml
     - marker_start: '<tomcat-users>'
     - marker_end: '</tomcat-users>'
     - content: |
@@ -36,49 +32,16 @@ tomcat-users.xml:
         <user username="admin" password="admin" roles="manager-gui,admin-gui" />
     - show_changes: True
 
-pwm_v1.7.1:
+pwm_zip:
   archive.extracted:
-    - name: /usr/local/tomcat7/apache-tomcat-7.0.67/temp/pwm/
+    - name: /usr/local/bin/pwm/
     - source: 'https://s3.amazonaws.com/dicelab-pwm/pwm-1.8.0-SNAPSHOT-2016-02-05T18-09-31Z-pwm-bundle.zip'
     - source_hash: 'https://s3.amazonaws.com/dicelab-pwm/pwm-1.8.0-SNAPSHOT-2016-02-05T18-09-31Z-pwm-bundle.zip.md5'
     - archive_format: zip
 
-/usr/local/tomcat7/apache-tomcat-7.0.67/webapps/pwm.war:
+/usr/local/share/tomcat/webapps/pwm.war:
   file.managed:
-    - source: /usr/local/tomcat7/apache-tomcat-7.0.67/temp/pwm/pwm.war
-
-/etc/init.d/tomcat:
-  file.append:
-    - text: |
-        #!/bin/bash
-        # description: Tomcat Start Stop Restart
-        # processname: tomcat
-        # chkconfig: 234 20 80
-        JAVA_HOME=/usr/lib/jvm/jre-1.8.0-openjdk.x86_64
-        export JAVA_HOME
-        PATH=$JAVA_HOME/bin:$PATH
-        export PATH
-        CATALINA_HOME=/usr/local/tomcat7/apache-tomcat-7.0.67
-        
-        case $1 in
-        start)
-        sh $CATALINA_HOME/bin/startup.sh
-        ;;
-        stop)
-        sh $CATALINA_HOME/bin/shutdown.sh
-        ;;
-        restart)
-        sh $CATALINA_HOME/bin/shutdown.sh
-        sh $CATALINA_HOME/bin/startup.sh
-        ;;
-        esac
-        exit 0
-
-tomcatmode:
-  file.managed:
-    - name: /etc/init.d/tomcat
-    - mode: 755
-    - replace: False
+    - source: /usr/local/bin/pwm/pwm.war
 
 runtomcatservice:
   service.running:
@@ -131,8 +94,8 @@ runatdservice:
         # Gotta make SELinux happy...
         if [[ $(getenforce) = "Enforcing" ]] || [[ $(getenforce) = "Permissive" ]]
         then
-            chcon -R --reference=/usr/local/tomcat7/apache-tomcat-7.0.67/webapps \
-                /usr/local/tomcat7/apache-tomcat-7.0.67/webapps/pwm.war
+            chcon -R --reference=/usr/local/share/tomcat/webapps \
+                /usr/local/share/tomcat/webapps/pwm.war
             if [[ $(getsebool httpd_can_network_relay | \
                 cut -d ">" -f 2 | sed 's/[ ]*//g') = "off" ]]
             then
@@ -150,9 +113,9 @@ run selinuxproxy script:
 
 pwmapppath:
   file.blockreplace:
-    - name: /usr/local/tomcat7/apache-tomcat-7.0.67/webapps/pwm/WEB-INF/web.xml
+    - name: /usr/local/share/tomcat/webapps/pwm/WEB-INF/web.xml
     - marker_start: "        <param-name>applicationPath</param-name>"
     - marker_end: "    </context-param>"
-    - content: "        <param-value>/usr/local/tomcat7/apache-tomcat-7.0.67/webapps/pwm/WEB-INF</param-value>"
+    - content: "        <param-value>/usr/local/share/tomcat/webapps/pwm/WEB-INF</param-value>"
     - show_changes: True
     - backup: '.bak'
