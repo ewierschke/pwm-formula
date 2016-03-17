@@ -85,3 +85,8 @@ enablepostfix:
   service.running:
     - name: postfix
     - enable: True
+
+/usr/share/tomcat/webapps/pwm/WEB-INF/PwmConfiguration.xml:
+  file.managed:
+    - user: tomcat
+    - group: tomcat
