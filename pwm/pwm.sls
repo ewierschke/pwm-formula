@@ -39,7 +39,7 @@ pwm_zip:
     - source_hash: 'https://s3.amazonaws.com/dicelab-pwm/pwm-1.8.0-SNAPSHOT-2016-02-05T18-09-31Z-pwm-bundle.zip.md5'
     - archive_format: zip
 
-/usr/local/share/tomcat/webapps/pwm.war:
+/usr/share/tomcat/webapps/pwm.war:
   file.managed:
     - source: /usr/local/bin/pwm/pwm.war
 
@@ -94,8 +94,8 @@ runatdservice:
         # Gotta make SELinux happy...
         if [[ $(getenforce) = "Enforcing" ]] || [[ $(getenforce) = "Permissive" ]]
         then
-            chcon -R --reference=/usr/local/share/tomcat/webapps \
-                /usr/local/share/tomcat/webapps/pwm.war
+            chcon -R --reference=/usr/share/tomcat/webapps \
+                /usr/share/tomcat/webapps/pwm.war
             if [[ $(getsebool httpd_can_network_relay | \
                 cut -d ">" -f 2 | sed 's/[ ]*//g') = "off" ]]
             then
@@ -113,9 +113,9 @@ run selinuxproxy script:
 
 pwmapppath:
   file.blockreplace:
-    - name: /usr/local/share/tomcat/webapps/pwm/WEB-INF/web.xml
+    - name: /usr/share/tomcat/webapps/pwm/WEB-INF/web.xml
     - marker_start: "        <param-name>applicationPath</param-name>"
     - marker_end: "    </context-param>"
-    - content: "        <param-value>/usr/local/share/tomcat/webapps/pwm/WEB-INF</param-value>"
+    - content: "        <param-value>/usr/share/tomcat/webapps/pwm/WEB-INF</param-value>"
     - show_changes: True
     - backup: '.bak'

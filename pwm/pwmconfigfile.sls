@@ -3,7 +3,7 @@ include:
 
 pwmconfig:
   file.managed:
-    - name: /usr/local/share/tomcat/webapps/pwm/WEB-INF/PwmConfiguration.xml
+    - name: /usr/share/tomcat/webapps/pwm/WEB-INF/PwmConfiguration.xml
     - source: s3://dicelab-pwmconfig/18branch/PwmConfiguration.xml
     - source_hash: https://s3.amazonaws.com/dicelab-pwmconfig/18branch/PwmConfiguration.xml.md5
 
@@ -27,7 +27,7 @@ service tomcat start:
     - text: |
         #!/bin/sh
         sleep 2
-        md5tmp=$(md5sum /usr/local/share/tomcat/webapps/pwm/WEB-INF/PwmConfiguration.xml)
+        md5tmp=$(md5sum /usr/share/tomcat/webapps/pwm/WEB-INF/PwmConfiguration.xml)
         echo $md5tmp > /tmp/md5conf
         IFS=' ' read -a myarray <<< "$md5tmp"
         echo ${myarray[0]} > /tmp/PwmConfiguration.xml.md5
@@ -35,7 +35,7 @@ service tomcat start:
         sed -i ':a;N;$!ba;s/\n/\ /g' /tmp/PwmConfiguration.xml.md5
         rm -rf /tmp/md5conf
         logger "created md5file in tmp"
-        s3cmd put /usr/local/share/tomcat/webapps/pwm/WEB-INF/PwmConfiguration.xml s3://dicelab-pwmconfig/18branch/PwmConfiguration.xml
+        s3cmd put /usr/share/tomcat/webapps/pwm/WEB-INF/PwmConfiguration.xml s3://dicelab-pwmconfig/18branch/PwmConfiguration.xml
         logger "s3 put conf.xml file"
         s3cmd put -P /tmp/PwmConfiguration.xml.md5 s3://dicelab-pwmconfig/18branch/PwmConfiguration.xml.md5
         logger "s3 put conffile md5"

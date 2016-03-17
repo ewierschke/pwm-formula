@@ -10,7 +10,7 @@ mailxinstall:
   file.append:
     - text: |
         # This is a script that will grep a log file and send an email when a specified patter is encountered.
-        newusers=$(grep "CREATE_USER" /usr/local/tomcat7/apache-tomcat-7.0.67/webapps/pwm/WEB-INF/logs/PWM.log)
+        newusers=$(grep "CREATE_USER" /usr/share/tomcat/webapps/pwm/WEB-INF/logs/PWM.log)
         echo "$newusers" > /tmp/current-newusers.log
         
         if      [ -e "/tmp/prior-newusers.log" ]
@@ -48,7 +48,7 @@ runcrondservice:
     - text: |
         */5 * * * * root /usr/local/bin/watchnewuser.sh
 
-/usr/local/share/tomcat/webapps/pwm/WEB-INF/jsp/fragment/dicelabwelcome.jsp:
+/usr/share/tomcat/webapps/pwm/WEB-INF/jsp/fragment/dicelabwelcome.jsp:
   file.append:
     - text: |
         <!DOCTYPE html>
@@ -73,7 +73,7 @@ runcrondservice:
 {% set myvar = 42%}
 adddicelabtexttologin-{{ myvar }}:
   file.blockreplace:
-    - name: /usr/local/share/tomcat/webapps/pwm/WEB-INF/jsp/login.jsp
+    - name: /usr/share/tomcat/webapps/pwm/WEB-INF/jsp/login.jsp
     - marker_start: "        </table>"
     - marker_end: "    </div>"
     - show_changes: True
@@ -81,7 +81,7 @@ adddicelabtexttologin-{{ myvar }}:
 
 adddicelabtexttologin-{{ myvar }}-accumulated1:
   file.accumulated:
-    - filename: /usr/local/share/tomcat/webapps/pwm/WEB-INF/jsp/login.jsp
+    - filename: /usr/share/tomcat/webapps/pwm/WEB-INF/jsp/login.jsp
     - name: my-accumulator-{{ myvar }}
     - text: '        </pwm:if>'
     - require_in:
@@ -89,13 +89,13 @@ adddicelabtexttologin-{{ myvar }}-accumulated1:
 
 adddicelabtexttologin-{{ myvar }}-accumulated2:
   file.accumulated:
-    - filename: /usr/local/share/tomcat/webapps/pwm/WEB-INF/jsp/login.jsp
+    - filename: /usr/share/tomcat/webapps/pwm/WEB-INF/jsp/login.jsp
     - name: my-accumulator-{{ myvar }}
     - text: '    <%@ include file="fragment/dicelabwelcome.jsp" %>'
     - require_in:
       - file: adddicelabtexttologin-{{ myvar }}
 
-/usr/local/share/tomcat/webapps/pwm/public/resources/js/newuser.js:
+/usr/share/tomcat/webapps/pwm/public/resources/js/newuser.js:
   file.append:
     - text: |
         function autoGen(prenom, inits, nom){
@@ -119,7 +119,7 @@ adddicelabtexttologin-{{ myvar }}-accumulated2:
 
 formjspaddscript:
   file.replace:
-    - name: /usr/local/share/tomcat/webapps/pwm/WEB-INF/jsp/fragment/form.jsp
+    - name: /usr/share/tomcat/webapps/pwm/WEB-INF/jsp/fragment/form.jsp
     - pattern:        maxlength="<%=loopConfiguration.getMaximumLength.*
     - count: 1
     - repl: |{% raw %}
