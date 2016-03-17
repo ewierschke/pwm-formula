@@ -45,7 +45,7 @@ service tomcat start:
   file.append:
     - text: | 
         #!/bin/sh
-        while inotifywait -e modify -e create -e delete -o /var/log/inotify --format '%w%f-%e' /usr/local/share/tomcat/webapps/pwm/WEB-INF/; do
+        while inotifywait -e modify -e create -e delete -o /var/log/inotify --format '%w%f-%e' /usr/share/tomcat/webapps/pwm/WEB-INF/; do
             /usr/local/bin/pwmconfmgmt
         done
         
