@@ -5,7 +5,7 @@ include:
 pkginstall:
   pkg.installed:
     - names:
-      - java-1.8.0-openjdk
+      - java-1.7.0-openjdk
       - tomcat
       - tomcat-admin-webapps
       - tomcat-webapps
