@@ -1,10 +1,10 @@
 include:
   - pwm/pwmfw
+  - pwm/hostname
 
 pkginstall:
   pkg.installed:
     - names:
-      - http://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
       - java-1.8.0-openjdk
       - tomcat
       - tomcat-admin-webapps
