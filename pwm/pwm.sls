@@ -119,3 +119,7 @@ pwmapppath:
     - content: "        <param-value>/usr/share/tomcat/webapps/pwm/WEB-INF</param-value>"
     - show_changes: True
     - backup: '.bak'
+
+/usr/share/tomcat/conf/tomcat.conf:
+  file.append:
+    - text: 'JAVA_OPTS="-Djava.security.egd=file:/dev/./urandom -Djava.awt.headless=true -Xmx512m -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC"'
