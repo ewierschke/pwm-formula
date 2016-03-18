@@ -1,7 +1,7 @@
 # This is currently intended for ec2 hosts that come with sth like ip-10-10-0-123 for a hostname.
 # To match the hostname with the entries created by the hostsfile state, also execute this state.
 
-{%- set fqdn = grains['fqdn'] %}
+{%- set fqdn = grains['nodename'] %}
 {%- set localip = grains['ipv4'] %}
 {%- if grains['os_family'] == 'RedHat' %}
 

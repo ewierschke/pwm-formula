@@ -167,3 +167,14 @@ pwmapppath:
 /usr/share/tomcat/conf/tomcat.conf:
   file.append:
     - text: 'JAVA_OPTS="-Djava.security.egd=file:/dev/./urandom -Djava.awt.headless=true -Xmx512m -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC"'
+
+/usr/local/bin/rerunhostnamestate:
+  file.append:
+    - text: 'salt-call --local state.apply pwm/hostname'
+
+chmod 777 /usr/local/bin/rerunhostnamestate:
+  cmd.run
+
+runhostnamestate:
+  cmd.run:
+    - name: at now + 10 minutes -f /usr/local/bin/rerunhostnamestate
