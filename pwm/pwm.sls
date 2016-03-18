@@ -17,13 +17,13 @@ pkginstall:
 
 /usr/local/bin/apache-tomcat-7.0.67.tar.gz:
   archive.extracted:
-    - name: /usr/local/bin
+    - name: /usr/local/bin/tomcat7
     - source: 'https://archive.apache.org/dist/tomcat/tomcat-7/v7.0.67/bin/apache-tomcat-7.0.67.tar.gz'
     - source_hash: 'https://archive.apache.org/dist/tomcat/tomcat-7/v7.0.67/bin/apache-tomcat-7.0.67.tar.gz.md5'
     - archive_format: tar
     - tar_options: xzf
 
-mv /usr/local/bin/apache-tomcat-7.0.67 /usr/local/bin/tomcat:
+mv /usr/local/bin/tomcat7/apache-tomcat-7.0.67 /usr/local/bin/tomcat:
   cmd.run
   
 mv /usr/local/bin/tomcat /usr/share/:
