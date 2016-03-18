@@ -29,6 +29,39 @@ mv /usr/local/bin/tomcat7/apache-tomcat-7.0.67 /usr/local/bin/tomcat:
 mv /usr/local/bin/tomcat /usr/share/:
   cmd.run
 
+/etc/init.d/tomcat:
+  file.append:
+    - text: |
+        #!/bin/bash
+        # description: Tomcat Start Stop Restart
+        # processname: tomcat
+        # chkconfig: 234 20 80
+        JAVA_HOME=/usr/lib/jvm/jre-1.8.0-openjdk.x86_64
+        export JAVA_HOME
+        PATH=$JAVA_HOME/bin:$PATH
+        export PATH
+        CATALINA_HOME=/usr/share/tomcat
+        
+        case $1 in
+        start)
+        sh $CATALINA_HOME/bin/startup.sh
+        ;;
+        stop)
+        sh $CATALINA_HOME/bin/shutdown.sh
+        ;;
+        restart)
+        sh $CATALINA_HOME/bin/shutdown.sh
+        sh $CATALINA_HOME/bin/startup.sh
+        ;;
+        esac
+        exit 0
+
+tomcatmode:
+  file.managed:
+    - name: /etc/init.d/tomcat
+    - mode: 755
+    - replace: False
+
 tomcat-users.xml:
   file.blockreplace:
     - name: /usr/share/tomcat/conf/tomcat-users.xml
