@@ -76,16 +76,10 @@ tomcat-users.xml:
         <user username="admin" password="admin" roles="manager-gui,admin-gui" />
     - show_changes: True
 
-pwm_zip:
-  archive.extracted:
-    - name: /usr/local/bin/pwm/
-    - source: 'https://s3.amazonaws.com/dicelab-pwm/pwm-1.8.0-SNAPSHOT-2016-02-05T18-09-31Z-pwm-bundle.zip'
-    - source_hash: 'https://s3.amazonaws.com/dicelab-pwm/pwm-1.8.0-SNAPSHOT-2016-02-05T18-09-31Z-pwm-bundle.zip.md5'
-    - archive_format: zip
-
 /usr/share/tomcat/webapps/pwm.war:
   file.managed:
-    - source: /usr/local/bin/pwm/pwm.war
+    - source: 'https://s3.amazonaws.com/dicelab-pwm/branch/pwm.war'
+    - source_hash: 'https://s3.amazonaws.com/dicelab-pwm/branch/pwm.war.md5'
 
 runtomcatservice:
   service.running:
