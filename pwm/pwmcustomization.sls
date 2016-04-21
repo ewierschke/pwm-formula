@@ -83,11 +83,19 @@ adddicelabtexttologin-{{ myvar }}-accumulated1:
   file.accumulated:
     - filename: /usr/share/tomcat/webapps/pwm/WEB-INF/jsp/login.jsp
     - name: my-accumulator-{{ myvar }}
-    - text: '        </pwm:if>'
+    - text: '            </pwm:if>'
     - require_in:
       - file: adddicelabtexttologin-{{ myvar }}
 
 adddicelabtexttologin-{{ myvar }}-accumulated2:
+  file.accumulated:
+    - filename: /usr/share/tomcat/webapps/pwm/WEB-INF/jsp/login.jsp
+    - name: my-accumulator-{{ myvar }}
+    - text: '        </pwm:if>'
+    - require_in:
+      - file: adddicelabtexttologin-{{ myvar }}
+
+adddicelabtexttologin-{{ myvar }}-accumulated3:
   file.accumulated:
     - filename: /usr/share/tomcat/webapps/pwm/WEB-INF/jsp/login.jsp
     - name: my-accumulator-{{ myvar }}
