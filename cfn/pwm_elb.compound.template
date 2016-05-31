@@ -45,6 +45,10 @@
             "MinLength"   : "1",
             "Default"     : "1"
         },
+        "IAMGroup"              : {
+            "Description" : "ID of the IAM group to be granted SSH access to PWM instances",
+            "Type"        : "String"
+        },
         "InstanceType"             : {
             "Description" : "Amazon EC2 instance type for the PWM Instances",
             "Type"        : "String",
@@ -126,6 +130,9 @@
                     },
                     "DesiredCapacity" : {
                         "Ref" : "DesiredCapacity"
+                    },
+                    "IAMGroup" : {
+                        "Ref" : "IAMGroup"
                     },
                     "PWMElbName"         : {
                         "Fn::GetAtt" : [
