@@ -245,7 +245,7 @@
                     },
                     "bootstrap" : {
                         "files" : {
-                            "/opt/authorized_keys_command.sh": {
+                            "/usr/local/bin/authorized_keys_command.sh": {
                                 "content": {"Fn::Join": ["", [
                                     "#!/bin/bash -e", "\n",
                                     "if [ -z \"$1\" ]; then", "\n",
@@ -317,7 +317,7 @@
                                 }
                             },
                             "60-configure_sshd_command": {
-                                "command": "sed -i 's:#AuthorizedKeysCommand none:AuthorizedKeysCommand /opt/authorized_keys_command.sh:g' /etc/ssh/sshd_config"
+                                "command": "sed -i 's:#AuthorizedKeysCommand none:AuthorizedKeysCommand /usr/local/bin/authorized_keys_command.sh:g' /etc/ssh/sshd_config"
                             },
                             "70-configure_sshd_commanduser": {
                                 "command": "sed -i 's:#AuthorizedKeysCommandUser nobody:AuthorizedKeysCommandUser nobody:g' /etc/ssh/sshd_config"
