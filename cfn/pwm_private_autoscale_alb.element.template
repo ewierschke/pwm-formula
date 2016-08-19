@@ -142,7 +142,7 @@
         "AllowIAMgroupSSHKeyAccess": {
             "Type": "AWS::IAM::ManagedPolicy",
             "Properties": {
-                "Description": "Policy to GetGroup listing of IAMGroup paramter and list and get all IAM users public SSH key",
+                "Description": "Policy to GetGroup listing of IAMGroup parameter and list and get all IAM users public SSH key",
                 "PolicyDocument": {
                     "Version": "2012-10-17",
                     "Statement": [ {
