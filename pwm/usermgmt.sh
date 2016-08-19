@@ -93,9 +93,10 @@ do
     echo "$User exists"
   else
     /usr/sbin/adduser "$User"
+    passwd -l "$User"
     if [ $? -ne 3 ]; then
       echo "$User ALL=(ALL) NOPASSWD:ALL" > "/etc/sudoers.d/$User"
-      log "$User created by ${__ScriptName}"
+      log "User $User created by ${__ScriptName}"
     fi
   fi
 done </usr/local/bin/userstocreate.log
@@ -105,7 +106,7 @@ do
     /usr/sbin/userdel -r "$User"
     if [ $? -ne 6 ]; then
       rm /etc/suoders.d/"$User"
-      log "$User deleted by ${__ScriptName}"
+      log "User $User deleted by ${__ScriptName}"
     fi
 done </usr/local/bin/userstodelete.log
 #get ready for next run
