@@ -140,18 +140,16 @@
             } 
         },
         "AllowIAMgroupSSHKeyAccess": {
-            "Type": "AWS::IAM::ManagedPolicy",
+            "Type": "AWS::IAM::Policy",
             "Properties": {
-                "Description": "Policy to GetGroup listing of IAMGroup parameter and list and get all IAM users public SSH key",
+                "PolicyName" : "AllowIAMgroupSSHKeyAccess",
                 "PolicyDocument": {
                     "Version": "2012-10-17",
                     "Statement": [ {
                         "Effect": "Allow",
-                        "Action": [
-                            "iam:GetGroup"
-                        ],
+                        "Action": [ "iam:GetGroup" ],
                         "Resource": [
-                            {"Fn::Join": ["", ["arn:aws:iam::", { "Ref": "AWS::AccountId" },":group/", { "Ref": "IAMGroup" }]]}
+                            { "Fn::Join": [ "", [ "arn:aws:iam::", { "Ref": "AWS::AccountId" }, ":group/", { "Ref": "IAMGroup" } ] ] }
                         ]
                     }, 
                     {
@@ -161,7 +159,7 @@
                             "iam:GetSSHPublicKey"
                         ],
                         "Resource": [
-                            {"Fn::Join": ["", ["arn:aws:iam::", { "Ref": "AWS::AccountId" },":user/*"]]}
+                            { "Fn::Join": [ "", [ "arn:aws:iam::", { "Ref": "AWS::AccountId" }, ":user/*" ] ] }
                         ]
                     } ]
                 },
@@ -249,6 +247,11 @@
                         }
                     },
                     "bootstrap" : {
+                        "packages" : {
+                                "yum" : {
+                                    "git" : []
+                                }
+                        },
                         "files" : {
                             "/usr/local/bin/authorized_keys_command.sh": {
                                 "content": {"Fn::Join": ["", [
@@ -266,7 +269,7 @@
                             },
                             "/etc/cron.d/usermgmt": {
                                 "content": {"Fn::Join": ["", [
-                                    "*/10 * * * * root /usr/local/bin/usermgmt.sh -G `cat /usr/local/bin/groupname`", "\n"
+                                    "*/8 * * * * root /usr/local/bin/usermgmt.sh -G `cat /usr/local/bin/groupname`", "\n"
                                 ]]},
                                 "mode": "000644",
                                 "owner": "root",
@@ -283,18 +286,10 @@
                                     ]
                                 }
                             },
-                            "20-installepel": {
+                            "20-enableepel": {
                                 "command" : {
                                     "Fn::Join" : ["",
                                         ["yum-config-manager --enable epel",
-                                        "\n"]
-                                    ]
-                                }
-                            },
-                            "30-installgit" :{
-                                "command" : {
-                                    "Fn::Join" : ["",
-                                        ["yum -y install git",
                                         "\n"]
                                     ]
                                 }
