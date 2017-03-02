@@ -20,7 +20,7 @@ pkginstall:
     - source: 'https://archive.apache.org/dist/tomcat/tomcat-7/v7.0.67/bin/apache-tomcat-7.0.67.tar.gz'
     - source_hash: 'https://archive.apache.org/dist/tomcat/tomcat-7/v7.0.67/bin/apache-tomcat-7.0.67.tar.gz.md5'
     - archive_format: tar
-    - tar_options: xzf
+    - options: xzf
 
 tomcat-users.xml:
   file.blockreplace:
@@ -42,6 +42,7 @@ pwm_v1.7.1:
     - source: 'https://s3.amazonaws.com/dicelab-pwm/pwm_v1.7.1.zip'
     - source_hash: 'https://s3.amazonaws.com/dicelab-pwm/pwm_v1.7.1.zip.md5'
     - archive_format: zip
+    - enforce_toplevel: False
 
 /usr/local/tomcat7/apache-tomcat-7.0.67/webapps/pwm.war:
   file.managed:
