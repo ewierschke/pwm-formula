@@ -87,10 +87,10 @@
                 "Hvm" : "ami-8d49889b"
             },
             "us-west-1" : {
-                "Hvm" : "ami-3aabeb5a"
+                "Hvm" : "ami-2b74284b"
             },
             "us-west-2" : {
-                "Hvm" : "ami-7dd8111d"
+                "Hvm" : "ami-d70580b7"
             }
         }
     },
