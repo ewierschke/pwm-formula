@@ -21,12 +21,12 @@ pkginstall:
     - source: 'https://archive.apache.org/dist/tomcat/tomcat-7/v7.0.67/bin/apache-tomcat-7.0.67.tar.gz'
     - source_hash: 'https://archive.apache.org/dist/tomcat/tomcat-7/v7.0.67/bin/apache-tomcat-7.0.67.tar.gz.md5'
     - archive_format: tar
-    - tar_options: xzf
+    - options: xzf
 
 mv /usr/local/bin/tomcat7/apache-tomcat-7.0.67 /usr/local/bin/tomcat:
   cmd.run
   
-mv /usr/local/bin/tomcat /usr/share/:
+mv /usr/local/bin/tomcat /usr/share/ -f --backup=numbered:
   cmd.run
 
 /etc/init.d/tomcat:

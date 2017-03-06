@@ -84,7 +84,7 @@
         },
         "AWSRegion2InstanceType2Ami" : {
             "us-east-1" : {
-                "Hvm" : "ami-0a57c71d"
+                "Hvm" : "ami-8d49889b"
             },
             "us-west-1" : {
                 "Hvm" : "ami-3aabeb5a"

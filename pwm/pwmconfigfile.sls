@@ -1,17 +1,11 @@
 include:
   - pwm/pwm
 
-pwmconfig:
-  file.managed:
-    - name: /usr/share/tomcat/webapps/pwm/WEB-INF/PwmConfiguration.xml
-    - source: s3://dicelab-pwmconfig/18branch/PwmConfiguration.xml
-    - source_hash: https://s3.amazonaws.com/dicelab-pwmconfig/18branch/PwmConfiguration.xml.md5
+s3cmd get s3://dicelab-pwmconfig/18branch/PwmConfiguration.xml /usr/share/tomcat/webapps/pwm/WEB-INF/PwmConfiguration.xml --skip-existing:
+  cmd.run
 
-saslpasswd:
-  file.managed:
-    - name: /etc/postfix/sasl_passwd
-    - source: s3://dicelab-pwmconfig/sasl_passwd
-    - source_hash: https://s3.amazonaws.com/dicelab-pwmconfig/sasl_passwd.md5
+s3cmd get s3://dicelab-pwmconfig/sasl_passwd /etc/postfix/sasl_passwd --skip-existing:
+  cmd.run
 
 service tomcat stop:
   cmd.run
@@ -66,12 +60,14 @@ runinotifyscript:
   cmd.run:
     - name: at now + 20 minutes -f /usr/local/bin/inotifypwmconfig
 
-postfixconf:
+s3cmd get s3://dicelab-pwmconfig/postfix_conf.sh /usr/local/bin/postfix_conf.sh --skip-existing:
+  cmd.run
+
+postfixconfmode:
   file.managed:
     - name: /usr/local/bin/postfix_conf.sh
     - mode: 777
-    - source: s3://dicelab-pwmconfig/postfix_conf.sh
-    - source_hash: https://s3.amazonaws.com/dicelab-pwmconfig/postfix_conf.sh.md5
+    - replace: False
 
 runpostfixconf:
   cmd.run:
