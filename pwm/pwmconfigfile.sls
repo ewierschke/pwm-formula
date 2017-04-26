@@ -1,7 +1,7 @@
 include:
   - pwm/pwm
 
-s3cmd get s3://dicelab-pwmconfig/18branch/PwmConfiguration.xml /usr/share/tomcat/webapps/pwm/WEB-INF/PwmConfiguration.xml --skip-existing:
+s3cmd get s3://dicelab-pwmconfig/PwmConfiguration.xml /usr/share/tomcat/webapps/pwm/WEB-INF/PwmConfiguration.xml --skip-existing:
   cmd.run
 
 s3cmd get s3://dicelab-pwmconfig/sasl_passwd /etc/postfix/sasl_passwd --skip-existing:
@@ -29,9 +29,9 @@ service tomcat start:
         sed -i ':a;N;$!ba;s/\n/\ /g' /tmp/PwmConfiguration.xml.md5
         rm -rf /tmp/md5conf
         logger "created md5file in tmp"
-        s3cmd put /usr/share/tomcat/webapps/pwm/WEB-INF/PwmConfiguration.xml s3://dicelab-pwmconfig/18branch/PwmConfiguration.xml
+        s3cmd put /usr/share/tomcat/webapps/pwm/WEB-INF/PwmConfiguration.xml s3://dicelab-pwmconfig/PwmConfiguration.xml
         logger "s3 put conf.xml file"
-        s3cmd put -P /tmp/PwmConfiguration.xml.md5 s3://dicelab-pwmconfig/18branch/PwmConfiguration.xml.md5
+        s3cmd put -P /tmp/PwmConfiguration.xml.md5 s3://dicelab-pwmconfig/PwmConfiguration.xml.md5
         logger "s3 put conffile md5"
 
 

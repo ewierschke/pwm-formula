@@ -11,16 +11,27 @@
             "Description" : "Public/private key pairs allow you to securely connect to your instance after it launches",
             "Type" : "AWS::EC2::KeyPair::KeyName"
         },
+        "AmiId" :
+        {
+            "Description" : "AMI ID",
+            "Type" : "String",
+            "Default" : ""
+        },
         "InstanceType" : {
             "Description" : "Amazon EC2 instance type for the PWM Instance (using Feb ACB AMI)",
             "Type" : "String",
             "Default" : "t2.micro",
             "AllowedValues" : 
             [
-                "t1.micro",
                 "t2.micro",
                 "t2.small",
-                "m1.small"
+                "t2.medium",
+                "t2.large",
+                "t2.xlarge",
+                "c4.large",
+                "c4.xlarge",
+                "m4.large",
+                "m4.xlarge"
             ]
         },
         "DesiredCapacity" : {
@@ -278,10 +289,10 @@
                                     ]
                                 }
                             },
-                            "20-installepel": {
+                            "20-enableepel": {
                                 "command" : {
                                     "Fn::Join" : ["",
-                                        ["yum -y install http://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm",
+                                        ["yum-config-manager --enable epel",
                                         "\n"]
                                     ]
                                 }
@@ -297,7 +308,7 @@
                             "40-clonepwmformula": {
                                 "command" : {
                                     "Fn::Join" : ["",
-                                        ["git clone -b pwm1.8 https://github.com/ewierschke/pwm-formula /srv/salt/formulas/pwm-formula",
+                                        ["git clone -b pwm17cleanup https://github.com/ewierschke/pwm-formula /srv/salt/formulas/pwm-formula",
                                         "\n"]
                                     ]
                                 }
@@ -364,18 +375,9 @@
                 }
             },
             "Properties" : {
-                "ImageId" : {
-                    "Fn::FindInMap" : [
-                        "AWSRegion2InstanceType2Ami", {
-                            "Ref" : "AWS::Region"
-                        }, 
-                        { "Fn::FindInMap" : [
-                            "AWSInstanceType2VirtType", {
-                                "Ref" : "InstanceType"
-                             },
-                        "InstanceVirtType"]
-                        }
-                    ]
+                "ImageId" : 
+                {
+                    "Ref" : "AmiId"
                 },
                 "InstanceType" : {
                     "Ref" : "InstanceType"

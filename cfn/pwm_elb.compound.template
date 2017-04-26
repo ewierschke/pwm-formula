@@ -27,6 +27,12 @@
             "Description" : "Public/private key pairs allow you to securely connect to your instance after it launches",
             "Type"        : "AWS::EC2::KeyPair::KeyName"
         },
+        "AmiId" :
+        {
+            "Description" : "AMI ID",
+            "Type" : "String",
+            "Default" : ""
+        },
         "DesiredCapacity"          : {
             "Description" : "The number of PWM instances the autoscale group will spin up initially",
             "Type"        : "String",
@@ -53,10 +59,13 @@
             "Description" : "Amazon EC2 instance type for the PWM Instances",
             "Type"        : "String",
             "Default"     : "t2.micro",
-            "AllowedValues" : [
+            "AllowedValues" : 
+            [
                 "t2.micro",
                 "t2.small",
                 "t2.medium",
+                "t2.large",
+                "t2.xlarge",
                 "c4.large",
                 "c4.xlarge",
                 "m4.large",
@@ -72,7 +81,7 @@
         "PWMSecurityGroupStack" : {
             "Type" : "AWS::CloudFormation::Stack",
             "Properties" : {
-                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/branch/pwm_security_group.element.template",
+                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/pwm_security_group.element.template",
                 "Parameters"  : {
                     "VPC" : {
                         "Ref" : "VPC"
@@ -85,7 +94,7 @@
             "Type" : "AWS::CloudFormation::Stack",
             "DependsOn" : "PWMSecurityGroupStack",
             "Properties" : {
-                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/branch/pwm_elb_public_ssl_443.element.template",
+                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/pwm_elb_public_ssl_443.element.template",
                 "Parameters"  : {
                     "SslCertificateName" : {
                         "Ref" : "ElbSslCertificateName"
@@ -114,10 +123,13 @@
             "Type" : "AWS::CloudFormation::Stack",
             "DependsOn" : "PWMElbStack",
             "Properties" : {
-                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/branch/pwm_private_autoscale_elb.element.template",
+                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/pwm_private_autoscale_elb.element.template",
                 "Parameters"  : {
                     "KeyPairName" : {
                         "Ref" : "KeyPairName"
+                    },
+                    "AmiId" : {
+                        "Ref" : "AmiId"
                     },
                     "InstanceType" : {
                         "Ref" : "InstanceType"
