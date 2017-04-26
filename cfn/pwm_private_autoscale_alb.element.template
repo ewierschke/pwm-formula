@@ -282,6 +282,14 @@
                                     ]
                                 }
                             },
+                            "30-installgit" :{
+                                "command" : {
+                                    "Fn::Join" : ["",
+                                        ["yum -y install git",
+                                        "\n"]
+                                    ]
+                                }
+                            },
                             "40-clonepwmformula": {
                                 "command" : {
                                     "Fn::Join" : ["",
