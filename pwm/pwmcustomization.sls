@@ -1,10 +1,11 @@
 include:
   - pwm/pwmconfigfile
 
-mailxinstall:
+mailerinstall:
   pkg.installed:
     - names:
       - mailx
+      - mutt
 
 /usr/local/bin/watchnewuser.sh:
   file.append:
@@ -44,13 +45,43 @@ mailxinstall:
              sed 's/",".*//' /tmp/source > /tmp/source2
              newusername=$(cat /tmp/output3)
              newuserdate=$(cat /tmp/datecreated)
-             newusersource=$(cat /tmp/source2) 
-             printf "######""\n""A New Dicelab user was created via PWM.""\n""\n""-->""$newusername"" created a new account at ""$newuserdate""\n""The account was created from the following IP address: ""$newusersource""\n""The account should currently be disabled, please confirm their account justification""\n""with the account manager, enable the account, and send the new user the appropriate notification.""\n""######""\n" | mailx -s "WARNING: New DICELAB User Created" -r "pwm@dicelab.net" pwm-notifications@plus3it.com
+             newusersource=$(cat /tmp/source2)
+             resourcedomain=$(cat /tmp/resourcedomain)
+             envirname=$(cat /tmp/envirname)
+             mailtodomain=$(cat /tmp/mailtodomain) 
+             cp /usr/local/bin/email.html /tmp/email1.html
+             sed -i "s/newuserdate/$newuserdate/g" /tmp/email1.html
+             sed -i "s/newusername/$newusername/g" /tmp/email1.html
+             sed -i "s/newusersource/$newusersource/g" /tmp/email1.html
+             sed -i "s/example/$envirname/g" /tmp/email1.html
+             sed -i "s/resourcedomain/$resourcedomain/g" /tmp/email1.html
+             mutt -e 'set content_type=text/html' -s "WARNING: New $envirname User Created" pwm-notifications@$mailtodomain < /tmp/email1.html
+             rm -rf /tmp/email1.html
              echo "$newusers" > /tmp/prior-newusers.log
              log "emailed list of new users"
         else
              log "no new users"
         fi
+
+/usr/local/bin/createmuttrc.sh:
+  file.append:
+    - text: |
+        echo set realname="The PWM" >> ~/.muttrc
+        mailfromdomain=$(cat /tmp/mailfromdomain)
+        echo set from="pwm@$mailfromdomain" >> ~/.muttrc
+        echo set use_from=yes >> ~/.muttrc
+        echo set edit_headers = yes >> ~/.muttrc
+        echo set use_envelope_from = yes >> ~/.muttrc
+
+createmuttrcmode:
+  file.managed:
+    - name: /usr/local/bin/createmuttrc.sh
+    - mode: 777
+    - replace: False
+
+run createmuttrc script:
+  cmd.run:
+    - name: /usr/local/bin/createmuttrc.sh
 
 watchnewusermode:
   file.managed:
