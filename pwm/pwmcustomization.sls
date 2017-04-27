@@ -9,27 +9,47 @@ mailxinstall:
 /usr/local/bin/watchnewuser.sh:
   file.append:
     - text: |
-        # This is a script that will grep a log file and send an email when a specified patter is encountered.
+        # This is a script that will grep a log file and send an email when a specified pattern is encountered.
+        __ScriptName="watchnewuser.sh"
+        
+        log()
+        {
+            logger -i -t "${__ScriptName}" -s -- "$1" 2> /dev/console
+            echo "$1"
+        }  # ----------  end of function log  ----------
+        
+        log "checking for new users"
         newusers=$(grep "CREATE_USER" /usr/share/tomcat/webapps/pwm/WEB-INF/logs/PWM.log)
         echo "$newusers" > /tmp/current-newusers.log
         
-        if      [ -e "/tmp/prior-newusers.log" ]
-                 then echo "prior-newusers.log Exists" > /dev/null
+        if   [ -e "/tmp/prior-newusers.log" ]
+        then 
+             echo "prior-newusers.log Exists" > /dev/null
         else
-                touch /tmp/prior-newusers.log | echo "" > /tmp/prior-newusers.log
+             touch /tmp/prior-newusers.log | echo "" > /tmp/prior-newusers.log
         fi
         
         newuserentries=$(diff --suppress-common-lines -u /tmp/prior-newusers.log /tmp/current-newusers.log | grep '\+[0-9]')
         
-        if
-                        test "$newuserentries" != "" && test "$newusers" = ""
-                        then echo "No New Errors" > /dev/null
-                        logger "no new users"
-                elif
-                        test "$newuserentries" != ""
-                        then echo "$newuserentries" | mailx -s "WARNING: New DICELAB User Created" -r "pwm@dicelab.net" pwm-notifications@plus3it.com
-                        echo "$newusers" > /tmp/prior-newusers.log
-                        logger "emailed list of new users"
+        if   test "$newuserentries" != "" && test "$newusers" = ""
+        then 
+             log "should not see this log"
+        elif test "$newuserentries" != ""
+        then 
+             sed 's/^.*\(perpetratorID.*perpetratorDN\).*$/\1/' /tmp/current-newusers.log > /tmp/output
+             cut -b 17- /tmp/output > /tmp/output2
+             sed 's/",".*//' /tmp/output2 > /tmp/output3
+             sed 's/, INFO.*//' /tmp/current-newusers.log > /tmp/datecreated
+             sed 's/.*sourceAddress":"//' /tmp/current-newusers.log > /tmp/source
+             sed 's/",".*//' /tmp/source > /tmp/source2
+             newusername=$(cat /tmp/output3)
+             newuserdate=$(cat /tmp/datecreated)
+             newusersource=$(cat /tmp/source2) 
+             printf "######""\n""A New Dicelab user was created via PWM.""\n""\n""-->""$newusername"" created a new account at ""$newuserdate""\n""The account was created from the following IP address: ""$newusersource""\n""The account should currently be disabled, please confirm their account justification""\n""with the account manager, enable the account, and send the new user the appropriate notification.""\n""######""\n" | mailx -s "WARNING: New DICELAB User Created" -r "pwm@dicelab.net" erik.wierschke@plus3it.com
+             echo "$newusers" > /tmp/prior-newusers.log
+             log "emailed list of new users"
+        else
+             log "no new users"
         fi
 
 watchnewusermode:
