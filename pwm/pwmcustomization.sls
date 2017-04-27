@@ -45,7 +45,7 @@ mailxinstall:
              newusername=$(cat /tmp/output3)
              newuserdate=$(cat /tmp/datecreated)
              newusersource=$(cat /tmp/source2) 
-             printf "######""\n""A New Dicelab user was created via PWM.""\n""\n""-->""$newusername"" created a new account at ""$newuserdate""\n""The account was created from the following IP address: ""$newusersource""\n""The account should currently be disabled, please confirm their account justification""\n""with the account manager, enable the account, and send the new user the appropriate notification.""\n""######""\n" | mailx -s "WARNING: New DICELAB User Created" -r "pwm@dicelab.net" erik.wierschke@plus3it.com
+             printf "######""\n""A New Dicelab user was created via PWM.""\n""\n""-->""$newusername"" created a new account at ""$newuserdate""\n""The account was created from the following IP address: ""$newusersource""\n""The account should currently be disabled, please confirm their account justification""\n""with the account manager, enable the account, and send the new user the appropriate notification.""\n""######""\n" | mailx -s "WARNING: New DICELAB User Created" -r "pwm@dicelab.net" pwm-notifications@plus3it.com
              echo "$newusers" > /tmp/prior-newusers.log
              log "emailed list of new users"
         else
