@@ -57,8 +57,32 @@
             "Type" : "String",
             "MinLength" : "1"
         },
-        "DomainDNSName" : {
-            "Description" : "Fully qualified domain name (FQDN) of the forest root domain e.g. example.com (future use)",
+        "FriendlyEnvironmentName" : {
+            "Description" : "Friendly name of the Environment in which PWM is being installed, for use in emails and branding (future use)",
+            "Type" : "String",
+            "Default" : "Example",
+            "MinLength" : "3",
+            "MaxLength" : "25",
+            "AllowedPattern" : "[a-zA-Z0-9]+\\..+"
+        },
+        "ResourceDNSDomainName" : {
+            "Description" : "Fully qualified domain name (FQDN) of the domain e.g. example.com, where environment resources reside, usually the same as MailFromDNSDomainName (future use)",
+            "Type" : "String",
+            "Default" : "example.com",
+            "MinLength" : "3",
+            "MaxLength" : "25",
+            "AllowedPattern" : "[a-zA-Z0-9]+\\..+"
+        },
+        "MailFromDNSDomainName" : {
+            "Description" : "Fully qualified domain name (FQDN) of the domain e.g. example.com, from which email will originate, usually the same as ResourceDNSDomainName (future use)",
+            "Type" : "String",
+            "Default" : "example.com",
+            "MinLength" : "3",
+            "MaxLength" : "25",
+            "AllowedPattern" : "[a-zA-Z0-9]+\\..+"
+        },
+        "MailToDNSDomainName" : {
+            "Description" : "Fully qualified domain name (FQDN) of the domain e.g. example.com, to which pwm-notifications emails will be sent (future use)",
             "Type" : "String",
             "Default" : "example.com",
             "MinLength" : "3",
@@ -262,10 +286,34 @@
                                 "mode": "000644",
                                 "owner": "root",
                                 "group": "root"
+                            },
+                            "/usr/local/bin/envirname": {
+                                "content": { "Ref" : "FriendlyEnvironmentName" },
+                                "mode": "000644",
+                                "owner": "root",
+                                "group": "root"
+                            },
+                            "/usr/local/bin/resourcedomain": {
+                                "content": { "Ref" : "ResourceDNSDomainName" },
+                                "mode": "000644",
+                                "owner": "root",
+                                "group": "root"
+                            },
+                            "/usr/local/bin/mailfromdomain": {
+                                "content": { "Ref" : "MailFromDNSDomainName" },
+                                "mode": "000644",
+                                "owner": "root",
+                                "group": "root"
+                            },
+                            "/usr/local/bin/mailtodomain": {
+                                "content": { "Ref" : "MailToDNSDomainName" },
+                                "mode": "000644",
+                                "owner": "root",
+                                "group": "root"
                             }
                         },
                         "commands" : {
-                            "10-systemprep-launch" : {
+                            "10-watchmaker-prep : {
                                 "command" : {
                                     "Fn::Join" : ["",
                                         ["curl --silent --show-error --retry 5 -L ", 
@@ -274,10 +322,11 @@
                                     ]
                                 }
                             },
-                            "20-enableepel": {
+                            "20-watchmaker-launch" : {
                                 "command" : {
                                     "Fn::Join" : ["",
-                                        ["yum-config-manager --enable epel",
+                                        ["curl --silent --show-error --retry 5 -L ", 
+                                        { "Ref" : "BootstrapURL" }, " | sed -e 's/^NOREBOOT.*/NOREBOOT=\"True\"/' | bash", 
                                         "\n"]
                                     ]
                                 }
@@ -298,27 +347,63 @@
                                     ]
                                 }
                             },
-                            "45-cp_usermgmt": {
-                                "command": "cp /srv/salt/formulas/pwm-formula/pwm/usermgmt.sh /usr/local/bin/"
-                            },
-                            "46-ch_usermgmt": {
-                                "command": "chmod 755 /usr/local/bin/usermgmt.sh & chown root /usr/local/bin/usermgmt.sh & chgrp root /usr/local/bin/usermgmt.sh"
-                            },
-                            "50-editminionconf" : {
+                            "41-email_prep": {
                                 "command" : {
                                     "Fn::Join" : ["",
-                                        ["sed -i '/scc-formula/a \\    - /srv/salt/formulas/pwm-formula' /etc/salt/minion && service salt-minion restart",
+                                        ["cp /srv/salt/formulas/pwm-formula/pwm/email.html /usr/local/bin/email.html",
                                         "\n"]
                                     ]
                                 }
                             },
-                            "60-configure_sshd_command": {
-                                "command": "sed -i 's:#AuthorizedKeysCommand none:AuthorizedKeysCommand /usr/local/bin/authorized_keys_command.sh:g' /etc/ssh/sshd_config"
+                            "42-minion_prepa": {
+                                "command" : {
+                                    "Fn::Join" : ["",
+                                        ["cp /srv/salt/formulas/pwm-formula/pwm.conf /etc/salt/minion.d/",
+                                        "\n"]
+                                    ]
+                                }
                             },
-                            "70-configure_sshd_commanduser": {
-                                "command": "sed -i 's:#AuthorizedKeysCommandUser nobody:AuthorizedKeysCommandUser nobody:g' /etc/ssh/sshd_config"
+                            "43-minion_prepb": {
+                                "command" : {
+                                    "Fn::Join" : ["",
+                                        ["mv /etc/salt/minion.d/watchmaker.conf /usr/local/bin/",
+                                        "\n"]
+                                    ]
+                                }
                             },
-                            "75-create_groupnamefile": {
+                            "50-cp_sshusermgmt": {
+                                "command" : {
+                                    "Fn::Join" : ["",
+                                        ["cp /srv/salt/formulas/pwm-formula/pwm/usermgmt.sh /usr/local/bin/",
+                                        "\n"]
+                                    ]
+                                }
+                            },
+                            "51-ch_sshusermgmt": {
+                                "command" : {
+                                    "Fn::Join" : ["",
+                                        ["chmod 755 /usr/local/bin/usermgmt.sh & chown root /usr/local/bin/usermgmt.sh & chgrp root /usr/local/bin/usermgmt.sh",
+                                        "\n"]
+                                    ]
+                                }
+                            },
+                            "52-configure_sshd_command": {
+                                "command" : {
+                                    "Fn::Join" : ["",
+                                        ["sed -i 's:#AuthorizedKeysCommand none:AuthorizedKeysCommand /usr/local/bin/authorized_keys_command.sh:g' /etc/ssh/sshd_config",
+                                        "\n"]
+                                    ]
+                                }
+                            },
+                            "53-configure_sshd_commanduser": {
+                                "command" : {
+                                    "Fn::Join" : ["",
+                                        ["sed -i 's:#AuthorizedKeysCommandUser nobody:AuthorizedKeysCommandUser nobody:g' /etc/ssh/sshd_config",
+                                        "\n"]
+                                    ]
+                                }
+                            },
+                            "54-create_groupnamefile": {
                                 "command": {
                                     "Fn::Join" : ["",
                                         ["echo ", { "Ref" : "IAMGroup" },
@@ -326,8 +411,13 @@
                                     ]
                                 }
                             },
-                            "80-usermgmt": {
-                                "command": "./usermgmt.sh -G `cat /usr/local/bin/groupname`",
+                            "55-sshusermgmt": {
+                                "command" : {
+                                    "Fn::Join" : ["",
+                                        ["./usermgmt.sh -G `cat /usr/local/bin/groupname`",
+                                        "\n"]
+                                    ]
+                                },
                                 "cwd": "/usr/local/bin"
                             },
                             "90-applypwmstate" :{

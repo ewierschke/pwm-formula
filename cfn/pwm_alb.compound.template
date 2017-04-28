@@ -6,6 +6,38 @@
             "Description" : "VPC ID",
             "Type"        : "AWS::EC2::VPC::Id"
         },
+        "FriendlyEnvironmentName" : {
+            "Description" : "Friendly name of the Environment in which PWM is being installed, for use in emails and branding (future use)",
+            "Type" : "String",
+            "Default" : "Example",
+            "MinLength" : "3",
+            "MaxLength" : "25",
+            "AllowedPattern" : "[a-zA-Z0-9]+\\..+"
+        },
+        "ResourceDNSDomainName" : {
+            "Description" : "Fully qualified domain name (FQDN) of the domain e.g. example.com, where environment resources reside, usually the same as MailFromDNSDomainName (future use)",
+            "Type" : "String",
+            "Default" : "example.com",
+            "MinLength" : "3",
+            "MaxLength" : "25",
+            "AllowedPattern" : "[a-zA-Z0-9]+\\..+"
+        },
+        "MailFromDNSDomainName" : {
+            "Description" : "Fully qualified domain name (FQDN) of the domain e.g. example.com, from which email will originate, usually the same as ResourceDNSDomainName (future use)",
+            "Type" : "String",
+            "Default" : "example.com",
+            "MinLength" : "3",
+            "MaxLength" : "25",
+            "AllowedPattern" : "[a-zA-Z0-9]+\\..+"
+        },
+        "MailToDNSDomainName" : {
+            "Description" : "Fully qualified domain name (FQDN) of the domain e.g. example.com, to which pwm-notifications emails will be sent (future use)",
+            "Type" : "String",
+            "Default" : "example.com",
+            "MinLength" : "3",
+            "MaxLength" : "25",
+            "AllowedPattern" : "[a-zA-Z0-9]+\\..+"
+        },
         "ALBSslCertificateName" : {
             "Description" : "The name (for IAM) or identifier (for ACM) of the SSL certificate to associate with the ELB. The cert must already exist in the service.",
             "Type"        : "String"
@@ -77,7 +109,7 @@
             "Type"        : "List<AWS::EC2::Subnet::Id>"
         },
         "PWMConfigBucketName"         : {
-            "Description" : "Name of the S3 bucket where the PWM config should be pulled and stored",
+            "Description" : "Name of the existing S3 bucket where the PWM config should be pulled and pushed",
             "Type"        : "String"
         },
     },
@@ -175,6 +207,18 @@
                             "PWMALBTargetGroupStack",
                             "Outputs.TargetGroupName"
                         ]
+                    },
+                    "FriendlyEnvironmentName" : {
+                        "Ref" : "FriendlyEnvironmentName"
+                    },
+                    "ResourceDNSDomainName" : {
+                        "Ref" : "ResourceDNSDomainName"
+                    },
+                    "MailFromDNSDomainName" : {
+                        "Ref" : "MailFromDNSDomainName"
+                    },
+                    "MailToDNSDomainName" : {
+                        "Ref" : "MailToDNSDomainName"
                     },
                     "PrivateSubnetIDs" : {
                         "Fn::Join" : [
