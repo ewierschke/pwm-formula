@@ -182,7 +182,6 @@
             "Properties" : {
                 "VPCZoneIdentifier" : [ { "Ref" : "PrivateSubnetIDs" } ],
                 "LaunchConfigurationName" : { "Ref" : "PWMLaunchConfig" },
-                "TargetGroupARNs" : [ { "Ref" : "PWMALBTargetGroupName" } ],
                 "MinSize" : { "Ref" : "MinCapacity" },
                 "MaxSize" : { "Ref" : "MaxCapacity" },
                 "DesiredCapacity" : { "Ref" : "DesiredCapacity" },

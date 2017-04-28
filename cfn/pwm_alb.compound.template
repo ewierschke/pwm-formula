@@ -11,8 +11,7 @@
             "Type" : "String",
             "Default" : "Example",
             "MinLength" : "3",
-            "MaxLength" : "25",
-            "AllowedPattern" : "[a-zA-Z0-9]+\\..+"
+            "MaxLength" : "25"
         },
         "ResourceDNSDomainName" : {
             "Description" : "Fully qualified domain name (FQDN) of the domain e.g. example.com, where environment resources reside, usually the same as MailFromDNSDomainName (future use)",
