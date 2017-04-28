@@ -37,22 +37,25 @@ mailerinstall:
              log "should not see this log"
         elif test "$newuserentries" != ""
         then 
-             sed 's/^.*\(perpetratorID.*perpetratorDN\).*$/\1/' /tmp/current-newusers.log > /tmp/output
-             cut -b 17- /tmp/output > /tmp/output2
+             sed 's/^.*\(perpetratorID.*perpetratorDN\).*$/\1/' /tmp/current-newusers.log > /tmp/output1
+             cut -b 17- /tmp/output1 > /tmp/output2
              sed 's/",".*//' /tmp/output2 > /tmp/output3
              sed 's/, INFO.*//' /tmp/current-newusers.log > /tmp/datecreated
-             sed 's/.*sourceAddress":"//' /tmp/current-newusers.log > /tmp/source
-             sed 's/",".*//' /tmp/source > /tmp/source2
+             sed 's/.*sourceAddress":"//' /tmp/current-newusers.log > /tmp/source1
+             sed 's/",".*//' /tmp/source1 > /tmp/source2
              newusername=$(cat /tmp/output3)
              newuserdate=$(cat /tmp/datecreated)
              newusersource=$(cat /tmp/source2)
-             resourcedomain=$(cat /tmp/resourcedomain)
-             envirname=$(cat /tmp/envirname)
-             mailtodomain=$(cat /tmp/mailtodomain) 
+             newusername2=$(echo $newusername | sed -e "s/ /-and-/g")
+             newuserdate2=$(echo $newuserdate | sed -e "s/ /-and-/g")
+             newusersource2=$(echo $newusersource | sed -e "s/ /-and-/g")
+             resourcedomain=$(cat /usr/local/bin/resourcedomain)
+             envirname=$(cat /usr/local/bin/envirname)
+             mailtodomain=$(cat /usr/local/bin/mailtodomain) 
              cp /usr/local/bin/email.html /tmp/email1.html
-             sed -i "s/newuserdate/$newuserdate/g" /tmp/email1.html
-             sed -i "s/newusername/$newusername/g" /tmp/email1.html
-             sed -i "s/newusersource/$newusersource/g" /tmp/email1.html
+             sed -i "s/newuserdate/$newuserdate2/g" /tmp/email1.html
+             sed -i "s/newusername/$newusername2/g" /tmp/email1.html
+             sed -i "s/newusersource/$newusersource2/g" /tmp/email1.html
              sed -i "s/example/$envirname/g" /tmp/email1.html
              sed -i "s/resourcedomain/$resourcedomain/g" /tmp/email1.html
              mutt -e 'set content_type=text/html' -s "WARNING: New $envirname User Created" pwm-notifications@$mailtodomain < /tmp/email1.html
@@ -66,12 +69,12 @@ mailerinstall:
 /usr/local/bin/createmuttrc.sh:
   file.append:
     - text: |
-        echo set realname="The PWM" >> ~/.muttrc
-        mailfromdomain=$(cat /tmp/mailfromdomain)
-        echo set from="pwm@$mailfromdomain" >> ~/.muttrc
-        echo set use_from=yes >> ~/.muttrc
-        echo set edit_headers = yes >> ~/.muttrc
-        echo set use_envelope_from = yes >> ~/.muttrc
+        echo 'set realname="The PWM"' >> ~/.muttrc
+        mailfromdomain=$(cat /usr/local/bin/mailfromdomain)
+        echo 'set from="pwm@$mailfromdomain"' >> ~/.muttrc
+        echo 'set use_from = yes' >> ~/.muttrc
+        echo 'set edit_headers = yes' >> ~/.muttrc
+        echo 'set use_envelope_from = yes' >> ~/.muttrc
 
 createmuttrcmode:
   file.managed:
