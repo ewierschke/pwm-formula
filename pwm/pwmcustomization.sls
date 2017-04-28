@@ -41,12 +41,12 @@ mailerinstall:
              sed 's/",".*//' /tmp/output2 > /tmp/output3
              sed 's/, INFO.*//' /tmp/current-newusers.log > /tmp/datecreated
              sed 's/.*sourceAddress":"//' /tmp/current-newusers.log > /tmp/source1
-             sed 's/",".*//' /tmp/source1 > /tmp/source2
+             sed 's/,.*//' /tmp/source1 > /tmp/source2
              newusername=$(cat /tmp/output3)
              newuserdate=$(cat /tmp/datecreated)
              newusersource=$(cat /tmp/source2)
              newusername2=$(echo $newusername | sed -e "s/ /-and-/g")
-             newuserdate2=$(echo $newuserdate | sed -e "s/ /-and-/g")
+             newuserdate2=$(echo $newuserdate | sed -e "s/ /,/g")
              newusersource2=$(echo $newusersource | sed -e "s/ /-and-/g")
              resourcedomain=$(cat /usr/local/bin/resourcedomain)
              envirname=$(cat /usr/local/bin/envirname)
@@ -57,7 +57,7 @@ mailerinstall:
              sed -i "s/newusersource/$newusersource2/g" /tmp/email1.html
              sed -i "s/example/$envirname/g" /tmp/email1.html
              sed -i "s/resourcedomain/$resourcedomain/g" /tmp/email1.html
-             mutt -e 'set content_type=text/html' -s "WARNING: New $envirname User Created" pwm-notifications@$mailtodomain < /tmp/email1.html
+             mutt -F /root/.muttrc -e 'set content_type=text/html' -s "WARNING: New $envirname User Created" pwm-notifications@$mailtodomain < /tmp/email1.html
              rm -rf /tmp/email1.html
              echo "$newusers" > /tmp/prior-newusers.log
              log "emailed list of new users to postfix via mutt"
@@ -69,12 +69,12 @@ mailerinstall:
 /usr/local/bin/createmuttrc.sh:
   file.append:
     - text: |
-        echo 'set realname="The PWM"' >> ~/.muttrc
+        echo 'set realname="The PWM"' >> /root/.muttrc
         mailfromdomain=$(cat /usr/local/bin/mailfromdomain)
-        echo 'set from="pwm@'$mailfromdomain'"' >> ~/.muttrc
-        echo 'set use_from = yes' >> ~/.muttrc
-        echo 'set edit_headers = yes' >> ~/.muttrc
-        echo 'set use_envelope_from = yes' >> ~/.muttrc
+        echo 'set from="pwm@'$mailfromdomain'"' >> /root/.muttrc
+        echo 'set use_from = yes' >> /root/.muttrc
+        echo 'set edit_headers = yes' >> /root/.muttrc
+        echo 'set use_envelope_from = yes' >> /root/.muttrc
 
 createmuttrcmode:
   file.managed:
