@@ -4,7 +4,6 @@ include:
 mailerinstall:
   pkg.installed:
     - names:
-      - mailx
       - mutt
 
 /usr/local/bin/watchnewuser.sh:
@@ -19,7 +18,7 @@ mailerinstall:
             echo "$1"
         }  # ----------  end of function log  ----------
         
-        log "checking for new users"
+        #log "checking for new users"
         newusers=$(grep "CREATE_USER" /usr/share/tomcat/webapps/pwm/WEB-INF/logs/PWM.log)
         echo "$newusers" > /tmp/current-newusers.log
         
@@ -61,9 +60,9 @@ mailerinstall:
              mutt -e 'set content_type=text/html' -s "WARNING: New $envirname User Created" pwm-notifications@$mailtodomain < /tmp/email1.html
              rm -rf /tmp/email1.html
              echo "$newusers" > /tmp/prior-newusers.log
-             log "emailed list of new users"
+             log "emailed list of new users to postfix via mutt"
         else
-             log "no new users"
+             #log "no new users"
         fi
 
 /usr/local/bin/createmuttrc.sh:
@@ -71,7 +70,7 @@ mailerinstall:
     - text: |
         echo 'set realname="The PWM"' >> ~/.muttrc
         mailfromdomain=$(cat /usr/local/bin/mailfromdomain)
-        echo 'set from="pwm@$mailfromdomain"' >> ~/.muttrc
+        echo 'set from="pwm@'$mailfromdomain'"' >> ~/.muttrc
         echo 'set use_from = yes' >> ~/.muttrc
         echo 'set edit_headers = yes' >> ~/.muttrc
         echo 'set use_envelope_from = yes' >> ~/.muttrc
@@ -153,21 +152,21 @@ adddicelabtexttologin-{{ myvar }}-accumulated2:
   file.append:
     - text: |
         function autoGen(prenom, inits, nom){
-        	var prenom = document.getElementById("givenName").value;
-        	var nom = document.getElementById("sn").value;
+            var prenom = document.getElementById("givenName").value;
+            var nom = document.getElementById("sn").value;
                 var inits = document.getElementById("initials").value;
-        	uidGen(prenom, inits, nom);
-        	cnGen(prenom, inits, nom);
+            uidGen(prenom, inits, nom);
+            cnGen(prenom, inits, nom);
         }
         
         function uidGen(prenom, inits, nom){
-        	var sAMAccountName = prenom.toLowerCase() + '.' + inits.toLowerCase() + '.' + nom.toLowerCase();
-        	document.getElementById("sAMAccountName").value = sAMAccountName;
+            var sAMAccountName = prenom.toLowerCase() + '.' + inits.toLowerCase() + '.' + nom.toLowerCase();
+            document.getElementById("sAMAccountName").value = sAMAccountName;
         }
         
         function cnGen(prenom, inits, nom){
-        	var cn = prenom.toLowerCase() + '.' + inits.toLowerCase() + '.' + nom.toLowerCase();
-        	document.getElementById("cn").value = cn;
+            var cn = prenom.toLowerCase() + '.' + inits.toLowerCase() + '.' + nom.toLowerCase();
+            document.getElementById("cn").value = cn;
         }
         
 
