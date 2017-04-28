@@ -62,6 +62,7 @@ mailerinstall:
              echo "$newusers" > /tmp/prior-newusers.log
              log "emailed list of new users to postfix via mutt"
         else
+             echo nothing > /dev/null
              #log "no new users"
         fi
 
