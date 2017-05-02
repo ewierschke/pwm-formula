@@ -286,6 +286,12 @@
                                 "owner": "root",
                                 "group": "root"
                             },
+                            "/usr/local/bin/configbucketname": {
+                                "content": { "Ref" : "PWMConfigBucketName" },
+                                "mode": "000644",
+                                "owner": "root",
+                                "group": "root"
+                            },
                             "/usr/local/bin/envirname": {
                                 "content": { "Ref" : "FriendlyEnvironmentName" },
                                 "mode": "000644",
