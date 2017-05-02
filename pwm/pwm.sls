@@ -78,8 +78,8 @@ tomcat-users.xml:
 
 /usr/share/tomcat/webapps/pwm.war:
   file.managed:
-    - source: 'https://s3.amazonaws.com/dicelab-pwm/pwm.war'
-    - source_hash: 'https://s3.amazonaws.com/dicelab-pwm/pwm.war.md5'
+    - source: 'https://s3.amazonaws.com/app-chemistry/files/pwm17.war'
+    - source_hash: 'https://s3.amazonaws.com/app-chemistry/files/pwm17.war.md5'
 
 runtomcatservice:
   service.running:

@@ -5,6 +5,13 @@ mailerinstall:
   pkg.installed:
     - names:
       - mutt
+      - jq
+
+export ENVIRNAME=`cat /usr/local/bin/envirname`:
+  cmd.run
+
+export RESOURCEDOMAIN=`cat /usr/local/bin/resourcedomain`:
+  cmd.run
 
 /usr/local/bin/watchnewuser.sh:
   file.append:
@@ -105,6 +112,64 @@ mailerinstall:
                                 </table>
         
 
+/usr/local/bin/emailpart2.html:
+  file.append:
+    - text: |
+                                <table border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
+                                  <tbody>
+                                    <tr>
+                                      <td align="left">
+                                        <table border="0" cellpadding="0" cellspacing="0">
+                                          <tbody>
+                                            <tr>
+                                              <td> <a href="https://guac.{{ salt['environ.get']('RESOURCEDOMAIN') }}" target="_blank">Login to Guac to review the Account</a> </td>
+                                            </tr>
+                                          </tbody>
+                                        </table>
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                                <p>The account(s) should currently be disabled, please confirm the account justification with the account manager, enable the account, and send the new user(s) the appropriate notification.</p>
+                                <p>Good luck! Hope it works.</p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+        
+                      <!-- END MAIN CONTENT AREA -->
+                      </table>
+        
+                    <!-- START FOOTER -->
+                    <div class="footer">
+                      <table border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td class="content-block">
+                            <span class="apple-link">{{ salt['environ.get']('ENVIRNAME') }}</span>
+                            <br> Don't like these emails? <a href="http://i.imgur.com/CScmqnj.gif">Unsubscribe</a>.
+                          </td>
+                        </tr>
+                        <tr>
+                          <td class="content-block powered-by">
+                            Powered by <a href="http://htmlemail.io">HTMLemail</a>.
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+                    <!-- END FOOTER -->
+                    
+                  <!-- END CENTERED WHITE CONTAINER -->
+                  </div>
+                </td>
+                <td>&nbsp;</td>
+              </tr>
+            </table>
+          </body>
+        </html>
+        <!-- https://github.com/leemunroe/responsive-html-email-template -->
+        
+
 /usr/local/bin/createmuttrc.sh:
   file.append:
     - text: |
@@ -141,7 +206,7 @@ runcrondservice:
     - text: |
         */5 * * * * root /usr/local/bin/watchnewuser.sh
 
-/usr/share/tomcat/webapps/pwm/WEB-INF/jsp/fragment/dicelabwelcome.jsp:
+/usr/share/tomcat/webapps/pwm/WEB-INF/jsp/fragment/envwelcome.jsp:
   file.append:
     - text: |
         <!DOCTYPE html>
@@ -155,7 +220,7 @@ runcrondservice:
             <p>&nbsp;</p>
             <p style="text-align: center; color: #7e7e7e; font-size: 15px; font-family: avenir; font-weight: $aileron-ultra-light;">&nbsp;</p>
             <p style="text-align: center;"><strong>=====</strong></p>
-            <p style="text-align: center;"><strong>Welcome to the DICELAB account management system. &nbsp;</strong></p>
+            <p style="text-align: center;"><strong>Welcome to the {{ salt['environ.get']('ENVIRNAME') }} account management system. &nbsp;</strong></p>
             <p style="text-align: center;">If you have already been provided a username but need to setup your password please select 'Activate Account'.</p>
             <p style="text-align: center;">If you do not yet have a username please select 'New User Registration'.</p>
             <p style="text-align: center;">Otherwise, login with your credentials, or select 'Forgotten Password' to recover your credentials.</p>
@@ -164,7 +229,7 @@ runcrondservice:
         </html>
 
 {% set myvar = 42%}
-adddicelabtexttologin-{{ myvar }}:
+addenvtexttologin-{{ myvar }}:
   file.blockreplace:
     - name: /usr/share/tomcat/webapps/pwm/WEB-INF/jsp/login.jsp
     - marker_start: "        </table>"
@@ -172,21 +237,21 @@ adddicelabtexttologin-{{ myvar }}:
     - show_changes: True
     - backup: '.bak'
 
-adddicelabtexttologin-{{ myvar }}-accumulated1:
+addenvtexttologin-{{ myvar }}-accumulated1:
   file.accumulated:
     - filename: /usr/share/tomcat/webapps/pwm/WEB-INF/jsp/login.jsp
     - name: my-accumulator-{{ myvar }}
     - text: '        <% } %>'
     - require_in:
-      - file: adddicelabtexttologin-{{ myvar }}
+      - file: addenvtexttologin-{{ myvar }}
 
-adddicelabtexttologin-{{ myvar }}-accumulated2:
+addenvtexttologin-{{ myvar }}-accumulated2:
   file.accumulated:
     - filename: /usr/share/tomcat/webapps/pwm/WEB-INF/jsp/login.jsp
     - name: my-accumulator-{{ myvar }}
-    - text: '    <%@ include file="fragment/dicelabwelcome.jsp" %>'
+    - text: '    <%@ include file="fragment/envwelcome.jsp" %>'
     - require_in:
-      - file: adddicelabtexttologin-{{ myvar }}
+      - file: addenvtexttologin-{{ myvar }}
 
 /usr/share/tomcat/webapps/pwm/public/resources/js/newuser.js:
   file.append:
