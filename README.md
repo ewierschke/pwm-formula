@@ -11,6 +11,7 @@ In order to neutralize the formula for ~any environment certain files and/or var
 - `/usr/local/bin/mailfromdomain` should contain the FQDN of the domain name from which emails can originate, used in the new user email (i.e. example.com)
 - `/usr/local/bin/mailtodomain` should contain the FQDN of the domain name to which new pwm-notifications emails should be sent, used in the new user email (i.e. example.com)
 - `/usr/local/bin/configbucketname` should contain the shortname of the s3 bucket from which to download and upload the PWM Configuration XML file (i.e. example-pwmconfig)
+
 The following three commands should be run prior to running the pwm salt state in order to populate environment variables used in the state(s):
 
 ```bash
