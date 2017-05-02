@@ -285,6 +285,12 @@
                                 "owner": "root",
                                 "group": "root"
                             },
+                            "/usr/local/bin/configbucketname": {
+                                "content": { "Ref" : "PWMConfigBucketName" },
+                                "mode": "000644",
+                                "owner": "root",
+                                "group": "root"
+                            },
                             "/usr/local/bin/envirname": {
                                 "content": { "Ref" : "FriendlyEnvironmentName" },
                                 "mode": "000644",
@@ -351,14 +357,6 @@
                                     ]
                                 }
                             },
-                            "41-email_prep": {
-                                "command" : {
-                                    "Fn::Join" : ["",
-                                        ["cp /srv/salt/formulas/pwm-formula/pwm/email.html /usr/local/bin/email.html",
-                                        "\n"]
-                                    ]
-                                }
-                            },
                             "42-minion_prepa": {
                                 "command" : {
                                     "Fn::Join" : ["",
@@ -371,6 +369,30 @@
                                 "command" : {
                                     "Fn::Join" : ["",
                                         ["mv /etc/salt/minion.d/watchmaker.conf /usr/local/bin/oldwatchmaker.conf",
+                                        "\n"]
+                                    ]
+                                }
+                            },
+                            "44-set_envirname_var": {
+                                "command" : {
+                                    "Fn::Join" : ["",
+                                        ["export ENVIRNAME=`cat /usr/local/bin/envirname`",
+                                        "\n"]
+                                    ]
+                                }
+                            },
+                            "45-set_resourcedomain_var": {
+                                "command" : {
+                                    "Fn::Join" : ["",
+                                        ["export RESOURCEDOMAIN=`cat /usr/local/bin/resourcedomain`",
+                                        "\n"]
+                                    ]
+                                }
+                            },
+                            "46-set_configbucket_var": {
+                                "command" : {
+                                    "Fn::Join" : ["",
+                                        ["export CONFIGBUCKETNAME=`cat /usr/local/bin/configbucketname`",
                                         "\n"]
                                     ]
                                 }
