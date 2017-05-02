@@ -362,7 +362,7 @@
                             "42-minion_prepa": {
                                 "command" : {
                                     "Fn::Join" : ["",
-                                        ["cp /srv/salt/formulas/pwm-formula/pwm.conf /etc/salt/minion.d/",
+                                        ["cp /srv/salt/formulas/pwm-formula/pwm.conf /etc/salt/minion.d/pwm.conf",
                                         "\n"]
                                     ]
                                 }
@@ -370,7 +370,7 @@
                             "43-minion_prepb": {
                                 "command" : {
                                     "Fn::Join" : ["",
-                                        ["mv /etc/salt/minion.d/watchmaker.conf /usr/local/bin/",
+                                        ["mv /etc/salt/minion.d/watchmaker.conf /usr/local/bin/oldwatchmaker.conf",
                                         "\n"]
                                     ]
                                 }
