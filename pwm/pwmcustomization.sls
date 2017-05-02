@@ -19,52 +19,91 @@ mailerinstall:
         }  # ----------  end of function log  ----------
         
         #log "checking for new users"
-        newusers=$(grep "CREATE_USER" /usr/share/tomcat/webapps/pwm/WEB-INF/logs/PWM.log)
-        echo "$newusers" > /tmp/current-newusers.log
+        newusers=$(grep -a "CREATE_USER" /usr/share/tomcat/webapps/pwm/WEB-INF/logs/PWM.log)
+        echo "$newusers" > /usr/local/bin/current-newusers.log
         
-        if   [ -e "/tmp/prior-newusers.log" ]
-        then 
+        if   [ -e "/usr/local/bin/prior-newusers.log" ]
+        then
              echo "prior-newusers.log Exists" > /dev/null
         else
-             touch /tmp/prior-newusers.log | echo "" > /tmp/prior-newusers.log
+             touch /usr/local/bin/prior-newusers.log | echo "" > /usr/local/bin/prior-newusers.log
         fi
         
-        newuserentries=$(diff --suppress-common-lines -u /tmp/prior-newusers.log /tmp/current-newusers.log | grep '\+[0-9]')
-        
+        #compare prior newusers to current newusers
+        newuserentries=$(diff --suppress-common-lines -a /usr/local/bin/prior-newusers.log /usr/local/bin/current-newusers.log)
         if   test "$newuserentries" != "" && test "$newusers" = ""
-        then 
-             log "should not see this log"
+        then
+             log "should not see this log-diff of temp files isn't comparing correctly to actual log of new users"
         elif test "$newuserentries" != ""
-        then 
-             sed 's/^.*\(perpetratorID.*perpetratorDN\).*$/\1/' /tmp/current-newusers.log > /tmp/output1
-             cut -b 17- /tmp/output1 > /tmp/output2
-             sed 's/",".*//' /tmp/output2 > /tmp/output3
-             sed 's/, INFO.*//' /tmp/current-newusers.log > /tmp/datecreated
-             sed 's/.*sourceAddress":"//' /tmp/current-newusers.log > /tmp/source1
-             sed 's/,.*//' /tmp/source1 > /tmp/source2
-             newusername=$(cat /tmp/output3)
-             newuserdate=$(cat /tmp/datecreated)
-             newusersource=$(cat /tmp/source2)
-             newusername2=$(echo $newusername | sed -e "s/ /-and-/g")
-             newuserdate2=$(echo $newuserdate | sed -e "s/ /,/g")
-             newusersource2=$(echo $newusersource | sed -e "s/ /-and-/g")
-             resourcedomain=$(cat /usr/local/bin/resourcedomain)
-             envirname=$(cat /usr/local/bin/envirname)
+        then
+             #count new entries and collect json key value pairs from log entry
+             echo "$newuserentries" > /usr/local/bin/newuserentries
+             diffcount=$(wc -l < /usr/local/bin/newuserentries)
+             count=$((diffcount-1))
+             while IFS="," read a b c foo; do echo $foo >> /usr/local/bin/onlyjson; done < /usr/local/bin/newuserentries
+             cut -b 14- /usr/local/bin/onlyjson > /usr/local/bin/cleanjson
+             cat /usr/local/bin/cleanjson | jq '.targetID, .timestamp, .sourceAddress' >> /usr/local/bin/prearray
+             readarray -t myarray < /usr/local/bin/prearray
+             #create html table snippets for email
+             v=0
+             for (( c=1; c<=$count; c++ ))
+             do  
+                cp /usr/local/bin/emailsniporig.html /usr/local/bin/emailsnip$c.html
+                __username__=${myarray[$v]}
+                __time__=${myarray[$v+1]}
+                __ip__=${myarray[$v+2]}
+                sed -i "s/__username__/$__username__/g" /usr/local/bin/emailsnip$c.html
+                sed -i "s/__time__/$__time__/g" /usr/local/bin/emailsnip$c.html
+                sed -i "s/__ip__/$__ip__/g" /usr/local/bin/emailsnip$c.html
+                v=$[v+3]
+             done
+             #concat html table snippets into one file
+             for (( c=1; c<=$count; c++ ))
+             do  
+                cat /usr/local/bin/emailsnip$c.html >> /usr/local/bin/emailconcatsnip.html
+             done
+             #create full email
+             cat /usr/local/bin/emailpart1.html /usr/local/bin/emailconcatsnip.html /usr/local/bin/emailpart2.html > /usr/local/bin/fullemail.html
+             #send email
              mailtodomain=$(cat /usr/local/bin/mailtodomain) 
-             cp /usr/local/bin/email.html /tmp/email1.html
-             sed -i "s/newuserdate/$newuserdate2/g" /tmp/email1.html
-             sed -i "s/newusername/$newusername2/g" /tmp/email1.html
-             sed -i "s/newusersource/$newusersource2/g" /tmp/email1.html
-             sed -i "s/example/$envirname/g" /tmp/email1.html
-             sed -i "s/resourcedomain/$resourcedomain/g" /tmp/email1.html
-             mutt -F /root/.muttrc -e 'set content_type=text/html' -s "WARNING: New $envirname User Created" pwm-notifications@$mailtodomain < /tmp/email1.html
-             rm -rf /tmp/email1.html
-             echo "$newusers" > /tmp/prior-newusers.log
+             mutt -F /root/.muttrc -e 'set content_type=text/html' -s "WARNING: New $envirname User Created" pwm-notifications@$mailtodomain < /usr/local/bin/fullemail.html
+            #cleanup for next run
+             rm -rf /usr/local/bin/fullemail.html
+             for (( c=1; c<=$count; c++ ))
+             do  
+                rm -rf /usr/local/bin/emailsnip$c.html
+             done
+             rm -rf /usr/local/bin/emailconcatsnip.html
+             rm -rf /usr/local/bin/newuserentries
+             rm -rf /usr/local/bin/onlyjson
+             rm -rf /usr/local/bin/cleanjson
+             rm -rf /usr/local/bin/prearray
+             echo "$newusers" > /usr/local/bin/prior-newusers.log
              log "emailed list of new users to postfix via mutt"
         else
              echo nothing > /dev/null
              #log "no new users"
         fi
+
+/usr/local/bin/emailsniporig.html:
+  file.append:
+    - text: |
+                                <table border="0" cellpadding="0" cellspacing="0">
+                                  <tbody>
+                                    <tr>
+                                      <td align="left">
+                                        <table border="0" cellpadding="0" cellspacing="0">
+                                          <tbody>
+                                            <tr>
+                                              <td> <p>__username__ created an account __time__ from the following IP address: __ip__</p> </td>
+                                            </tr>
+                                          </tbody>
+                                        </table>
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+        
 
 /usr/local/bin/createmuttrc.sh:
   file.append:
