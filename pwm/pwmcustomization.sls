@@ -106,7 +106,7 @@ mailerinstall:
                                 </table>
         
 
-/usr/local/bin/emailsniporig.html:
+/usr/local/bin/emailpart1.html:
   file.append:
     - text: |
         <!doctype html>
