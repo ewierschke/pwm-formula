@@ -66,9 +66,10 @@ mailerinstall:
              #create full email
              cat /usr/local/bin/emailpart1.html /usr/local/bin/emailconcatsnip.html /usr/local/bin/emailpart2.html > /usr/local/bin/fullemail.html
              #send email
+             envirname=$(cat /usr/local/bin/envirname)
              mailtodomain=$(cat /usr/local/bin/mailtodomain)
              mutt -F /root/.muttrc -e 'set content_type=text/html' -s "WARNING: New $envirname User Created" pwm-notifications@$mailtodomain < /usr/local/bin/fullemail.html
-            #cleanup for next run
+             #cleanup for next run
              rm -rf /usr/local/bin/fullemail.html
              for (( c=1; c<=$count; c++ ))
              do

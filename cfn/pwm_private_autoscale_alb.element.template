@@ -1,6 +1,6 @@
 {
     "AWSTemplateFormatVersion" : "2010-09-09",
-    "Description" : "This template deploys a PWM instance from launch config in an autoscale group behind an ELB using snippets from pwmstrap. (Feb AMIs)",
+    "Description" : "This template deploys a PWM instance from launch config in an autoscale group behind an ALB using watchmaker.",
     "Parameters" : {
         "BootstrapURL" : {
             "Description" : "URL to the SystemPrep Bootstrapper",
@@ -280,7 +280,7 @@
                             },
                             "/etc/cron.d/usermgmt": {
                                 "content": {"Fn::Join": ["", [
-                                    "*/8 * * * * root /usr/local/bin/usermgmt.sh -G `cat /usr/local/bin/groupname`", "\n"
+                                    "*/8 * * * * root /usr/local/bin/usermgmt.sh -G $(cat /usr/local/bin/groupname)", "\n"
                                 ]]},
                                 "mode": "000644",
                                 "owner": "root",
@@ -377,7 +377,7 @@
                             "44-set_envirname_var": {
                                 "command" : {
                                     "Fn::Join" : ["",
-                                        ["export ENVIRNAME=`cat /usr/local/bin/envirname`",
+                                        ["echo 'export ENVIRNAME=$(cat /usr/local/bin/envirname)' >> /root/.bashrc & export ENVIRNAME=$(cat /usr/local/bin/envirname)",
                                         "\n"]
                                     ]
                                 }
@@ -385,7 +385,7 @@
                             "45-set_resourcedomain_var": {
                                 "command" : {
                                     "Fn::Join" : ["",
-                                        ["export RESOURCEDOMAIN=`cat /usr/local/bin/resourcedomain`",
+                                        ["echo 'export RESOURCEDOMAIN=$(cat /usr/local/bin/resourcedomain)' >> /root/.bashrc & export RESOURCEDOMAIN=$(cat /usr/local/bin/resourcedomain)",
                                         "\n"]
                                     ]
                                 }
@@ -393,7 +393,7 @@
                             "46-set_configbucket_var": {
                                 "command" : {
                                     "Fn::Join" : ["",
-                                        ["export CONFIGBUCKETNAME=`cat /usr/local/bin/configbucketname`",
+                                        ["echo 'export CONFIGBUCKETNAME=$(cat /usr/local/bin/configbucketname)' >> /root/.bashrc & export CONFIGBUCKETNAME=$(cat /usr/local/bin/configbucketname)",
                                         "\n"]
                                     ]
                                 }
@@ -401,7 +401,7 @@
                             "50-cp_sshusermgmt": {
                                 "command" : {
                                     "Fn::Join" : ["",
-                                        ["cp /srv/salt/formulas/pwm-formula/pwm/usermgmt.sh /usr/local/bin/",
+                                        ["cp /srv/salt/formulas/pwm-formula/pwm/usermgmt.sh /usr/local/bin/usermgmt.sh",
                                         "\n"]
                                     ]
                                 }
@@ -441,16 +441,15 @@
                             "55-sshusermgmt": {
                                 "command" : {
                                     "Fn::Join" : ["",
-                                        ["./usermgmt.sh -G `cat /usr/local/bin/groupname`",
+                                        ["/usr/local/bin/usermgmt.sh -G $(cat /usr/local/bin/groupname)",
                                         "\n"]
                                     ]
-                                },
-                                "cwd": "/usr/local/bin"
+                                }
                             },
                             "90-applypwmstate" :{
                                 "command" : {
                                     "Fn::Join" : ["",
-                                    ["salt-call --local state.apply pwm",
+                                    ["CONFIGBUCKETNAME=\"$(cat /usr/local/bin/configbucketname)\" RESOURCEDOMAIN=\"$(cat /usr/local/bin/resourcedomain)\" ENVIRNAME=\"$(cat /usr/local/bin/envirname)\" salt-call --local state.apply pwm",
                                     "\n"]
                                     ]
                                 },

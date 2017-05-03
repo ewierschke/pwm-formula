@@ -1,20 +1,20 @@
 {
     "AWSTemplateFormatVersion" : "2010-09-09",
-    "Description"              : "This template creates an instance of PWM for Dicelab password management, fronted by an Elastic Load Balancer.",
+    "Description"              : "This template creates an instance of PWM for account management, fronted by an Application Load Balancer.",
     "Parameters"               : {
         "VPC" : {
             "Description" : "VPC ID",
             "Type"        : "AWS::EC2::VPC::Id"
         },
         "FriendlyEnvironmentName" : {
-            "Description" : "Friendly name of the Environment in which PWM is being installed, for use in emails and branding (future use)",
+            "Description" : "Friendly name of the Environment in which PWM is being installed, for use in emails and branding",
             "Type" : "String",
-            "Default" : "Example",
+            "Default" : "EXAMPLE",
             "MinLength" : "3",
             "MaxLength" : "25"
         },
         "ResourceDNSDomainName" : {
-            "Description" : "Fully qualified domain name (FQDN) of the domain e.g. example.com, where environment resources reside, usually the same as MailFromDNSDomainName (future use)",
+            "Description" : "Fully qualified domain name (FQDN) of the domain e.g. example.com, where environment resources reside, usually the same as MailFromDNSDomainName",
             "Type" : "String",
             "Default" : "example.com",
             "MinLength" : "3",
@@ -22,7 +22,7 @@
             "AllowedPattern" : "[a-zA-Z0-9]+\\..+"
         },
         "MailFromDNSDomainName" : {
-            "Description" : "Fully qualified domain name (FQDN) of the domain e.g. example.com, from which email will originate, usually the same as ResourceDNSDomainName (future use)",
+            "Description" : "Fully qualified domain name (FQDN) of the domain e.g. example.com, from which email will originate, usually the same as ResourceDNSDomainName",
             "Type" : "String",
             "Default" : "example.com",
             "MinLength" : "3",
@@ -30,7 +30,7 @@
             "AllowedPattern" : "[a-zA-Z0-9]+\\..+"
         },
         "MailToDNSDomainName" : {
-            "Description" : "Fully qualified domain name (FQDN) of the domain e.g. example.com, to which pwm-notifications emails will be sent (future use)",
+            "Description" : "Fully qualified domain name (FQDN) of the domain e.g. example.com, to which pwm-notifications emails will be sent",
             "Type" : "String",
             "Default" : "example.com",
             "MinLength" : "3",
@@ -116,7 +116,7 @@
         "PWMSecurityGroupStack" : {
             "Type" : "AWS::CloudFormation::Stack",
             "Properties" : {
-                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/pwm_security_group.element.template",
+                "TemplateURL" : "https://s3.amazonaws.com/app-chemistry/templates/pwm_security_group.element.template",
                 "Parameters"  : {
                     "VPC" : {
                         "Ref" : "VPC"
@@ -128,7 +128,7 @@
         "PWMALBTargetGroupStack" : {
             "Type" : "AWS::CloudFormation::Stack",
             "Properties" : {
-                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/pwm_targetgroup_alb.element.template",
+                "TemplateURL" : "https://s3.amazonaws.com/app-chemistry/templates/pwm_alb_targetgroup.element.template",
                 "Parameters"  : {
                     "VPC" : {
                         "Ref" : "VPC"
@@ -140,7 +140,7 @@
             "Type" : "AWS::CloudFormation::Stack",
             "DependsOn" : [ "PWMSecurityGroupStack", "PWMALBTargetGroupStack" ],
             "Properties" : {
-                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/pwm_alb_public_ssl_443.element.template",
+                "TemplateURL" : "https://s3.amazonaws.com/app-chemistry/templates/pwm_alb_public_ssl_443.element.template",
                 "Parameters"  : {
                     "SslCertificateName" : {
                         "Ref" : "ALBSslCertificateName"
@@ -175,7 +175,7 @@
             "Type" : "AWS::CloudFormation::Stack",
             "DependsOn" : [ "PWMSecurityGroupStack", "PWMALBTargetGroupStack" ],
             "Properties" : {
-                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/pwm_private_autoscale_alb.element.template",
+                "TemplateURL" : "https://s3.amazonaws.com/app-chemistry/templates/pwm_private_autoscale_alb.element.template",
                 "Parameters"  : {
                     "KeyPairName" : {
                         "Ref" : "KeyPairName"
