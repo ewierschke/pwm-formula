@@ -1,0 +1,199 @@
+{
+    "AWSTemplateFormatVersion" : "2010-09-09",
+    "Description"              : "This template creates an instance of PWM for Dicelab password management, fronted by an Elastic Load Balancer.",
+    "Parameters"               : {
+        "VPC" : {
+            "Description" : "VPC ID",
+            "Type"        : "AWS::EC2::VPC::Id"
+        },
+        "ElbSslCertificateName" : {
+            "Description" : "The name (for IAM) or identifier (for ACM) of the SSL certificate to associate with the ELB. The cert must already exist in the service.",
+            "Type"        : "String"
+        },
+        "ElbSslCertificateService" : {
+            "Description" : "The service hosting the SSL certificate. Must be ACM or IAM.",
+            "Type"        : "String",
+            "Default"     : "ACM",
+            "AllowedValues" : [
+                "ACM",
+                "IAM"
+            ]
+        },
+        "PublicSubnetIDs"          : {
+            "Description" : "A list of Public subnet IDs to attach to the load balancer.",
+            "Type"        : "List<AWS::EC2::Subnet::Id>"
+        },
+        "KeyPairName"              : {
+            "Description" : "Public/private key pairs allow you to securely connect to your instance after it launches",
+            "Type"        : "AWS::EC2::KeyPair::KeyName"
+        },
+        "DesiredCapacity"          : {
+            "Description" : "The number of PWM instances the autoscale group will spin up initially",
+            "Type"        : "String",
+            "MinLength"   : "1",
+            "Default"     : "1"
+        },
+        "MinCapacity"              : {
+            "Description" : "The minimum number of PWM instances for the autoscale group",
+            "Type"        : "String",
+            "MinLength"   : "1",
+            "Default"     : "1"
+        },
+        "MaxCapacity"              : {
+            "Description" : "The maximum number of PWM instances for the autoscale group",
+            "Type"        : "String",
+            "MinLength"   : "1",
+            "Default"     : "1"
+        },
+        "InstanceType"             : {
+            "Description" : "Amazon EC2 instance type for the PWM Instances",
+            "Type"        : "String",
+            "Default"     : "t2.micro",
+            "AllowedValues" : [
+                "t2.micro",
+                "t2.small",
+                "t2.medium",
+                "c4.large",
+                "c4.xlarge",
+                "m4.large",
+                "m4.xlarge"
+            ]
+        },
+        "PrivateSubnetIDs"         : {
+            "Description" : "List of Private Subnet IDs where the PWM instances will run. (only select one, load balancing not tested)",
+            "Type"        : "List<AWS::EC2::Subnet::Id>"
+        }
+    },
+    "Resources"                : {
+        "PWMSecurityGroupStack" : {
+            "Type" : "AWS::CloudFormation::Stack",
+            "Properties" : {
+                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/pwm_security_group.element.template",
+                "Parameters"  : {
+                    "VPC" : {
+                        "Ref" : "VPC"
+                    },
+                    "UseELB" : "true"
+                }
+            }
+        },
+        "PWMElbStack"           : {
+            "Type" : "AWS::CloudFormation::Stack",
+            "DependsOn" : "PWMSecurityGroupStack",
+            "Properties" : {
+                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/pwm_elb_public_ssl_443.element.template",
+                "Parameters"  : {
+                    "SslCertificateName" : {
+                        "Ref" : "ElbSslCertificateName"
+                    },
+                    "SslCertificateService" : {
+                        "Ref" : "ElbSslCertificateService"
+                    },
+                    "PublicSubnetIDs"       : {
+                        "Fn::Join" : [
+                            ",",
+                            {
+                                "Ref" : "PublicSubnetIDs"
+                            }
+                        ]
+                    },
+                    "SecurityGroupId"       : {
+                        "Fn::GetAtt" : [
+                            "PWMSecurityGroupStack",
+                            "Outputs.PWMElbSecurityGroupId"
+                        ]
+                    }
+                }
+            }
+        },
+        "PWMStack"              : {
+            "Type" : "AWS::CloudFormation::Stack",
+            "DependsOn" : "PWMElbStack",
+            "Properties" : {
+                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/pwm_private_autoscale_elb.element.template",
+                "Parameters"  : {
+                    "KeyPairName" : {
+                        "Ref" : "KeyPairName"
+                    },
+                    "InstanceType" : {
+                        "Ref" : "InstanceType"
+                    },
+                    "MinCapacity"  : {
+                        "Ref" : "MinCapacity"
+                    },
+                    "MaxCapacity"  : {
+                        "Ref" : "MaxCapacity"
+                    },
+                    "DesiredCapacity" : {
+                        "Ref" : "DesiredCapacity"
+                    },
+                    "PWMElbName"         : {
+                        "Fn::GetAtt" : [
+                            "PWMElbStack",
+                            "Outputs.LoadBalancerName"
+                        ]
+                    },
+                    "PrivateSubnetIDs" : {
+                        "Fn::Join" : [
+                            ",",
+                            {
+                                "Ref" : "PrivateSubnetIDs"
+                            }
+                        ]
+                    },
+                    "SecurityGroupIdPWMInstance" : {
+                        "Fn::Join" : [
+                            ",",
+                            [
+                                {
+                                    "Fn::GetAtt" : [
+                                        "PWMSecurityGroupStack",
+                                        "Outputs.PWMSecurityGroupId"
+                                    ]
+                                }
+                            ]
+                        ]
+                    }
+                }
+            }
+        }
+    },
+    "Outputs"                  : {
+        "PWMLoadBalancerName" : {
+            "Description" : "Name of the PWM Elastic Load Balancer",
+            "Value"       : {
+                "Fn::GetAtt" : [
+                    "PWMElbStack",
+                    "Outputs.LoadBalancerName"
+                ]
+            }
+        },
+        "PWMLoadBalancerDns"  : {
+            "Description" : "DNS name for the PWM ELB",
+            "Value"       : {
+                "Fn::GetAtt" : [
+                    "PWMElbStack",
+                    "Outputs.LoadBalancerDns"
+                ]
+            }
+        },
+        "PWMSecurityGroupId"  : {
+            "Description" : "Security Group ID for the PWM instances",
+            "Value"       : {
+                "Fn::GetAtt" : [
+                    "PWMSecurityGroupStack",
+                    "Outputs.PWMSecurityGroupId"
+                ]
+            }
+        },
+        "PWMElbSecurityGroupId" : {
+            "Description" : "Security Group ID for the PWM Elastic Load Balancer",
+            "Value"       : {
+                "Fn::GetAtt" : [
+                    "PWMSecurityGroupStack",
+                    "Outputs.PWMElbSecurityGroupId"
+                ]
+            }
+        }
+    }
+}
