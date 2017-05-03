@@ -24,10 +24,10 @@ utilizes httpd for proxy from tomcat 8080 to public port
 
 utilizes postfix for receiving email locally from app and script to be sent via AWS SES
 
-current cfn templates assume the existance of a private s3 bucket used for get and put of the PwmConfiguration.xml file which contains the configuration state of the PWM instance
-(s3 put operations for the PwmConfiguration.xml file look for changes to the file before executing, file change monitor starts 20min after script execution)
-in salt states, the same s3 bucket is used to get the SES username and password as well as a postfix configuration script 
-in cfn, the s3 bucket name is used in the creation of an instance role for allowing instance access to files
+- current cfn templates assume the existance of a private s3 bucket used for get and put of the PwmConfiguration.xml file which contains the configuration state of the PWM instance
+- (s3 put operations for the PwmConfiguration.xml file look for changes to the file before executing, file change monitor starts 20min after script execution)
+- in salt states, the same s3 bucket is used to get the SES username and password as well as a postfix configuration script 
+- in cfn, the s3 bucket name is used in the creation of an instance role for allowing instance access to files
 
 current cfn templates utilize a variation of https://github.com/widdix/aws-ec2-ssh to grant IAM group members access to the EC2 instance
 
