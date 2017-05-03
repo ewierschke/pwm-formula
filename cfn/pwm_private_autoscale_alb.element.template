@@ -353,7 +353,7 @@
                             "40-clonepwmformula": {
                                 "command" : {
                                     "Fn::Join" : ["",
-                                        ["git clone -b pwm17cleanup https://github.com/ewierschke/pwm-formula /srv/salt/formulas/pwm-formula",
+                                        ["git clone https://github.com/ewierschke/pwm-formula /srv/salt/formulas/pwm-formula",
                                         "\n"]
                                     ]
                                 }
