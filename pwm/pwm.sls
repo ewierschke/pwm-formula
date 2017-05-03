@@ -1,5 +1,6 @@
 include:
   - pwm/pwmfw
+  - pwm/hostname
 
 pkginstall:
   pkg.installed:
@@ -14,39 +15,19 @@ pkginstall:
       - postfix
       - cyrus-sasl-plain
 
-/usr/local/apache-tomcat-7.0.67.tar.gz:
+/usr/local/bin/apache-tomcat-7.0.67.tar.gz:
   archive.extracted:
-    - name: /usr/local/tomcat7/
+    - name: /usr/local/bin/tomcat7
     - source: 'https://archive.apache.org/dist/tomcat/tomcat-7/v7.0.67/bin/apache-tomcat-7.0.67.tar.gz'
     - source_hash: 'https://archive.apache.org/dist/tomcat/tomcat-7/v7.0.67/bin/apache-tomcat-7.0.67.tar.gz.md5'
     - archive_format: tar
     - options: xzf
 
-tomcat-users.xml:
-  file.blockreplace:
-    - name: /usr/local/tomcat7/apache-tomcat-7.0.67/conf/tomcat-users.xml
-    - marker_start: '<tomcat-users>'
-    - marker_end: '</tomcat-users>'
-    - content: |
-        <!-- user manager can access only manager section -->
-        <role rolename="manager-gui" />
-        <user username="manager" password="manager" roles="manager-gui" />
-        <!-- user admin can access manager and admin section both -->
-        <role rolename="admin-gui" />
-        <user username="admin" password="admin" roles="manager-gui,admin-gui" />
-    - show_changes: True
-
-pwm_v1.7.1:
-  archive.extracted:
-    - name: /usr/local/tomcat7/apache-tomcat-7.0.67/temp/pwm/
-    - source: 'https://s3.amazonaws.com/dicelab-pwm/pwm_v1.7.1.zip'
-    - source_hash: 'https://s3.amazonaws.com/dicelab-pwm/pwm_v1.7.1.zip.md5'
-    - archive_format: zip
-    - enforce_toplevel: False
-
-/usr/local/tomcat7/apache-tomcat-7.0.67/webapps/pwm.war:
-  file.managed:
-    - source: /usr/local/tomcat7/apache-tomcat-7.0.67/temp/pwm/pwm.war
+mv /usr/local/bin/tomcat7/apache-tomcat-7.0.67 /usr/local/bin/tomcat:
+  cmd.run
+  
+mv /usr/local/bin/tomcat /usr/share/ -f --backup=numbered:
+  cmd.run
 
 /etc/init.d/tomcat:
   file.append:
@@ -59,7 +40,7 @@ pwm_v1.7.1:
         export JAVA_HOME
         PATH=$JAVA_HOME/bin:$PATH
         export PATH
-        CATALINA_HOME=/usr/local/tomcat7/apache-tomcat-7.0.67
+        CATALINA_HOME=/usr/share/tomcat
         
         case $1 in
         start)
@@ -80,6 +61,25 @@ tomcatmode:
     - name: /etc/init.d/tomcat
     - mode: 755
     - replace: False
+
+tomcat-users.xml:
+  file.blockreplace:
+    - name: /usr/share/tomcat/conf/tomcat-users.xml
+    - marker_start: '<tomcat-users>'
+    - marker_end: '</tomcat-users>'
+    - content: |
+        <!-- user manager can access only manager section -->
+        <role rolename="manager-gui" />
+        <user username="manager" password="manager" roles="manager-gui" />
+        <!-- user admin can access manager and admin section both -->
+        <role rolename="admin-gui" />
+        <user username="admin" password="admin" roles="manager-gui,admin-gui" />
+    - show_changes: True
+
+/usr/share/tomcat/webapps/pwm.war:
+  file.managed:
+    - source: 'https://s3.amazonaws.com/app-chemistry/files/pwm17.war'
+    - source_hash: 'https://s3.amazonaws.com/app-chemistry/files/pwm17.war.md5'
 
 runtomcatservice:
   service.running:
@@ -132,8 +132,8 @@ runatdservice:
         # Gotta make SELinux happy...
         if [[ $(getenforce) = "Enforcing" ]] || [[ $(getenforce) = "Permissive" ]]
         then
-            chcon -R --reference=/usr/local/tomcat7/apache-tomcat-7.0.67/webapps \
-                /usr/local/tomcat7/apache-tomcat-7.0.67/webapps/pwm.war
+            chcon -R --reference=/usr/share/tomcat/webapps \
+                /usr/share/tomcat/webapps/pwm.war
             if [[ $(getsebool httpd_can_network_relay | \
                 cut -d ">" -f 2 | sed 's/[ ]*//g') = "off" ]]
             then
@@ -148,3 +148,18 @@ chmod 777 /usr/local/bin/selinuxproxy.sh:
 run selinuxproxy script:
   cmd.run:
     - name: /usr/local/bin/selinuxproxy.sh
+
+/usr/share/tomcat/conf/tomcat.conf:
+  file.append:
+    - text: 'JAVA_OPTS="-Djava.security.egd=file:/dev/./urandom -Djava.awt.headless=true -Xmx512m -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC"'
+
+/usr/local/bin/rerunhostnamestate:
+  file.append:
+    - text: 'salt-call --local state.apply pwm/hostname'
+
+chmod 777 /usr/local/bin/rerunhostnamestate:
+  cmd.run
+
+runhostnamestate:
+  cmd.run:
+    - name: at now + 10 minutes -f /usr/local/bin/rerunhostnamestate
