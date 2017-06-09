@@ -109,8 +109,3 @@ chmod 777 /usr/local/bin/rerunhostnamestate:
 runhostnamestate:
   cmd.run:
     - name: at now + 10 minutes -f /usr/local/bin/rerunhostnamestate
-
-restarttomcattopickuppwmapppath:
-  module.run:
-    - name: service.restart
-    - m_name: tomcat
