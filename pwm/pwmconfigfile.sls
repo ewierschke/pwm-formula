@@ -7,14 +7,10 @@ s3cmd get s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/18branch/PwmConfigu
 s3cmd get s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/sasl_passwd /etc/postfix/sasl_passwd --skip-existing:
   cmd.run
 
-service tomcat stop:
-  cmd.run
-
-sleep 3:
-  cmd.run
-
-service tomcat start:
-  cmd.run
+restarttomcattopickupnewconf:
+  module.run:
+    - name: service.restart
+    - m_name: tomcat
 
 /usr/local/bin/pwmconfmgmt:
   file.append:
