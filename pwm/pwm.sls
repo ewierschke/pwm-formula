@@ -26,11 +26,6 @@ runtomcatservice:
     - name: tomcat
     - enable: True
 
-restarttomcattopickuppwm:
-  module.run:
-    - name: service.restart
-    - m_name: tomcat
-  
 sleep 5:
   cmd.run
 
