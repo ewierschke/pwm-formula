@@ -1,10 +1,41 @@
 {
     "AWSTemplateFormatVersion" : "2010-09-09",
-    "Description"              : "This template creates an instance of PWM for Dicelab password management, fronted by an Elastic Load Balancer.",
+    "Description"              : "This template creates an instance of PWM for account management, fronted by an Application Load Balancer.",
     "Parameters"               : {
         "VPC" : {
             "Description" : "VPC ID",
             "Type"        : "AWS::EC2::VPC::Id"
+        },
+        "FriendlyEnvironmentName" : {
+            "Description" : "Friendly name of the Environment in which PWM is being installed, for use in emails and branding",
+            "Type" : "String",
+            "Default" : "EXAMPLE",
+            "MinLength" : "3",
+            "MaxLength" : "25"
+        },
+        "ResourceDNSDomainName" : {
+            "Description" : "Fully qualified domain name (FQDN) of the domain e.g. example.com, where environment resources reside, usually the same as MailFromDNSDomainName",
+            "Type" : "String",
+            "Default" : "example.com",
+            "MinLength" : "3",
+            "MaxLength" : "25",
+            "AllowedPattern" : "[a-zA-Z0-9]+\\..+"
+        },
+        "MailFromDNSDomainName" : {
+            "Description" : "Fully qualified domain name (FQDN) of the domain e.g. example.com, from which email will originate, usually the same as ResourceDNSDomainName",
+            "Type" : "String",
+            "Default" : "example.com",
+            "MinLength" : "3",
+            "MaxLength" : "25",
+            "AllowedPattern" : "[a-zA-Z0-9]+\\..+"
+        },
+        "MailToDNSDomainName" : {
+            "Description" : "Fully qualified domain name (FQDN) of the domain e.g. example.com, to which pwm-notifications emails will be sent",
+            "Type" : "String",
+            "Default" : "example.com",
+            "MinLength" : "3",
+            "MaxLength" : "25",
+            "AllowedPattern" : "[a-zA-Z0-9]+\\..+"
         },
         "ALBSslCertificateName" : {
             "Description" : "The name (for IAM) or identifier (for ACM) of the SSL certificate to associate with the ELB. The cert must already exist in the service.",
@@ -26,6 +57,12 @@
         "KeyPairName"              : {
             "Description" : "Public/private key pairs allow you to securely connect to your instance after it launches",
             "Type"        : "AWS::EC2::KeyPair::KeyName"
+        },
+        "AmiId" :
+        {
+            "Description" : "AMI ID",
+            "Type" : "String",
+            "Default" : ""
         },
         "DesiredCapacity"          : {
             "Description" : "The number of PWM instances the autoscale group will spin up initially",
@@ -53,10 +90,13 @@
             "Description" : "Amazon EC2 instance type for the PWM Instances",
             "Type"        : "String",
             "Default"     : "t2.micro",
-            "AllowedValues" : [
+            "AllowedValues" : 
+            [
                 "t2.micro",
                 "t2.small",
                 "t2.medium",
+                "t2.large",
+                "t2.xlarge",
                 "c4.large",
                 "c4.xlarge",
                 "m4.large",
@@ -68,7 +108,7 @@
             "Type"        : "List<AWS::EC2::Subnet::Id>"
         },
         "PWMConfigBucketName"         : {
-            "Description" : "Name of the S3 bucket where the PWM config should be pulled and stored",
+            "Description" : "Name of the existing S3 bucket where the PWM config should be pulled and pushed",
             "Type"        : "String"
         },
     },
@@ -76,7 +116,7 @@
         "PWMSecurityGroupStack" : {
             "Type" : "AWS::CloudFormation::Stack",
             "Properties" : {
-                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/branch/pwm_security_group.element.template",
+                "TemplateURL" : "https://s3.amazonaws.com/app-chemistry/templates/pwm_security_group.element.template",
                 "Parameters"  : {
                     "VPC" : {
                         "Ref" : "VPC"
@@ -85,10 +125,10 @@
                 }
             }
         },
-        "PWMTargetGroupStack" : {
+        "PWMALBTargetGroupStack" : {
             "Type" : "AWS::CloudFormation::Stack",
             "Properties" : {
-                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/branch/pwm_targetgroup_alb.element.template",
+                "TemplateURL" : "https://s3.amazonaws.com/app-chemistry/templates/pwm_alb_targetgroup.element.template",
                 "Parameters"  : {
                     "VPC" : {
                         "Ref" : "VPC"
@@ -98,9 +138,9 @@
         },
         "PWMALBStack"           : {
             "Type" : "AWS::CloudFormation::Stack",
-            "DependsOn" : [ "PWMSecurityGroupStack", "PWMTargetGroupStack" ],
+            "DependsOn" : [ "PWMSecurityGroupStack", "PWMALBTargetGroupStack" ],
             "Properties" : {
-                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/branch/pwm_alb_public_ssl_443.element.template",
+                "TemplateURL" : "https://s3.amazonaws.com/app-chemistry/templates/pwm_alb_public_ssl_443.element.template",
                 "Parameters"  : {
                     "SslCertificateName" : {
                         "Ref" : "ALBSslCertificateName"
@@ -124,7 +164,7 @@
                     },
                     "TargetGroupId"       : {
                         "Fn::GetAtt" : [
-                            "PWMTargetGroupStack",
+                            "PWMALBTargetGroupStack",
                             "Outputs.TargetGroupName"
                         ]
                     }
@@ -133,12 +173,15 @@
         },
         "PWMAutoScaleStack"              : {
             "Type" : "AWS::CloudFormation::Stack",
-            "DependsOn" : [ "PWMSecurityGroupStack", "PWMTargetGroupStack" ],
+            "DependsOn" : [ "PWMSecurityGroupStack", "PWMALBTargetGroupStack" ],
             "Properties" : {
-                "TemplateURL" : "https://s3.amazonaws.com/dicelab-pwm/branch/pwm_private_autoscale_alb.element.template",
+                "TemplateURL" : "https://s3.amazonaws.com/app-chemistry/templates/pwmbranch/pwm_private_autoscale_alb.element.template",
                 "Parameters"  : {
                     "KeyPairName" : {
                         "Ref" : "KeyPairName"
+                    },
+                    "AmiId" : {
+                        "Ref" : "AmiId"
                     },
                     "InstanceType" : {
                         "Ref" : "InstanceType"
@@ -160,9 +203,21 @@
                     },
                     "PWMALBTargetGroupName"         : {
                         "Fn::GetAtt" : [
-                            "PWMTargetGroupStack",
+                            "PWMALBTargetGroupStack",
                             "Outputs.TargetGroupName"
                         ]
+                    },
+                    "FriendlyEnvironmentName" : {
+                        "Ref" : "FriendlyEnvironmentName"
+                    },
+                    "ResourceDNSDomainName" : {
+                        "Ref" : "ResourceDNSDomainName"
+                    },
+                    "MailFromDNSDomainName" : {
+                        "Ref" : "MailFromDNSDomainName"
+                    },
+                    "MailToDNSDomainName" : {
+                        "Ref" : "MailToDNSDomainName"
                     },
                     "PrivateSubnetIDs" : {
                         "Fn::Join" : [
