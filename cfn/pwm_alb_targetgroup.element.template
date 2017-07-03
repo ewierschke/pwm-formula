@@ -1,37 +1,40 @@
 {
-    "AWSTemplateFormatVersion" : "2010-09-09",
-    "Description"              : "This template creates an ALB Target Group for PWM",
-    "Parameters"               : {
-        "VPC" : {
-            "Description" : "VPC ID",
-            "Type"        : "AWS::EC2::VPC::Id"
-        }
-    },
-    "Resources"                : {
-        "ALBTargetGroup" : {
-            "Type" : "AWS::ElasticLoadBalancingV2::TargetGroup",
-            "Properties" : {
-                "HealthCheckIntervalSeconds" : "30",
-                "HealthCheckPath" : "/index.jsp",
-                "HealthCheckPort" : "8080",
-                "HealthCheckProtocol" : "HTTP",
-                "HealthCheckTimeoutSeconds" : "5",
-                "HealthyThresholdCount" : "5",
-                "Port" : "80",
-                "Protocol" : "HTTP",
-                "UnhealthyThresholdCount" : "10",
-                "VpcId" : {
-                    "Ref" : "VPC"
-                }
-            }
-        }
-    },
-    "Outputs"                  : {
-        "TargetGroupName" : {
-            "Description" : "Name of the PWM ALB Target Group",
-            "Value"       : {
-                "Ref" : "ALBTargetGroup"
-            }
-        }
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "This template creates an ALB Target Group for PWM",
+  "Parameters": {
+    "VPC": {
+      "Description": "VPC ID",
+      "Type": "AWS::EC2::VPC::Id"
     }
+  },
+  "Resources": {
+    "ALBTargetGroup": {
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+      "Properties": {
+        "HealthCheckIntervalSeconds": "30",
+        "HealthCheckPath": "/",
+        "HealthCheckPort": "80",
+        "HealthCheckProtocol": "HTTP",
+        "HealthCheckTimeoutSeconds": "5",
+        "HealthyThresholdCount": "5",
+        "Port": "80",
+        "Protocol": "HTTP",
+        "Matcher": {
+          "HttpCode": "302"
+        },
+        "UnhealthyThresholdCount": "10",
+        "VpcId": {
+          "Ref": "VPC"
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "TargetGroupName": {
+      "Description": "Name of the PWM ALB Target Group",
+      "Value": {
+        "Ref": "ALBTargetGroup"
+      }
+    }
+  }
 }
