@@ -2,11 +2,6 @@
     "AWSTemplateFormatVersion" : "2010-09-09",
     "Description" : "This template deploys a PWM instance from launch config in an autoscale group behind an ALB using watchmaker.",
     "Parameters" : {
-        "BootstrapURL" : {
-            "Description" : "URL to the SystemPrep Bootstrapper",
-            "Type" : "String",
-            "Default" : "https://s3.amazonaws.com/systemprep/BootStrapScripts/SystemPrep-Bootstrap--Linux.sh"
-        },
         "KeyPairName" : {
             "Description" : "Public/private key pairs allow you to securely connect to your instance after it launches",
             "Type" : "AWS::EC2::KeyPair::KeyName"
@@ -231,10 +226,10 @@
                                 { "Fn::Join" : ["", [
                                     "[cfn-auto-reloader-hook]\n",
                                     "triggers=post.update\n",
-                                    "path=Resources.SystemPrepLaunchConfig.Metadata\n",
+                                    "path=Resources.PWMLaunchConfig.Metadata\n",
                                     "action=/opt/aws/bin/cfn-init -v -c update",
                                     " --stack ", { "Ref" : "AWS::StackName" },
-                                    " --resource SystemPrepLaunchConfig",
+                                    " --resource PWMLaunchConfig",
                                     " --region ", { "Ref" : "AWS::Region" }, "\n",
                                     "runas=root\n"
                                 ]]},
