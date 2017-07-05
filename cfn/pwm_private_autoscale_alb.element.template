@@ -231,10 +231,10 @@
                                 { "Fn::Join" : ["", [
                                     "[cfn-auto-reloader-hook]\n",
                                     "triggers=post.update\n",
-                                    "path=Resources.SystemPrepLaunchConfig.Metadata\n",
+                                    "path=Resources.PWMLaunchConfig.Metadata\n",
                                     "action=/opt/aws/bin/cfn-init -v -c update",
                                     " --stack ", { "Ref" : "AWS::StackName" },
-                                    " --resource SystemPrepLaunchConfig",
+                                    " --resource PWMLaunchConfig",
                                     " --region ", { "Ref" : "AWS::Region" }, "\n",
                                     "runas=root\n"
                                 ]]},
