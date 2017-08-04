@@ -66,6 +66,13 @@ postfixconfmode:
     - mode: 777
     - replace: False
 
+pwmconfchown:
+  file.managed:
+    - name: /usr/share/tomcat/webapps/pwm/WEB-INF/PwmConfiguration.xml
+    - user: tomcat
+    - group: tomcat
+    - replace: False
+
 runpostfixconf:
   cmd.run:
     - name: /usr/local/bin/postfix_conf.sh
