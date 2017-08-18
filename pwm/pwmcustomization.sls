@@ -61,14 +61,20 @@ mailerinstall:
              #concat html table snippets into one file
              for (( c=1; c<=$count; c++ ))
              do  
-                cat /usr/local/bin/emailsnip$c.html >> /usr/local/bin/emailconcatsnip.html
+                #get username
+                user=${myarray[$v]}
+                #remove last fullemail
+                rm -rf /usr/local/bin/fullemail.html
+                #create full email
+                cat /usr/local/bin/emailpart1.html /usr/local/bin/emailsnip$c.html /usr/local/bin/emailpart2.html > /usr/local/bin/fullemail.html
+                #send email
+                envirname=$(cat /usr/local/bin/envirname)
+                mailtodomain=$(cat /usr/local/bin/mailtodomain)
+                mailfromdomain=$(cat /usr/local/bin/mailfromdomain)
+                mutt -F /root/.muttrc -e 'set content_type=text/html' -s "WARNING: $user created an account in $envirname" pwm-notifications@$mailtodomain < /usr/local/bin/fullemail.html
+                mutt -F /root/.muttrc -e 'set content_type=text/html' -s "WARNING: $user created an account in $envirname" help@$mailfromdomain < /usr/local/bin/fullemail.html
+                v=$[v+3]
              done
-             #create full email
-             cat /usr/local/bin/emailpart1.html /usr/local/bin/emailconcatsnip.html /usr/local/bin/emailpart2.html > /usr/local/bin/fullemail.html
-             #send email
-             envirname=$(cat /usr/local/bin/envirname)
-             mailtodomain=$(cat /usr/local/bin/mailtodomain)
-             mutt -F /root/.muttrc -e 'set content_type=text/html' -s "WARNING: New $envirname User Created" pwm-notifications@$mailtodomain < /usr/local/bin/fullemail.html
              #cleanup for next run
              rm -rf /usr/local/bin/fullemail.html
              for (( c=1; c<=$count; c++ ))
