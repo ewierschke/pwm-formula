@@ -103,7 +103,7 @@ mailerinstall:
                                         <table border="0" cellpadding="0" cellspacing="0">
                                           <tbody>
                                             <tr>
-                                              <td> <p>__username__ created an account __time__ from the following IP address: __ip__</p> </td>
+                                              <td> <p>__username__ created an account __time__ GMT from the following IP address: __ip__</p> </td>
                                             </tr>
                                           </tbody>
                                         </table>
