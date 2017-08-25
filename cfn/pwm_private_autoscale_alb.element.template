@@ -85,7 +85,7 @@
         },
         "PrivateSubnetIDs" : {
             "Description" : "Private Subnet ID where the PWM instance(s) will run. (only select one, load balancing not tested)",
-            "Type" : "AWS::EC2::Subnet::Id"
+            "Type" : "List<AWS::EC2::Subnet::Id>"
         },
         "SecurityGroupIdPWMInstance" : {
             "Description" : "ID of the security group for PWM instances",
@@ -175,7 +175,7 @@
         "PWMAutoScalingGroup" : {
             "Type" : "AWS::AutoScaling::AutoScalingGroup",
             "Properties" : {
-                "VPCZoneIdentifier" : [ { "Ref" : "PrivateSubnetIDs" } ],
+                "VPCZoneIdentifier" : { "Ref" : "PrivateSubnetIDs" },
                 "LaunchConfigurationName" : { "Ref" : "PWMLaunchConfig" },
                 "TargetGroupARNs" : [ { "Ref" : "PWMALBTargetGroupName" } ],
                 "MinSize" : { "Ref" : "MinCapacity" },
