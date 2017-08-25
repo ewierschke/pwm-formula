@@ -219,11 +219,11 @@
                     "MailToDNSDomainName" : {
                         "Ref" : "MailToDNSDomainName"
                     },
-                    "PrivateSubnetIDs" : {
+                    "PrivateSubnetIDs" :  {
                         "Fn::Join" : [
                             ",",
                             {
-                                "Ref" : "PrivateSubnetIDs"
+                                "Ref" : "PrivetSubnetIDs"
                             }
                         ]
                     },

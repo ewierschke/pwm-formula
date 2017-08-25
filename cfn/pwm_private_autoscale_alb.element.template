@@ -180,7 +180,7 @@
         "PWMAutoScalingGroup" : {
             "Type" : "AWS::AutoScaling::AutoScalingGroup",
             "Properties" : {
-                "VPCZoneIdentifier" : [ { "Ref" : "PrivateSubnetIDs" } ],
+                "VPCZoneIdentifier" : { "Ref" : "PrivateSubnetIDs" },
                 "LaunchConfigurationName" : { "Ref" : "PWMLaunchConfig" },
                 "TargetGroupARNs" : [ { "Ref" : "PWMALBTargetGroupName" } ],
                 "MinSize" : { "Ref" : "MinCapacity" },
