@@ -227,7 +227,7 @@
             "Fn::Join": [
               ",",
               {
-                "Ref": "PrivetSubnetIDs"
+                "Ref": "PrivateSubnetIDs"
               }
             ]
           },
