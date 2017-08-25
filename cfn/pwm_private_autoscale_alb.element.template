@@ -1,569 +1,777 @@
 {
-    "AWSTemplateFormatVersion" : "2010-09-09",
-    "Description" : "This template deploys a PWM instance from launch config in an autoscale group behind an ALB using watchmaker.",
-    "Parameters" : {
-        "BootstrapURL" : {
-            "Description" : "URL to the SystemPrep Bootstrapper",
-            "Type" : "String",
-            "Default" : "https://s3.amazonaws.com/systemprep/BootStrapScripts/SystemPrep-Bootstrap--Linux.sh"
-        },
-        "KeyPairName" : {
-            "Description" : "Public/private key pairs allow you to securely connect to your instance after it launches",
-            "Type" : "AWS::EC2::KeyPair::KeyName"
-        },
-        "AmiId" :
-        {
-            "Description" : "AMI ID",
-            "Type" : "String",
-            "Default" : ""
-        },
-        "InstanceType" : {
-            "Description" : "Amazon EC2 instance type for the PWM Instance (using Aug16 ACB CentOS6 AMI)",
-            "Type" : "String",
-            "Default" : "t2.micro",
-            "AllowedValues" : 
-            [
-                "t2.micro",
-                "t2.small",
-                "t2.medium",
-                "t2.large",
-                "t2.xlarge",
-                "c4.large",
-                "c4.xlarge",
-                "m4.large",
-                "m4.xlarge"
-            ]
-        },
-        "DesiredCapacity" : {
-            "Description" : "The number of instances the autoscale group will spin up initially",
-            "Type" : "String",
-            "MinLength" : "1",
-            "Default" : "1"
-        },
-        "MinCapacity" : {
-            "Description" : "The minimum number of instances for the autoscale group",
-            "Type" : "String",
-            "MinLength" : "1",
-            "Default" : "1"
-        },
-        "MaxCapacity" : {
-            "Description" : "The maximum number of instances for the autoscale group",
-            "Type" : "String",
-            "MinLength" : "1",
-            "Default" : "1"
-        },
-        "PWMALBTargetGroupName" : {
-            "Description" : "Name of the ALB PWM Target Group",
-            "Type" : "String",
-            "MinLength" : "1"
-        },
-        "FriendlyEnvironmentName" : {
-            "Description" : "Friendly name of the Environment in which PWM is being installed, for use in emails and branding (future use)",
-            "Type" : "String",
-            "Default" : "Example",
-            "MinLength" : "3",
-            "MaxLength" : "25"
-        },
-        "ResourceDNSDomainName" : {
-            "Description" : "Fully qualified domain name (FQDN) of the domain e.g. example.com, where environment resources reside, usually the same as MailFromDNSDomainName (future use)",
-            "Type" : "String",
-            "Default" : "example.com",
-            "MinLength" : "3",
-            "MaxLength" : "25",
-            "AllowedPattern" : "[a-zA-Z0-9]+\\..+"
-        },
-        "MailFromDNSDomainName" : {
-            "Description" : "Fully qualified domain name (FQDN) of the domain e.g. example.com, from which email will originate, usually the same as ResourceDNSDomainName (future use)",
-            "Type" : "String",
-            "Default" : "example.com",
-            "MinLength" : "3",
-            "MaxLength" : "25",
-            "AllowedPattern" : "[a-zA-Z0-9]+\\..+"
-        },
-        "MailToDNSDomainName" : {
-            "Description" : "Fully qualified domain name (FQDN) of the domain e.g. example.com, to which pwm-notifications emails will be sent (future use)",
-            "Type" : "String",
-            "Default" : "example.com",
-            "MinLength" : "3",
-            "MaxLength" : "25",
-            "AllowedPattern" : "[a-zA-Z0-9]+\\..+"
-        },
-        "PrivateSubnetIDs" : {
-            "Description" : "Private Subnet ID where the PWM instance(s) will run. (only select one, load balancing not tested)",
-            "Type" : "List<AWS::EC2::Subnet::Id>"
-        },
-        "SecurityGroupIdPWMInstance" : {
-            "Description" : "ID of the security group for PWM instances",
-            "Type" : "AWS::EC2::SecurityGroup::Id"
-        },
-        "IAMGroup" : {
-            "Description" : "ID of the IAM group to be granted SSH access to PWM instances",
-            "Type" : "String"
-        },
-        "PWMConfigBucketName" : {
-            "Description" : "Name of the S3 bucket where the PWM config should be pulled and stored",
-            "Type" : "String"
-        }
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "This template deploys a PWM instance from launch config in an autoscale group behind an ALB using watchmaker.",
+  "Parameters": {
+    "BootstrapURL": {
+      "Description": "URL to the SystemPrep Bootstrapper",
+      "Type": "String",
+      "Default": "https://s3.amazonaws.com/systemprep/BootStrapScripts/SystemPrep-Bootstrap--Linux.sh"
     },
-    "Resources" : {
-        "PWMInstanceProfile" : {
-            "Type" : "AWS::IAM::InstanceProfile",
-            "Properties" : {
-                "Path" : "/",
-                "Roles" : [{"Ref": "PWMInstanceRole"}]
-            }
-        },
-        "PWMInstanceRole": {
-            "Type": "AWS::IAM::Role",
-            "Properties": {
-                "AssumeRolePolicyDocument": {
-                    "Version": "2012-10-17",
-                    "Statement": [ {
-                        "Effect": "Allow",
-                        "Principal": {
-                            "Service": [ "ec2.amazonaws.com" ]
-                        },
-                        "Action": [ "sts:AssumeRole" ]
-                    } ]
-                },
-                "Path": "/"
-            }
-        },
-        "PWMConfigInstanceS3Access": {
-            "Type": "AWS::IAM::ManagedPolicy",
-            "Properties": {
-                "Description": "Policy for PWM instance role to access appropriate s3 bucket for pwm config",
-                "PolicyDocument": {
-                    "Version": "2012-10-17",
-                    "Statement": [ {
-                        "Effect": "Allow",
-                        "Action": [
-                            "s3:GetObject",
-                            "s3:PutObject",
-                            "s3:PutObjectAcl"
-                        ],
-                        "Resource": [
-                            {"Fn::Join": ["", ["arn:aws:s3:::", { "Ref": "PWMConfigBucketName" },"/*"]]}
-                        ]
-                    } ]
-                },
-                "Roles": [ { "Ref": "PWMInstanceRole" } ]
-            } 
-        },
-        "AllowIAMgroupSSHKeyAccess": {
-            "Type": "AWS::IAM::Policy",
-            "Properties": {
-                "PolicyName" : "AllowIAMgroupSSHKeyAccess",
-                "PolicyDocument": {
-                    "Version": "2012-10-17",
-                    "Statement": [ {
-                        "Effect": "Allow",
-                        "Action": [ "iam:GetGroup" ],
-                        "Resource": [
-                            { "Fn::Join": [ "", [ "arn:aws:iam::", { "Ref": "AWS::AccountId" }, ":group/", { "Ref": "IAMGroup" } ] ] }
-                        ]
-                    }, 
-                    {
-                        "Effect": "Allow",
-                        "Action": [
-                            "iam:ListSSHPublicKeys",
-                            "iam:GetSSHPublicKey"
-                        ],
-                        "Resource": [
-                            { "Fn::Join": [ "", [ "arn:aws:iam::", { "Ref": "AWS::AccountId" }, ":user/*" ] ] }
-                        ]
-                    } ]
-                },
-                "Roles": [ { "Ref": "PWMInstanceRole" } ]
-            } 
-        },
-        "PWMAutoScalingGroup" : {
-            "Type" : "AWS::AutoScaling::AutoScalingGroup",
-            "Properties" : {
-                "VPCZoneIdentifier" : { "Ref" : "PrivateSubnetIDs" },
-                "LaunchConfigurationName" : { "Ref" : "PWMLaunchConfig" },
-                "TargetGroupARNs" : [ { "Ref" : "PWMALBTargetGroupName" } ],
-                "MinSize" : { "Ref" : "MinCapacity" },
-                "MaxSize" : { "Ref" : "MaxCapacity" },
-                "DesiredCapacity" : { "Ref" : "DesiredCapacity" },
-                "HealthCheckGracePeriod" : "3600",
-                "HealthCheckType" : "ELB",
-                "Tags" : [
-                    {
-                        "Key" : "Name",
-                        "Value" : { "Fn::Join" : ["", [
-                            "pwm-",
-                            { "Ref" : "AWS::StackName" }
-                        ]]},
-                        "PropagateAtLaunch" : "true"
-                    }
-                ]
-            }
-        },
-        "PWMLaunchConfig" : {
-            "Type" : "AWS::AutoScaling::LaunchConfiguration",
-            "Metadata" : {
-                "AWS::CloudFormation::Init" : {
-                    "configSets" : {
-                    "Install" : [
-                        "setup",
-                        "bootstrap",
-                        "finalize"
-                     ]
-                },
-                    "setup" : {
-                        "files" : {
-                            "/etc/cfn/cfn-hup.conf" : {
-                                "content" :
-                                { "Fn::Join" : ["", [
-                                    "[main]\n",
-                                    "stack=", { "Ref" : "AWS::StackId" }, "\n",
-                                    "region=", { "Ref" : "AWS::Region" }, "\n",
-                                    "interval=1", "\n",
-                                    "verbose=true", "\n"
-                                ]]},
-                                "mode"    : "000400",
-                                "owner"   : "root",
-                                "group"   : "root"
-                            },
-                            "/etc/cfn/hooks.d/cfn-auto-reloader.conf" : {
-                                "content" :
-                                { "Fn::Join" : ["", [
-                                    "[cfn-auto-reloader-hook]\n",
-                                    "triggers=post.update\n",
-                                    "path=Resources.PWMLaunchConfig.Metadata\n",
-                                    "action=/opt/aws/bin/cfn-init -v -c update",
-                                    " --stack ", { "Ref" : "AWS::StackName" },
-                                    " --resource PWMLaunchConfig",
-                                    " --region ", { "Ref" : "AWS::Region" }, "\n",
-                                    "runas=root\n"
-                                ]]},
-                                "mode" : "000400",
-                                "owner" : "root",
-                                "group" : "root"
-                            }
-                        },
-                        "services" : {
-                            "sysvinit" : {
-                                "cfn-hup" : {
-                                    "enabled" : "true",
-                                    "ensureRunning" : "true",
-                                    "files" :
-                                    [
-                                        "/etc/cfn/cfn-hup.conf",
-                                        "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "bootstrap" : {
-                        "packages" : {
-                                "yum" : {
-                                    "git" : []
-                                }
-                        },
-                        "files" : {
-                            "/usr/local/bin/authorized_keys_command.sh": {
-                                "content": {"Fn::Join": ["", [
-                                    "#!/bin/bash -e", "\n",
-                                    "if [ -z \"$1\" ]; then", "\n",
-                                    "  exit 1", "\n",
-                                    "fi", "\n",
-                                    "aws iam list-ssh-public-keys --user-name \"$1\" --query \"SSHPublicKeys[?Status == 'Active'].[SSHPublicKeyId]\" --output text | while read KeyId; do", "\n",
-                                    "  aws iam get-ssh-public-key --user-name \"$1\" --ssh-public-key-id \"$KeyId\" --encoding SSH --query \"SSHPublicKey.SSHPublicKeyBody\" --output text", "\n",
-                                    "done", "\n"
-                                ]]},
-                                "mode": "000755",
-                                "owner": "root",
-                                "group": "root"
-                            },
-                            "/etc/cron.d/usermgmt": {
-                                "content": {"Fn::Join": ["", [
-                                    "*/8 * * * * root /usr/local/bin/usermgmt.sh -G $(cat /usr/local/bin/groupname)", "\n"
-                                ]]},
-                                "mode": "000644",
-                                "owner": "root",
-                                "group": "root"
-                            },
-                            "/usr/local/bin/configbucketname": {
-                                "content": { "Ref" : "PWMConfigBucketName" },
-                                "mode": "000644",
-                                "owner": "root",
-                                "group": "root"
-                            },
-                            "/usr/local/bin/envirname": {
-                                "content": { "Ref" : "FriendlyEnvironmentName" },
-                                "mode": "000644",
-                                "owner": "root",
-                                "group": "root"
-                            },
-                            "/usr/local/bin/resourcedomain": {
-                                "content": { "Ref" : "ResourceDNSDomainName" },
-                                "mode": "000644",
-                                "owner": "root",
-                                "group": "root"
-                            },
-                            "/usr/local/bin/mailfromdomain": {
-                                "content": { "Ref" : "MailFromDNSDomainName" },
-                                "mode": "000644",
-                                "owner": "root",
-                                "group": "root"
-                            },
-                            "/usr/local/bin/mailtodomain": {
-                                "content": { "Ref" : "MailToDNSDomainName" },
-                                "mode": "000644",
-                                "owner": "root",
-                                "group": "root"
-                            }
-                        },
-                        "commands" : {
-                            "10-install-epel" : {
-                                "command" : {
-                                    "Fn::Join" : ["",
-                                        ["yum -y install epel-release", 
-                                        "\n"]
-                                    ]
-                                }
-                            },
-                            "11-enable-epel" : {
-                                "command" : {
-                                    "Fn::Join" : ["",
-                                        ["yum-config-manager --enable epel", 
-                                        "\n"]
-                                    ]
-                                }
-                            },
-                            "20-watchmaker-prep" : {
-                                "command" : {
-                                    "Fn::Join" : ["",
-                                        ["yum -y --enablerepo=epel install python-pip wget && pip install --upgrade pip setuptools watchmaker", 
-                                        "\n"]
-                                    ]
-                                }
-                            },
-                            "30-watchmaker-launch" : {
-                                "command" : {
-                                    "Fn::Join" : ["",
-                                        ["watchmaker --log-level debug -n --log-dir=/var/log/watchmaker", 
-                                        "\n"]
-                                    ]
-                                }
-                            },
-                            "40-clonepwmformula": {
-                                "command" : {
-                                    "Fn::Join" : ["",
-                                        ["git clone -b pwm1.8 https://github.com/ewierschke/pwm-formula /srv/salt/formulas/pwm-formula",
-                                        "\n"]
-                                    ]
-                                }
-                            },
-                            "42-minion_prepa": {
-                                "command" : {
-                                    "Fn::Join" : ["",
-                                        ["cp /srv/salt/formulas/pwm-formula/pwm.conf /etc/salt/minion.d/",
-                                        "\n"]
-                                    ]
-                                }
-                            },
-                            "43-minion_prepb": {
-                                "command" : {
-                                    "Fn::Join" : ["",
-                                        ["mv /etc/salt/minion.d/watchmaker.conf /usr/local/bin/oldwatchmaker.conf",
-                                        "\n"]
-                                    ]
-                                }
-                            },
-                            "44-set_envirname_var": {
-                                "command" : {
-                                    "Fn::Join" : ["",
-                                        ["echo 'export ENVIRNAME=$(cat /usr/local/bin/envirname)' >> /root/.bashrc & export ENVIRNAME=$(cat /usr/local/bin/envirname)",
-                                        "\n"]
-                                    ]
-                                }
-                            },
-                            "45-set_resourcedomain_var": {
-                                "command" : {
-                                    "Fn::Join" : ["",
-                                        ["echo 'export RESOURCEDOMAIN=$(cat /usr/local/bin/resourcedomain)' >> /root/.bashrc & export RESOURCEDOMAIN=$(cat /usr/local/bin/resourcedomain)",
-                                        "\n"]
-                                    ]
-                                }
-                            },
-                            "46-set_configbucket_var": {
-                                "command" : {
-                                    "Fn::Join" : ["",
-                                        ["echo 'export CONFIGBUCKETNAME=$(cat /usr/local/bin/configbucketname)' >> /root/.bashrc & export CONFIGBUCKETNAME=$(cat /usr/local/bin/configbucketname)",
-                                        "\n"]
-                                    ]
-                                }
-                            },
-                            "50-cp_sshusermgmt": {
-                                "command" : {
-                                    "Fn::Join" : ["",
-                                        ["cp /srv/salt/formulas/pwm-formula/pwm/usermgmt.sh /usr/local/bin/usermgmt.sh",
-                                        "\n"]
-                                    ]
-                                }
-                            },
-                            "51-ch_sshusermgmt": {
-                                "command" : {
-                                    "Fn::Join" : ["",
-                                        ["chmod 755 /usr/local/bin/usermgmt.sh & chown root /usr/local/bin/usermgmt.sh & chgrp root /usr/local/bin/usermgmt.sh",
-                                        "\n"]
-                                    ]
-                                }
-                            },
-                            "52-configure_sshd_command": {
-                                "command" : {
-                                    "Fn::Join" : ["",
-                                        ["sed -i 's:#AuthorizedKeysCommand none:AuthorizedKeysCommand /usr/local/bin/authorized_keys_command.sh:g' /etc/ssh/sshd_config",
-                                        "\n"]
-                                    ]
-                                }
-                            },
-                            "53-configure_sshd_commanduser": {
-                                "command" : {
-                                    "Fn::Join" : ["",
-                                        ["sed -i 's:#AuthorizedKeysCommandUser nobody:AuthorizedKeysCommandUser nobody:g' /etc/ssh/sshd_config",
-                                        "\n"]
-                                    ]
-                                }
-                            },
-                            "54-create_groupnamefile": {
-                                "command": {
-                                    "Fn::Join" : ["",
-                                        ["echo ", { "Ref" : "IAMGroup" },
-                                        " > /usr/local/bin/groupname\n"]
-                                    ]
-                                }
-                            },
-                            "55-sshusermgmt": {
-                                "command" : {
-                                    "Fn::Join" : ["",
-                                        ["/usr/local/bin/usermgmt.sh -G $(cat /usr/local/bin/groupname)",
-                                        "\n"]
-                                    ]
-                                }
-                            },
-                            "90-applypwmstate" :{
-                                "command" : {
-                                    "Fn::Join" : ["",
-                                    ["CONFIGBUCKETNAME=\"$(cat /usr/local/bin/configbucketname)\" RESOURCEDOMAIN=\"$(cat /usr/local/bin/resourcedomain)\" ENVIRNAME=\"$(cat /usr/local/bin/envirname)\" salt-call --local state.apply pwm",
-                                    "\n"]
-                                    ]
-                                },
-                                "ignoreErrors" : "false"
-                            }
-                        }
-                    },
-                    "finalize" : {
-                        "commands" : {
-                            "10-signal-success" : {
-                                "command" : {
-                                    "Fn::Join" : ["",
-                                        ["/usr/bin/cfn-signal -e 0 ",
-                                        "   --stack ", { "Ref" : "AWS::StackName" },
-                                        "   --resource PWMAutoScalingGroup",
-                                        "   --region ", { "Ref" : "AWS::Region" },
-                                        ";sleep 60;reboot now\n"]
-                                    ]
-                                },
-                                "ignoreErrors" : "true"
-                            }
-                        }
-                    }
-                }
-            },
-            "Properties" : {
-                "ImageId" : 
-                {
-                    "Ref" : "AmiId"
-                },
-                "InstanceType" : {
-                    "Ref" : "InstanceType"
-                },
-                "KeyName" : {
-                    "Ref" : "KeyPairName"
-                },
-                "BlockDeviceMappings" : [
-                    {
-                        "DeviceName" : "/dev/sda1",
-                        "Ebs"        : {
-                            "VolumeSize" : "20",
-                            "VolumeType" : "gp2",
-                            "DeleteOnTermination" : "true"
-                        }
-                    }
-                ],
-                "SecurityGroups" : [
-                    { "Ref" : "SecurityGroupIdPWMInstance" }
-                ],
-                "IamInstanceProfile" : {"Ref": "PWMInstanceProfile"},
-                "UserData" : {
-                    "Fn::Base64" : 
-                    { "Fn::Join" : [ "", [
-                        "#!/bin/bash -xe\n\n",
-
-                        "# Get pip\n",
-                        "curl --silent --show-error --retry 5 -L ",
-                        "https://bootstrap.pypa.io/get-pip.py",
-                        " | python", "\n\n",
-
-                        "# Add pip to path\n",
-                        "hash pip 2> /dev/null || ",
-                        "PATH=\"${PATH}:/usr/local/bin\"", "\n\n",
-
-                        "# Upgrade setuptools\n",
-                        "pip install --upgrade setuptools\n\n",
-
-                        "# Fix python urllib3 warnings\n",
-                        "yum -y install gcc python-devel libffi-devel openssl-devel\n",
-                        "pip install pyopenssl ndg-httpsclient pyasn1\n\n",
-
-                        "# Get cfn utils\n",
-                        "pip install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\n\n",
-
-                        "# Remove gcc now that it is no longer needed\n",
-                        "yum -y remove gcc --setopt=clean_requirements_on_remove=1\n\n",
-
-                        "# Fixup cfn utils\n",
-                        "INITDIR=$(find -L /opt/aws/apitools/cfn-init/init -name redhat ",
-                        "2> /dev/null || echo /usr/init/redhat)\n",
-                        "chmod 775 ${INITDIR}/cfn-hup\n",
-                        "ln -f -s ${INITDIR}/cfn-hup /etc/rc.d/init.d/cfn-hup\n",
-                        "chkconfig --add cfn-hup\n",
-                        "chkconfig cfn-hup on\n",
-                        "mkdir -p /opt/aws/bin\n",
-                        "BINDIR=$(find -L /opt/aws/apitools/cfn-init -name bin ",
-                        "2> /dev/null || echo /usr/bin)\n",
-                        "for SCRIPT in cfn-elect-cmd-leader cfn-get-metadata cfn-hup ",
-                        "cfn-init cfn-send-cmd-event cfn-send-cmd-result cfn-signal\n",
-                        "do\n",
-                        "    ln -s ${BINDIR}/${SCRIPT} /opt/aws/bin/${SCRIPT} 2> /dev/null || ",
-                        "    echo Skipped symbolic link, /opt/aws/bin/${SCRIPT} already exists\n",
-                        "done\n\n",
-
-                        "# Add cfn-signal to path\n",
-                        "hash cfn-signal 2> /dev/null || ",
-                        "PATH=\"${PATH}:/usr/local/bin:/opt/aws/bin\"",
-                        "\n\n",
-
-                        "# Execute cfn-init\n",
-                        "/opt/aws/bin/cfn-init -v -c Install",
-                        " --stack ", { "Ref" : "AWS::StackName" },
-                        " --resource PWMLaunchConfig",
-                        " --region ", { "Ref" : "AWS::Region" }, " ||",
-                        " ( echo 'ERROR: cfn-init failed! Aborting!';",
-                        " /opt/aws/bin/cfn-signal -e 1",
-                        "  --stack ", { "Ref" : "AWS::StackName" },
-                        "  --resource PWMAutoScalingGroup",
-                        "  --region ", { "Ref" : "AWS::Region"}, ";",
-                        " exit 1",
-                        " )\n\n"
-                    ] ] }
-                }
-            }
-        }
+    "KeyPairName": {
+      "Description": "Public/private key pairs allow you to securely connect to your instance after it launches",
+      "Type": "AWS::EC2::KeyPair::KeyName"
+    },
+    "AmiId": {
+      "Description": "AMI ID",
+      "Type": "String",
+      "Default": ""
+    },
+    "InstanceType": {
+      "Description": "Amazon EC2 instance type for the PWM Instance (using Aug16 ACB CentOS6 AMI)",
+      "Type": "String",
+      "Default": "t2.micro",
+      "AllowedValues": [
+        "t2.micro",
+        "t2.small",
+        "t2.medium",
+        "t2.large",
+        "t2.xlarge",
+        "c4.large",
+        "c4.xlarge",
+        "m4.large",
+        "m4.xlarge"
+      ]
+    },
+    "DesiredCapacity": {
+      "Description": "The number of instances the autoscale group will spin up initially",
+      "Type": "String",
+      "MinLength": "1",
+      "Default": "1"
+    },
+    "MinCapacity": {
+      "Description": "The minimum number of instances for the autoscale group",
+      "Type": "String",
+      "MinLength": "1",
+      "Default": "1"
+    },
+    "MaxCapacity": {
+      "Description": "The maximum number of instances for the autoscale group",
+      "Type": "String",
+      "MinLength": "1",
+      "Default": "1"
+    },
+    "PWMALBTargetGroupName": {
+      "Description": "Name of the ALB PWM Target Group",
+      "Type": "String",
+      "MinLength": "1"
+    },
+    "FriendlyEnvironmentName": {
+      "Description": "Friendly name of the Environment in which PWM is being installed, for use in emails and branding (future use)",
+      "Type": "String",
+      "Default": "Example",
+      "MinLength": "3",
+      "MaxLength": "25"
+    },
+    "ResourceDNSDomainName": {
+      "Description": "Fully qualified domain name (FQDN) of the domain e.g. example.com, where environment resources reside, usually the same as MailFromDNSDomainName (future use)",
+      "Type": "String",
+      "Default": "example.com",
+      "MinLength": "3",
+      "MaxLength": "25",
+      "AllowedPattern": "[a-zA-Z0-9]+\\..+"
+    },
+    "MailFromDNSDomainName": {
+      "Description": "Fully qualified domain name (FQDN) of the domain e.g. example.com, from which email will originate, usually the same as ResourceDNSDomainName (future use)",
+      "Type": "String",
+      "Default": "example.com",
+      "MinLength": "3",
+      "MaxLength": "25",
+      "AllowedPattern": "[a-zA-Z0-9]+\\..+"
+    },
+    "MailToDNSDomainName": {
+      "Description": "Fully qualified domain name (FQDN) of the domain e.g. example.com, to which pwm-notifications emails will be sent (future use)",
+      "Type": "String",
+      "Default": "example.com",
+      "MinLength": "3",
+      "MaxLength": "25",
+      "AllowedPattern": "[a-zA-Z0-9]+\\..+"
+    },
+    "PrivateSubnetIDs": {
+      "Description": "Private Subnet ID where the PWM instance(s) will run. (only select one, load balancing not tested)",
+      "Type": "List<AWS::EC2::Subnet::Id>"
+    },
+    "SecurityGroupIdPWMInstance": {
+      "Description": "ID of the security group for PWM instances",
+      "Type": "AWS::EC2::SecurityGroup::Id"
+    },
+    "IAMGroup": {
+      "Description": "ID of the IAM group to be granted SSH access to PWM instances",
+      "Type": "String"
+    },
+    "PWMConfigBucketName": {
+      "Description": "Name of the S3 bucket where the PWM config should be pulled and stored",
+      "Type": "String"
     }
+  },
+  "Resources": {
+    "PWMInstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [
+          {
+            "Ref": "PWMInstanceRole"
+          }
+        ]
+      }
+    },
+    "PWMInstanceRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "ec2.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/"
+      }
+    },
+    "PWMConfigInstanceS3Access": {
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Properties": {
+        "Description": "Policy for PWM instance role to access appropriate s3 bucket for pwm config",
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:PutObjectAcl"
+              ],
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:s3:::",
+                      {
+                        "Ref": "PWMConfigBucketName"
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "Roles": [
+          {
+            "Ref": "PWMInstanceRole"
+          }
+        ]
+      }
+    },
+    "AllowIAMgroupSSHKeyAccess": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "AllowIAMgroupSSHKeyAccess",
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "iam:GetGroup"
+              ],
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:iam::",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":group/",
+                      {
+                        "Ref": "IAMGroup"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "iam:ListSSHPublicKeys",
+                "iam:GetSSHPublicKey"
+              ],
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:iam::",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":user/*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "Roles": [
+          {
+            "Ref": "PWMInstanceRole"
+          }
+        ]
+      }
+    },
+    "PWMAutoScalingGroup": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "VPCZoneIdentifier": {
+          "Ref": "PrivateSubnetIDs"
+        },
+        "LaunchConfigurationName": {
+          "Ref": "PWMLaunchConfig"
+        },
+        "TargetGroupARNs": [
+          {
+            "Ref": "PWMALBTargetGroupName"
+          }
+        ],
+        "MinSize": {
+          "Ref": "MinCapacity"
+        },
+        "MaxSize": {
+          "Ref": "MaxCapacity"
+        },
+        "DesiredCapacity": {
+          "Ref": "DesiredCapacity"
+        },
+        "HealthCheckGracePeriod": "3600",
+        "HealthCheckType": "ELB",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  "pwm-",
+                  {
+                    "Ref": "AWS::StackName"
+                  }
+                ]
+              ]
+            },
+            "PropagateAtLaunch": "true"
+          }
+        ]
+      }
+    },
+    "PWMLaunchConfig": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Metadata": {
+        "AWS::CloudFormation::Init": {
+          "configSets": {
+            "Install": [
+              "setup",
+              "bootstrap",
+              "finalize"
+            ]
+          },
+          "setup": {
+            "files": {
+              "/etc/cfn/cfn-hup.conf": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "[main]\n",
+                      "stack=",
+                      {
+                        "Ref": "AWS::StackId"
+                      },
+                      "\n",
+                      "region=",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      "\n",
+                      "interval=1",
+                      "\n",
+                      "verbose=true",
+                      "\n"
+                    ]
+                  ]
+                },
+                "mode": "000400",
+                "owner": "root",
+                "group": "root"
+              },
+              "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "[cfn-auto-reloader-hook]\n",
+                      "triggers=post.update\n",
+                      "path=Resources.PWMLaunchConfig.Metadata\n",
+                      "action=/opt/aws/bin/cfn-init -v -c update",
+                      " --stack ",
+                      {
+                        "Ref": "AWS::StackName"
+                      },
+                      " --resource PWMLaunchConfig",
+                      " --region ",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      "\n",
+                      "runas=root\n"
+                    ]
+                  ]
+                },
+                "mode": "000400",
+                "owner": "root",
+                "group": "root"
+              }
+            },
+            "services": {
+              "sysvinit": {
+                "cfn-hup": {
+                  "enabled": "true",
+                  "ensureRunning": "true",
+                  "files": [
+                    "/etc/cfn/cfn-hup.conf",
+                    "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+                  ]
+                }
+              }
+            }
+          },
+          "bootstrap": {
+            "packages": {
+              "yum": {
+                "git": []
+              }
+            },
+            "files": {
+              "/usr/local/bin/authorized_keys_command.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash -e",
+                      "\n",
+                      "if [ -z \"$1\" ]; then",
+                      "\n",
+                      "  exit 1",
+                      "\n",
+                      "fi",
+                      "\n",
+                      "aws iam list-ssh-public-keys --user-name \"$1\" --query \"SSHPublicKeys[?Status == 'Active'].[SSHPublicKeyId]\" --output text | while read KeyId; do",
+                      "\n",
+                      "  aws iam get-ssh-public-key --user-name \"$1\" --ssh-public-key-id \"$KeyId\" --encoding SSH --query \"SSHPublicKey.SSHPublicKeyBody\" --output text",
+                      "\n",
+                      "done",
+                      "\n"
+                    ]
+                  ]
+                },
+                "mode": "000755",
+                "owner": "root",
+                "group": "root"
+              },
+              "/etc/cron.d/usermgmt": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "*/8 * * * * root /usr/local/bin/usermgmt.sh -G $(cat /usr/local/bin/groupname)",
+                      "\n"
+                    ]
+                  ]
+                },
+                "mode": "000644",
+                "owner": "root",
+                "group": "root"
+              },
+              "/usr/local/bin/configbucketname": {
+                "content": {
+                  "Ref": "PWMConfigBucketName"
+                },
+                "mode": "000644",
+                "owner": "root",
+                "group": "root"
+              },
+              "/usr/local/bin/envirname": {
+                "content": {
+                  "Ref": "FriendlyEnvironmentName"
+                },
+                "mode": "000644",
+                "owner": "root",
+                "group": "root"
+              },
+              "/usr/local/bin/resourcedomain": {
+                "content": {
+                  "Ref": "ResourceDNSDomainName"
+                },
+                "mode": "000644",
+                "owner": "root",
+                "group": "root"
+              },
+              "/usr/local/bin/mailfromdomain": {
+                "content": {
+                  "Ref": "MailFromDNSDomainName"
+                },
+                "mode": "000644",
+                "owner": "root",
+                "group": "root"
+              },
+              "/usr/local/bin/mailtodomain": {
+                "content": {
+                  "Ref": "MailToDNSDomainName"
+                },
+                "mode": "000644",
+                "owner": "root",
+                "group": "root"
+              }
+            },
+            "commands": {
+              "10-install-epel": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "yum -y install epel-release",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "11-enable-epel": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "yum-config-manager --enable epel",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "20-watchmaker-prep": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "yum -y --enablerepo=epel install python-pip wget && pip install --upgrade pip setuptools watchmaker",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "30-watchmaker-launch": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "watchmaker --log-level debug -n --log-dir=/var/log/watchmaker",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "40-clonepwmformula": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "git clone -b pwm1.8 https://github.com/ewierschke/pwm-formula /srv/salt/formulas/pwm-formula",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "42-minion_prepa": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "cp /srv/salt/formulas/pwm-formula/pwm.conf /etc/salt/minion.d/",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "43-minion_prepb": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "mv /etc/salt/minion.d/watchmaker.conf /usr/local/bin/oldwatchmaker.conf",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "44-set_envirname_var": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "echo 'export ENVIRNAME=$(cat /usr/local/bin/envirname)' >> /root/.bashrc & export ENVIRNAME=$(cat /usr/local/bin/envirname)",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "45-set_resourcedomain_var": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "echo 'export RESOURCEDOMAIN=$(cat /usr/local/bin/resourcedomain)' >> /root/.bashrc & export RESOURCEDOMAIN=$(cat /usr/local/bin/resourcedomain)",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "46-set_configbucket_var": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "echo 'export CONFIGBUCKETNAME=$(cat /usr/local/bin/configbucketname)' >> /root/.bashrc & export CONFIGBUCKETNAME=$(cat /usr/local/bin/configbucketname)",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "50-cp_sshusermgmt": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "cp /srv/salt/formulas/pwm-formula/pwm/usermgmt.sh /usr/local/bin/usermgmt.sh",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "51-ch_sshusermgmt": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "chmod 755 /usr/local/bin/usermgmt.sh & chown root /usr/local/bin/usermgmt.sh & chgrp root /usr/local/bin/usermgmt.sh",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "52-configure_sshd_command": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "sed -i 's:#AuthorizedKeysCommand none:AuthorizedKeysCommand /usr/local/bin/authorized_keys_command.sh:g' /etc/ssh/sshd_config",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "53-configure_sshd_commanduser": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "sed -i 's:#AuthorizedKeysCommandUser nobody:AuthorizedKeysCommandUser nobody:g' /etc/ssh/sshd_config",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "54-create_groupnamefile": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "echo ",
+                      {
+                        "Ref": "IAMGroup"
+                      },
+                      " > /usr/local/bin/groupname\n"
+                    ]
+                  ]
+                }
+              },
+              "55-sshusermgmt": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "/usr/local/bin/usermgmt.sh -G $(cat /usr/local/bin/groupname)",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "90-applypwmstate": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "CONFIGBUCKETNAME=\"$(cat /usr/local/bin/configbucketname)\" RESOURCEDOMAIN=\"$(cat /usr/local/bin/resourcedomain)\" ENVIRNAME=\"$(cat /usr/local/bin/envirname)\" salt-call --local state.apply pwm",
+                      "\n"
+                    ]
+                  ]
+                },
+                "ignoreErrors": "false"
+              }
+            }
+          },
+          "finalize": {
+            "commands": {
+              "10-signal-success": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "/usr/bin/cfn-signal -e 0 ",
+                      "   --stack ",
+                      {
+                        "Ref": "AWS::StackName"
+                      },
+                      "   --resource PWMAutoScalingGroup",
+                      "   --region ",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ";sleep 60;reboot now\n"
+                    ]
+                  ]
+                },
+                "ignoreErrors": "true"
+              }
+            }
+          }
+        }
+      },
+      "Properties": {
+        "ImageId": {
+          "Ref": "AmiId"
+        },
+        "InstanceType": {
+          "Ref": "InstanceType"
+        },
+        "KeyName": {
+          "Ref": "KeyPairName"
+        },
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/sda1",
+            "Ebs": {
+              "VolumeSize": "20",
+              "VolumeType": "gp2",
+              "DeleteOnTermination": "true"
+            }
+          }
+        ],
+        "SecurityGroups": [
+          {
+            "Ref": "SecurityGroupIdPWMInstance"
+          }
+        ],
+        "IamInstanceProfile": {
+          "Ref": "PWMInstanceProfile"
+        },
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash -xe\n\n",
+                "# Get pip\n",
+                "curl --silent --show-error --retry 5 -L ",
+                "https://bootstrap.pypa.io/get-pip.py",
+                " | python",
+                "\n\n",
+                "# Add pip to path\n",
+                "hash pip 2> /dev/null || ",
+                "PATH=\"${PATH}:/usr/local/bin\"",
+                "\n\n",
+                "# Upgrade setuptools\n",
+                "pip install --upgrade setuptools\n\n",
+                "# Fix python urllib3 warnings\n",
+                "yum -y install gcc python-devel libffi-devel openssl-devel\n",
+                "pip install pyopenssl ndg-httpsclient pyasn1\n\n",
+                "# Get cfn utils\n",
+                "pip install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\n\n",
+                "# Remove gcc now that it is no longer needed\n",
+                "yum -y remove gcc --setopt=clean_requirements_on_remove=1\n\n",
+                "# Fixup cfn utils\n",
+                "INITDIR=$(find -L /opt/aws/apitools/cfn-init/init -name redhat ",
+                "2> /dev/null || echo /usr/init/redhat)\n",
+                "chmod 775 ${INITDIR}/cfn-hup\n",
+                "ln -f -s ${INITDIR}/cfn-hup /etc/rc.d/init.d/cfn-hup\n",
+                "chkconfig --add cfn-hup\n",
+                "chkconfig cfn-hup on\n",
+                "mkdir -p /opt/aws/bin\n",
+                "BINDIR=$(find -L /opt/aws/apitools/cfn-init -name bin ",
+                "2> /dev/null || echo /usr/bin)\n",
+                "for SCRIPT in cfn-elect-cmd-leader cfn-get-metadata cfn-hup ",
+                "cfn-init cfn-send-cmd-event cfn-send-cmd-result cfn-signal\n",
+                "do\n",
+                "    ln -s ${BINDIR}/${SCRIPT} /opt/aws/bin/${SCRIPT} 2> /dev/null || ",
+                "    echo Skipped symbolic link, /opt/aws/bin/${SCRIPT} already exists\n",
+                "done\n\n",
+                "# Add cfn-signal to path\n",
+                "hash cfn-signal 2> /dev/null || ",
+                "PATH=\"${PATH}:/usr/local/bin:/opt/aws/bin\"",
+                "\n\n",
+                "# Execute cfn-init\n",
+                "/opt/aws/bin/cfn-init -v -c Install",
+                " --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                " --resource PWMLaunchConfig",
+                " --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                " ||",
+                " ( echo 'ERROR: cfn-init failed! Aborting!';",
+                " /opt/aws/bin/cfn-signal -e 1",
+                "  --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                "  --resource PWMAutoScalingGroup",
+                "  --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ";",
+                " exit 1",
+                " )\n\n"
+              ]
+            ]
+          }
+        }
+      }
+    }
+  }
 }

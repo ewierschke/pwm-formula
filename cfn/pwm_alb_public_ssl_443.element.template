@@ -1,134 +1,157 @@
 {
-    "AWSTemplateFormatVersion" : "2010-09-09",
-    "Description"              : "This template creates a public Elastic Load Balancer using HTTPS on port 443 and a healthcheck for PWM",
-    "Parameters"               : {
-        "SslCertificateName" : {
-            "Description" : "The name (for IAM) or identifier (for ACM) of the SSL certificate to associate with the ALB. The cert must already exist in the service.",
-            "Type"        : "String"
-        },
-        "SslCertificateService" : {
-            "Description" : "The service hosting the SSL certificate. Must be ACM or IAM.",
-            "Type" : "String",
-            "Default" : "ACM",
-            "AllowedValues" : [
-                "ACM",
-                "IAM"
-            ]
-        },
-        "PublicSubnetIDs"    : {
-            "Description" : "A list of Public subnet IDs to attach to the load balancer.",
-            "Type"        : "List<AWS::EC2::Subnet::Id>"
-        },
-        "SecurityGroupId"    : {
-            "Description" : "ID of the security group for ELB",
-            "Type"        : "AWS::EC2::SecurityGroup::Id"
-        },
-        "TargetGroupId"    : {
-            "Description" : "ARN of the target group for ALB",
-            "Type"        : "String"
-        }
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "This template creates a public Elastic Load Balancer using HTTPS on port 443 and a healthcheck for PWM",
+  "Parameters": {
+    "SslCertificateName": {
+      "Description": "The name (for IAM) or identifier (for ACM) of the SSL certificate to associate with the ALB. The cert must already exist in the service.",
+      "Type": "String"
     },
-    "Conditions" : {
-         "UseACM" : { "Fn::Equals" : [ { "Ref" : "SslCertificateService" }, "ACM" ] }
+    "SslCertificateService": {
+      "Description": "The service hosting the SSL certificate. Must be ACM or IAM.",
+      "Type": "String",
+      "Default": "ACM",
+      "AllowedValues": [
+        "ACM",
+        "IAM"
+      ]
     },
-    "Resources"                : {
-        "ALB" : {
-            "Type" : "AWS::ElasticLoadBalancingV2::LoadBalancer",
-            "Properties" : {
-                "Scheme"                   : "internet-facing",
-                "SecurityGroups"           : [
-                    {
-                        "Ref" : "SecurityGroupId"
-                    }
-                ],
-                "Subnets"                  : {
-                    "Ref" : "PublicSubnetIDs"
-                },
-                "Tags"                     : [
-                    {
-                        "Key" : "Name",
-                        "Value" : {
-                            "Fn::Join" : [
-                                "",
-                                [
-                                    "pwm-",
-                                    {
-                                        "Ref" : "AWS::StackName"
-                                    }
-                                ]
-                            ]
-                        }
-                    }
-                ]
-            }
-        },
-        "ALBListeners" : {
-            "Type" : "AWS::ElasticLoadBalancingV2::Listener",
-            "Properties" : {
-                "DefaultActions": [{
-                    "Type": "forward",
-                    "TargetGroupArn": { "Ref": "TargetGroupId"}
-                    }],
-                "LoadBalancerArn": { "Ref": "ALB" },
-                "Port" : "443",
-                "Protocol" : "HTTPS",
-                "Certificates" : [{ 
-                    "CertificateArn" : {
-                          "Fn::If" : [
-                                "UseACM",
-                                {
-                                    "Fn::Join" : [
-                                        ":",
-                                        [
-                                            "arn:aws:acm",
-                                            { "Ref" : "AWS::Region" },
-                                            { "Ref":"AWS::AccountId" },
-                                            { "Fn::Join" : [
-                                                "",
-                                                [
-                                                    "certificate/",
-                                                    { "Ref":"SslCertificateName" }
-                                                ]
-                                            ] }
-                                        ]
-                                    ]
-                                },
-                                {
-                                    "Fn::Join": [
-                                        "",
-                                        [
-                                            "arn:aws:iam::",
-                                            {
-                                                "Ref":"AWS::AccountId"
-                                            },
-                                            ":server-certificate/",
-                                            {
-                                                "Ref":"SslCertificateName"
-                                            }
-                                        ]
-                                    ]
-                                }
-                            ]
-                        }
-                }]
-            }
-        }
+    "PublicSubnetIDs": {
+      "Description": "A list of Public subnet IDs to attach to the load balancer.",
+      "Type": "List<AWS::EC2::Subnet::Id>"
     },
-    "Outputs"                  : {
-        "LoadBalancerName" : {
-            "Description" : "Name of the PWM Application Load Balancer",
-            "Value"       : {
-                "Ref" : "ALB"
-            }
-        },
-        "LoadBalancerDns"  : {
-            "Description" : "DNS name for the PWM ALB",
-            "Value"       : {
-                "Fn::GetAtt" : [
-                    "ALB",
-                    "DNSName"
-                ]
-            }
-        }
+    "SecurityGroupId": {
+      "Description": "ID of the security group for ELB",
+      "Type": "AWS::EC2::SecurityGroup::Id"
+    },
+    "TargetGroupId": {
+      "Description": "ARN of the target group for ALB",
+      "Type": "String"
     }
+  },
+  "Conditions": {
+    "UseACM": {
+      "Fn::Equals": [
+        {
+          "Ref": "SslCertificateService"
+        },
+        "ACM"
+      ]
+    }
+  },
+  "Resources": {
+    "ALB": {
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+      "Properties": {
+        "Scheme": "internet-facing",
+        "SecurityGroups": [
+          {
+            "Ref": "SecurityGroupId"
+          }
+        ],
+        "Subnets": {
+          "Ref": "PublicSubnetIDs"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  "pwm-",
+                  {
+                    "Ref": "AWS::StackName"
+                  }
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "ALBListeners": {
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+      "Properties": {
+        "DefaultActions": [
+          {
+            "Type": "forward",
+            "TargetGroupArn": {
+              "Ref": "TargetGroupId"
+            }
+          }
+        ],
+        "LoadBalancerArn": {
+          "Ref": "ALB"
+        },
+        "Port": "443",
+        "Protocol": "HTTPS",
+        "Certificates": [
+          {
+            "CertificateArn": {
+              "Fn::If": [
+                "UseACM",
+                {
+                  "Fn::Join": [
+                    ":",
+                    [
+                      "arn:aws:acm",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "certificate/",
+                            {
+                              "Ref": "SslCertificateName"
+                            }
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:iam::",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":server-certificate/",
+                      {
+                        "Ref": "SslCertificateName"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "LoadBalancerName": {
+      "Description": "Name of the PWM Application Load Balancer",
+      "Value": {
+        "Ref": "ALB"
+      }
+    },
+    "LoadBalancerDns": {
+      "Description": "DNS name for the PWM ALB",
+      "Value": {
+        "Fn::GetAtt": [
+          "ALB",
+          "DNSName"
+        ]
+      }
+    }
+  }
 }
