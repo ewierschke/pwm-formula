@@ -237,6 +237,19 @@
     },
     "PWMAutoScalingGroup": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "UpdatePolicy": {
+        "AutoScalingReplacingUpdate": {
+          "WillReplace": "true"
+        }
+      },
+      "CreationPolicy": {
+        "ResourceSignal": {
+          "Count": {
+            "Ref": "DesiredCapacity"
+          },
+          "Timeout": "PT25M"
+        }
+      },
       "Properties": {
         "VPCZoneIdentifier": {
           "Ref": "PrivateSubnetIDs"
@@ -264,15 +277,7 @@
           {
             "Key": "Name",
             "Value": {
-              "Fn::Join": [
-                "",
-                [
-                  "pwm-",
-                  {
-                    "Ref": "AWS::StackName"
-                  }
-                ]
-              ]
+              "Ref": "AWS::StackName"
             },
             "PropagateAtLaunch": "true"
           }
@@ -326,7 +331,7 @@
                     [
                       "[cfn-auto-reloader-hook]\n",
                       "triggers=post.update\n",
-                      "path=Resources.PWMLaunchConfig.Metadata\n",
+                      "path=Resources.PWMLaunchConfig.Metadata.AWS::CloudFormation::Init\n",
                       "action=/opt/aws/bin/cfn-init -v -c update",
                       " --stack ",
                       {
@@ -703,22 +708,33 @@
               "",
               [
                 "#!/bin/bash -xe\n\n",
+                "# Export cert bundle ENVs\n",
+                "export AWS_CA_BUNDLE=/etc/pki/tls/certs/ca-bundle.crt\n",
+                "export REQUESTS_CA_BUNDLE=/etc/pki/tls/certs/ca-bundle.crt\n\n",
                 "# Get pip\n",
-                "curl --silent --show-error --retry 5 -L ",
-                "https://bootstrap.pypa.io/get-pip.py",
-                " | python",
-                "\n\n",
+                "curl --silent --show-error --retry 5 -L https://bootstrap.pypa.io/get-pip.py | python - --index-url=https://pypi.org/simple\n\n",
                 "# Add pip to path\n",
                 "hash pip 2> /dev/null || ",
                 "PATH=\"${PATH}:/usr/local/bin\"",
                 "\n\n",
-                "# Upgrade setuptools\n",
-                "pip install --upgrade setuptools\n\n",
+                "# Upgrade pip and setuptools\n",
+                "PYPI_URL=https://pypi.org/simple\n",
+                "PYPI_HOST=$(echo $PYPI_URL |sed -e \"s/[^/]*\\/\\/\\([^@]*@\\)\\?\\([^:/]*\\).*/\\2/\")\n",
+                "pip install",
+                " --index-url=\"$PYPI_URL\"",
+                " --trusted-host=\"$PYPI_HOST\"",
+                " --upgrade pip setuptools\n\n",
                 "# Fix python urllib3 warnings\n",
                 "yum -y install gcc python-devel libffi-devel openssl-devel\n",
-                "pip install pyopenssl ndg-httpsclient pyasn1\n\n",
+                "pip install",
+                " --index-url=\"$PYPI_URL\"",
+                " --trusted-host=\"$PYPI_HOST\"",
+                " --upgrade pyopenssl ndg-httpsclient pyasn1\n\n",
                 "# Get cfn utils\n",
-                "pip install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\n\n",
+                "pip install",
+                " --index-url=\"$PYPI_URL\"",
+                " --trusted-host=\"$PYPI_HOST\"",
+                " --upgrade https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\n\n",
                 "# Remove gcc now that it is no longer needed\n",
                 "yum -y remove gcc --setopt=clean_requirements_on_remove=1\n\n",
                 "# Fixup cfn utils\n",
