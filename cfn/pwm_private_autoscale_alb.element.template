@@ -664,7 +664,7 @@
                       {
                         "Ref": "AWS::Region"
                       },
-                      ";sleep 60;reboot now\n"
+                      ";sleep 15;reboot now\n"
                     ]
                   ]
                 },
