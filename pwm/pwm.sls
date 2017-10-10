@@ -19,7 +19,7 @@ pkginstall:
   archive.extracted:
     - name: /usr/local/bin/tomcat7
     - source: 'https://archive.apache.org/dist/tomcat/tomcat-7/v7.0.67/bin/apache-tomcat-7.0.67.tar.gz'
-    - source_hash: 'https://archive.apache.org/dist/tomcat/tomcat-7/v7.0.67/bin/apache-tomcat-7.0.67.tar.gz.md5'
+    - source_hash: 'https://archive.apache.org/dist/tomcat/tomcat-7/v7.0.67/bin/apache-tomcat-7.0.67.tar.gz.sha1'
     - archive_format: tar
     - options: xzf
 
@@ -79,7 +79,7 @@ tomcat-users.xml:
 /usr/share/tomcat/webapps/pwm.war:
   file.managed:
     - source: 'https://s3.amazonaws.com/app-chemistry/files/pwm17.war'
-    - source_hash: 'https://s3.amazonaws.com/app-chemistry/files/pwm17.war.md5'
+    - source_hash: 'https://s3.amazonaws.com/app-chemistry/files/pwm17.war.sha1'
 
 runtomcatservice:
   service.running:

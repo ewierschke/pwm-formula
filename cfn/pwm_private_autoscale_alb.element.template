@@ -367,6 +367,24 @@
               }
             },
             "files": {
+                            "/etc/cfn/scripts/watchmaker-install.sh" :
+                            {
+                                "content" :
+                                { "Fn::Join" : [ "", [
+                                  "#!/bin/bash\n\n",
+
+                                  "PYPI_URL=https://pypi.org/simple", "\n",
+
+                                  "pip install --index-url=\"$PYPI_URL\" wheel==0.29.0\n",
+
+                                  "pip install",
+                                  " --index-url=\"$PYPI_URL\"",
+                                  " --upgrade pip setuptools boto3 watchmaker\n\n"
+                                ]]},
+                                "mode" : "000700",
+                                "owner" : "root",
+                                "group" : "root"
+                            },
               "/usr/local/bin/authorized_keys_command.sh": {
                 "content": {
                   "Fn::Join": [
@@ -476,7 +494,7 @@
                   "Fn::Join": [
                     "",
                     [
-                      "yum -y --enablerepo=epel install python-pip wget && pip install --upgrade pip setuptools watchmaker",
+                      "yum -y --enablerepo=epel install wget && bash -xe /etc/cfn/scripts/watchmaker-install.sh",
                       "\n"
                     ]
                   ]
