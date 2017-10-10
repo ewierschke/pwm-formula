@@ -494,7 +494,7 @@
                   "Fn::Join": [
                     "",
                     [
-                      "yum -y --enablerepo=epel install wget && bash -xe /etc/cfn/scripts/watchmaker-install.sh",
+                      "yum -y --enablerepo=epel install wget python-pip && bash -xe /etc/cfn/scripts/watchmaker-install.sh",
                       "\n"
                     ]
                   ]

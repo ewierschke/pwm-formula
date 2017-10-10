@@ -6,6 +6,7 @@ pkginstall:
   pkg.installed:
     - names:
       - java-1.8.0-openjdk
+      - tomcat
       - wget
       - unzip
       - httpd
@@ -14,67 +15,6 @@ pkginstall:
       - at
       - postfix
       - cyrus-sasl-plain
-
-/usr/local/bin/apache-tomcat-7.0.67.tar.gz:
-  archive.extracted:
-    - name: /usr/local/bin/tomcat7
-    - source: 'https://archive.apache.org/dist/tomcat/tomcat-7/v7.0.67/bin/apache-tomcat-7.0.67.tar.gz'
-    - source_hash: 'https://archive.apache.org/dist/tomcat/tomcat-7/v7.0.67/bin/apache-tomcat-7.0.67.tar.gz.sha1'
-    - archive_format: tar
-    - options: xzf
-
-mv /usr/local/bin/tomcat7/apache-tomcat-7.0.67 /usr/local/bin/tomcat:
-  cmd.run
-  
-mv /usr/local/bin/tomcat /usr/share/ -f --backup=numbered:
-  cmd.run
-
-/etc/init.d/tomcat:
-  file.append:
-    - text: |
-        #!/bin/bash
-        # description: Tomcat Start Stop Restart
-        # processname: tomcat
-        # chkconfig: 234 20 80
-        JAVA_HOME=/usr/lib/jvm/jre-1.8.0-openjdk.x86_64
-        export JAVA_HOME
-        PATH=$JAVA_HOME/bin:$PATH
-        export PATH
-        CATALINA_HOME=/usr/share/tomcat
-        
-        case $1 in
-        start)
-        sh $CATALINA_HOME/bin/startup.sh
-        ;;
-        stop)
-        sh $CATALINA_HOME/bin/shutdown.sh
-        ;;
-        restart)
-        sh $CATALINA_HOME/bin/shutdown.sh
-        sh $CATALINA_HOME/bin/startup.sh
-        ;;
-        esac
-        exit 0
-
-tomcatmode:
-  file.managed:
-    - name: /etc/init.d/tomcat
-    - mode: 755
-    - replace: False
-
-tomcat-users.xml:
-  file.blockreplace:
-    - name: /usr/share/tomcat/conf/tomcat-users.xml
-    - marker_start: '<tomcat-users>'
-    - marker_end: '</tomcat-users>'
-    - content: |
-        <!-- user manager can access only manager section -->
-        <role rolename="manager-gui" />
-        <user username="manager" password="manager" roles="manager-gui" />
-        <!-- user admin can access manager and admin section both -->
-        <role rolename="admin-gui" />
-        <user username="admin" password="admin" roles="manager-gui,admin-gui" />
-    - show_changes: True
 
 /usr/share/tomcat/webapps/pwm.war:
   file.managed:
@@ -86,9 +26,6 @@ runtomcatservice:
     - name: tomcat
     - enable: True
 
-service tomcat restart:
-  cmd.run
-  
 sleep 5:
   cmd.run
 
