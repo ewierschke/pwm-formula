@@ -1,12 +1,3 @@
-public:
-  firewalld.present:
-    - name: public
-    - services:
-      - http
-      - ssh
-    - ports:
-      - 8080/tcp
-
 inputacceptpolicy:
   iptables.set_policy:
     - chain: INPUT
