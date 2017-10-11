@@ -1,7 +1,7 @@
 include:
   - pwm/pwm
 
-s3cmd get s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/PwmConfiguration.xml /usr/share/tomcat/webapps/pwm/WEB-INF/PwmConfiguration.xml --skip-existing:
+s3cmd get s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/PwmConfiguration.xml /usr/share/tomcat/webapps/ROOT/WEB-INF/PwmConfiguration.xml --skip-existing:
   cmd.run
 
 s3cmd get s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/sasl_passwd /etc/postfix/sasl_passwd --skip-existing:
@@ -22,7 +22,7 @@ service tomcat start:
         #!/bin/sh
         sleep 2
         configbucketname=$(cat /usr/local/bin/configbucketname) 
-        md5tmp=$(md5sum /usr/share/tomcat/webapps/pwm/WEB-INF/PwmConfiguration.xml)
+        md5tmp=$(md5sum /usr/share/tomcat/webapps/ROOT/WEB-INF/PwmConfiguration.xml)
         echo $md5tmp > /tmp/md5conf
         IFS=' ' read -a myarray <<< "$md5tmp"
         echo ${myarray[0]} > /tmp/PwmConfiguration.xml.md5
@@ -30,7 +30,7 @@ service tomcat start:
         sed -i ':a;N;$!ba;s/\n/\ /g' /tmp/PwmConfiguration.xml.md5
         rm -rf /tmp/md5conf
         logger "created md5file in tmp"
-        s3cmd put /usr/share/tomcat/webapps/pwm/WEB-INF/PwmConfiguration.xml s3://$configbucketname/PwmConfiguration.xml
+        s3cmd put /usr/share/tomcat/webapps/ROOT/WEB-INF/PwmConfiguration.xml s3://$configbucketname/PwmConfiguration.xml
         logger "s3 put conf.xml file"
         s3cmd put -P /tmp/PwmConfiguration.xml.md5 s3://$configbucketname/PwmConfiguration.xml.md5
         logger "s3 put conffile md5"
@@ -40,7 +40,7 @@ service tomcat start:
   file.append:
     - text: | 
         #!/bin/sh
-        while inotifywait -e modify -e create -e delete -o /var/log/inotify --format '%w%f-%e' /usr/share/tomcat/webapps/pwm/WEB-INF/; do
+        while inotifywait -e modify -e create -e delete -o /var/log/inotify --format '%w%f-%e' /usr/share/tomcat/webapps/ROOT/WEB-INF/; do
             /usr/local/bin/pwmconfmgmt
         done
         
