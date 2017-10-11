@@ -22,18 +22,18 @@ service tomcat start:
         #!/bin/sh
         sleep 2
         configbucketname=$(cat /usr/local/bin/configbucketname) 
-        md5tmp=$(md5sum /usr/share/tomcat/webapps/ROOT/WEB-INF/PwmConfiguration.xml)
-        echo $md5tmp > /tmp/md5conf
-        IFS=' ' read -a myarray <<< "$md5tmp"
-        echo ${myarray[0]} > /tmp/PwmConfiguration.xml.md5
-        sed 's/.*\///' /tmp/md5conf >> /tmp/PwmConfiguration.xml.md5
-        sed -i ':a;N;$!ba;s/\n/\ /g' /tmp/PwmConfiguration.xml.md5
-        rm -rf /tmp/md5conf
-        logger "created md5file in tmp"
+        sha1tmp=$(sha1sum /usr/share/tomcat/webapps/ROOT/WEB-INF/PwmConfiguration.xml)
+        echo $sha1tmp > /tmp/sha1conf
+        IFS=' ' read -a myarray <<< "$sha1tmp"
+        echo ${myarray[0]} > /tmp/PwmConfiguration.xml.sha1
+        sed 's/.*\///' /tmp/sha1conf >> /tmp/PwmConfiguration.xml.sha1
+        sed -i ':a;N;$!ba;s/\n/\ /g' /tmp/PwmConfiguration.xml.sha1
+        rm -rf /tmp/sha1conf
+        logger "created sha1file in tmp"
         s3cmd put /usr/share/tomcat/webapps/ROOT/WEB-INF/PwmConfiguration.xml s3://$configbucketname/PwmConfiguration.xml
         logger "s3 put conf.xml file"
-        s3cmd put -P /tmp/PwmConfiguration.xml.md5 s3://$configbucketname/PwmConfiguration.xml.md5
-        logger "s3 put conffile md5"
+        s3cmd put -P /tmp/PwmConfiguration.xml.sha1 s3://$configbucketname/PwmConfiguration.xml.sha1
+        logger "s3 put conffile sha1"
 
 
 /usr/local/bin/inotifypwmconfig:
