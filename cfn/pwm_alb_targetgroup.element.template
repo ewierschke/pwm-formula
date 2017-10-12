@@ -12,13 +12,16 @@
       "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
       "Properties": {
         "HealthCheckIntervalSeconds": "30",
-        "HealthCheckPath": "/index.jsp",
-        "HealthCheckPort": "8080",
+        "HealthCheckPath": "/",
+        "HealthCheckPort": "80",
         "HealthCheckProtocol": "HTTP",
         "HealthCheckTimeoutSeconds": "5",
         "HealthyThresholdCount": "5",
         "Port": "80",
         "Protocol": "HTTP",
+        "Matcher": {
+          "HttpCode": "302"
+        },
         "UnhealthyThresholdCount": "10",
         "VpcId": {
           "Ref": "VPC"
