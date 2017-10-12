@@ -1,10 +1,10 @@
 include:
   - pwm/pwm
 
-s3cmd get s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/PwmConfiguration.xml /usr/share/tomcat/webapps/ROOT/WEB-INF/PwmConfiguration.xml --skip-existing:
+aws s3 cp s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/PwmConfiguration.xml /usr/share/tomcat/webapps/ROOT/WEB-INF/PwmConfiguration.xml:
   cmd.run
 
-s3cmd get s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/sasl_passwd /etc/postfix/sasl_passwd --skip-existing:
+aws s3 cp s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/sasl_passwd /etc/postfix/sasl_passwd:
   cmd.run
 
 service tomcat stop:
@@ -61,7 +61,7 @@ runinotifyscript:
   cmd.run:
     - name: at now + 20 minutes -f /usr/local/bin/inotifypwmconfig
 
-s3cmd get s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/postfix_conf.sh /usr/local/bin/postfix_conf.sh --skip-existing:
+aws s3 cp s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/postfix_conf.sh /usr/local/bin/postfix_conf.sh:
   cmd.run
 
 postfixconfmode:

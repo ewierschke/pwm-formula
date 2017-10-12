@@ -646,6 +646,17 @@
                   ]
                 }
               },
+              "80-firewalld": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "setenforce 0 && firewall-cmd --zone=public --add-service=http --permanent && firewall-cmd --zone=public --add-service=http && firewall-cmd --zone=public --add-port=8080/tcp --permanent && firewall-cmd --zone=public --add-port=8080/tcp && setenforce 1",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
               "90-applypwmstate": {
                 "command": {
                   "Fn::Join": [

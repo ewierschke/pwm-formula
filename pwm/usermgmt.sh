@@ -80,8 +80,8 @@ if [ $? -eq 255 ]; then
   log "${__ScriptName} aws cli failure - possible issue; EC2 Instance role not setup with proper credentials or policy"
 fi
 #create sorted files for use with comm
-sort </usr/local/bin/lastimportusers.log >/usr/local/bin/lastimportusers.sorted.log
-sort </usr/local/bin/importusers.log >/usr/local/bin/importusers.sorted.log
+sort < /usr/local/bin/lastimportusers.log > /usr/local/bin/lastimportusers.sorted.log
+sort < /usr/local/bin/importusers.log > /usr/local/bin/importusers.sorted.log
 #create list of users to be imported that weren't already imported
 #create file userstocreate from list of items in importusers that aren't in lastimportusers
 comm -23 /usr/local/bin/importusers.sorted.log /usr/local/bin/lastimportusers.sorted.log > /usr/local/bin/userstocreate.log
@@ -101,7 +101,7 @@ do
       log "User $User created by ${__ScriptName}"
     fi
   fi
-done </usr/local/bin/userstocreate.log
+done < /usr/local/bin/userstocreate.log
 #delete users not in IAM group
 while read User
 do
@@ -110,7 +110,7 @@ do
       rm /etc/suoders.d/"$User"
       log "User $User deleted by ${__ScriptName}"
     fi
-done </usr/local/bin/userstodelete.log
+done < /usr/local/bin/userstodelete.log
 #get ready for next run
 #move current importusers list to lastimportusers list
 mv /usr/local/bin/importusers.log /usr/local/bin/lastimportusers.log

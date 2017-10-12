@@ -179,7 +179,7 @@
         "PWMALBTargetGroupStack"
       ],
       "Properties": {
-        "TemplateURL": "https://s3.amazonaws.com/app-chemistry/templates/pwm_private_autoscale_alb.element.template",
+        "TemplateURL": "https://s3.amazonaws.com/app-chemistry/templates/pwmrework/pwm_private_autoscale_alb.element.template",
         "Parameters": {
           "KeyPairName": {
             "Ref": "KeyPairName"
