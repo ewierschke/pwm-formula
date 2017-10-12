@@ -4,6 +4,13 @@ include:
 aws s3 cp s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/PwmConfiguration.xml /usr/share/tomcat/webapps/ROOT/WEB-INF/PwmConfiguration.xml:
   cmd.run
 
+pwmconfowner:
+  file.managed:
+    - name: /usr/share/tomcat/webapps/ROOT/WEB-INF/PwmConfiguration.xml
+    - user: tomcat
+    - group: tomcat
+    - replace: False
+
 aws s3 cp s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/sasl_passwd /etc/postfix/sasl_passwd:
   cmd.run
 
@@ -30,9 +37,9 @@ service tomcat start:
         sed -i ':a;N;$!ba;s/\n/\ /g' /tmp/PwmConfiguration.xml.sha1
         rm -rf /tmp/sha1conf
         logger "created sha1file in tmp"
-        s3cmd put /usr/share/tomcat/webapps/ROOT/WEB-INF/PwmConfiguration.xml s3://$configbucketname/PwmConfiguration.xml
+        aws s3 cp /usr/share/tomcat/webapps/ROOT/WEB-INF/PwmConfiguration.xml s3://$configbucketname/PwmConfiguration.xml
         logger "s3 put conf.xml file"
-        s3cmd put -P /tmp/PwmConfiguration.xml.sha1 s3://$configbucketname/PwmConfiguration.xml.sha1
+        aws s3 cp /tmp/PwmConfiguration.xml.sha1 s3://$configbucketname/PwmConfiguration.xml.sha1 --acl public-read
         logger "s3 put conffile sha1"
 
 
@@ -70,6 +77,9 @@ postfixconfmode:
     - mode: 777
     - replace: False
 
+sleep 5:
+  cmd.run
+
 runpostfixconf:
   cmd.run:
     - name: /usr/local/bin/postfix_conf.sh
@@ -77,6 +87,10 @@ runpostfixconf:
 postmapsasl:
   cmd.run:
     - name: postmap /etc/postfix/sasl_passwd
+
+selinuxjavatolclpostfix:
+  cmd.run:
+    - name: setsebool -P nis_enabled 1
 
 enablepostfix:
   service.running:
