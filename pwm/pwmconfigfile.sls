@@ -17,8 +17,9 @@ aws s3 cp s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/sasl_passwd /etc/po
 service tomcat stop:
   cmd.run
 
-sleep 3:
-  cmd.run
+sleeppretomcatrestart:
+  cmd.run:
+    - name: sleep 3
 
 service tomcat start:
   cmd.run
@@ -77,8 +78,9 @@ postfixconfmode:
     - mode: 777
     - replace: False
 
-sleep 5:
-  cmd.run
+sleepprepostfixconf:
+  cmd.run:
+    - name: sleep 5
 
 runpostfixconf:
   cmd.run:

@@ -662,7 +662,7 @@
                   "Fn::Join": [
                     "",
                     [
-                      "CONFIGBUCKETNAME=\"$(cat /usr/local/bin/configbucketname)\" RESOURCEDOMAIN=\"$(cat /usr/local/bin/resourcedomain)\" ENVIRNAME=\"$(cat /usr/local/bin/envirname)\" salt-call --local state.apply pwm",
+                      "CONFIGBUCKETNAME=\"$(cat /usr/local/bin/configbucketname)\" RESOURCEDOMAIN=\"$(cat /usr/local/bin/resourcedomain)\" ENVIRNAME=\"$(cat /usr/local/bin/envirname)\" salt-call --local --retcode-passthrough state.apply pwm",
                       "\n"
                     ]
                   ]
