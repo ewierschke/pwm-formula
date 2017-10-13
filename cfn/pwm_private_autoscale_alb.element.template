@@ -73,13 +73,13 @@
       "MaxLength": "25",
       "AllowedPattern": "[a-zA-Z0-9]+\\..+"
     },
-    "MailToDNSDomainName": {
-      "Description": "Fully qualified domain name (FQDN) of the domain e.g. example.com, to which pwm-notifications emails will be sent (future use)",
+    "MailToEmailAddress": {
+      "Description": "Email address to send new user created notification emails",
       "Type": "String",
-      "Default": "example.com",
+      "Default": "help@example.com",
       "MinLength": "3",
       "MaxLength": "25",
-      "AllowedPattern": "[a-zA-Z0-9]+\\..+"
+      "AllowedPattern": "^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$"
     },
     "PrivateSubnetIDs": {
       "Description": "Private Subnet ID where the PWM instance(s) will run. (only select one, load balancing not tested)",
@@ -458,9 +458,9 @@
                 "owner": "root",
                 "group": "root"
               },
-              "/usr/local/bin/mailtodomain": {
+              "/usr/local/bin/mailtoaddress": {
                 "content": {
-                  "Ref": "MailToDNSDomainName"
+                  "Ref": "MailToEmailAddress"
                 },
                 "mode": "000644",
                 "owner": "root",

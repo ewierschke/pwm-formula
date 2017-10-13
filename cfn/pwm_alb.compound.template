@@ -29,13 +29,13 @@
       "MaxLength": "25",
       "AllowedPattern": "[a-zA-Z0-9]+\\..+"
     },
-    "MailToDNSDomainName": {
-      "Description": "Fully qualified domain name (FQDN) of the domain e.g. example.com, to which pwm-notifications emails will be sent",
+    "MailToEmailAddress": {
+      "Description": "Email address to send new user created notification emails",
       "Type": "String",
-      "Default": "example.com",
+      "Default": "help@example.com",
       "MinLength": "3",
       "MaxLength": "25",
-      "AllowedPattern": "[a-zA-Z0-9]+\\..+"
+      "AllowedPattern": "^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$"
     },
     "ALBSslCertificateName": {
       "Description": "The name (for IAM) or identifier (for ACM) of the SSL certificate to associate with the ELB. The cert must already exist in the service.",
@@ -114,7 +114,7 @@
     "PWMSecurityGroupStack": {
       "Type": "AWS::CloudFormation::Stack",
       "Properties": {
-        "TemplateURL": "https://s3.amazonaws.com/app-chemistry/templates/pwm_security_group.element.template",
+        "TemplateURL": "https://s3.amazonaws.com/app-chemistry/templates/pwmrework/pwm_security_group.element.template",
         "Parameters": {
           "VPC": {
             "Ref": "VPC"
@@ -220,8 +220,8 @@
           "MailFromDNSDomainName": {
             "Ref": "MailFromDNSDomainName"
           },
-          "MailToDNSDomainName": {
-            "Ref": "MailToDNSDomainName"
+          "MailToEmailAddress": {
+            "Ref": "MailToEmailAddress"
           },
           "PrivateSubnetIDs": {
             "Fn::Join": [

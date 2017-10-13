@@ -63,10 +63,10 @@ mailerinstall:
                 cat /usr/local/bin/emailpart1.html /usr/local/bin/emailsnip$c.html /usr/local/bin/emailpart2.html > /usr/local/bin/fullemail.html
                 #send email
                 envirname=$(cat /usr/local/bin/envirname)
-                mailtodomain=$(cat /usr/local/bin/mailtodomain)
+                mailtoaddress=$(cat /usr/local/bin/mailtoaddress)
                 mailfromdomain=$(cat /usr/local/bin/mailfromdomain)
-                mutt -F /root/.muttrc -e 'set content_type=text/html' -s "WARNING: $__username__ created an account in $envirname" pwm-notifications@$mailtodomain < /usr/local/bin/fullemail.html
-                mutt -F /root/.muttrc -e 'set content_type=text/html' -s "NEW USER: $__username__ created an account in $envirname" help@$mailfromdomain < /usr/local/bin/fullemail.html
+                #mutt -F /root/.muttrc -e 'set content_type=text/html' -s "WARNING: $__username__ created an account in $envirname" pwm-notifications@$mailtodomain < /usr/local/bin/fullemail.html
+                mutt -F /root/.muttrc -e 'set content_type=text/html' -s "NEW USER: $__username__ created an account in $envirname" $mailtoaddress < /usr/local/bin/fullemail.html
                 v=$[v+3]
              done
              #cleanup for next run
