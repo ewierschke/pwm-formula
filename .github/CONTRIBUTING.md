@@ -30,3 +30,5 @@ If you are proposing a feature:
 *   Keep the scope as narrow as possible, to make it easier to implement.
 *   Remember that this is a community-driven, open-source project, and that
     code contributions are welcome. :)
+
+[0]: https://github.com/ewierschke/pwm-formula/issues
