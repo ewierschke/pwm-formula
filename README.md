@@ -11,7 +11,7 @@ variables are expected by the salt states [handled by cfn]:
 - `/usr/local/bin/envirname` should contain a single word environment name in
 all caps (i.e. `EXAMPLE`)
 - `/usr/local/bin/resourcedomain` should contain the FQDN of the domain name
-where the new user creation notification email should point recipients for other 
+where the new user creation notification email should point recipients for other
 environment resources such as Guacamole, etc.
 (i.e. `example.com`)
 - `/usr/local/bin/mailfromdomain` should contain the FQDN of the domain name
@@ -42,8 +42,9 @@ AWS SES
 - current cfn templates assume the existance of a private s3 bucket used for get
 and put of the PwmConfiguration.xml file which contains the configuration state
 of the PWM instance
-- (aws s3 cp operations for the PwmConfiguration.xml file look for changes to the
-file before executing, file change monitor starts 20min after salt execution)
+- (aws s3 cp operations for the PwmConfiguration.xml file look for changes to
+the file before executing, file change monitor starts 20min after salt
+execution)
 - in salt states, the same s3 bucket is used to get the SES username and
 password as well as a postfix configuration script 
 - in cfn, the s3 bucket name is used in the creation of an instance role for
