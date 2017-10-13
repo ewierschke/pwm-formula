@@ -517,7 +517,7 @@
                   "Fn::Join": [
                     "",
                     [
-                      "git clone -b nativetomcat https://github.com/ewierschke/pwm-formula /srv/salt/formulas/pwm-formula",
+                      "git clone https://github.com/ewierschke/pwm-formula /srv/salt/formulas/pwm-formula",
                       "\n"
                     ]
                   ]

@@ -114,7 +114,7 @@
     "PWMSecurityGroupStack": {
       "Type": "AWS::CloudFormation::Stack",
       "Properties": {
-        "TemplateURL": "https://s3.amazonaws.com/app-chemistry/templates/pwmrework/pwm_security_group.element.template",
+        "TemplateURL": "https://s3.amazonaws.com/app-chemistry/templates/pwm_security_group.element.template",
         "Parameters": {
           "VPC": {
             "Ref": "VPC"
@@ -126,7 +126,7 @@
     "PWMALBTargetGroupStack": {
       "Type": "AWS::CloudFormation::Stack",
       "Properties": {
-        "TemplateURL": "https://s3.amazonaws.com/app-chemistry/templates/pwmrework/pwm_alb_targetgroup.element.template",
+        "TemplateURL": "https://s3.amazonaws.com/app-chemistry/templates/pwm_alb_targetgroup.element.template",
         "Parameters": {
           "VPC": {
             "Ref": "VPC"
@@ -179,7 +179,7 @@
         "PWMALBTargetGroupStack"
       ],
       "Properties": {
-        "TemplateURL": "https://s3.amazonaws.com/app-chemistry/templates/pwmrework/pwm_private_autoscale_alb.element.template",
+        "TemplateURL": "https://s3.amazonaws.com/app-chemistry/templates/pwm_private_autoscale_alb.element.template",
         "Parameters": {
           "KeyPairName": {
             "Ref": "KeyPairName"
