@@ -16,10 +16,10 @@ pkginstall:
       - postfix
       - cyrus-sasl-plain
 
-/usr/share/tomcat/webapps/pwm.war:
+/usr/share/tomcat/webapps/ROOT.war:
   file.managed:
     - source: 'https://s3.amazonaws.com/app-chemistry/files/pwm18.war'
-    - source_hash: 'https://s3.amazonaws.com/app-chemistry/files/pwm18.war.md5'
+    - source_hash: 'https://s3.amazonaws.com/app-chemistry/files/pwm18.war.sha1'
 
 runtomcatservice:
   service.running:
@@ -32,26 +32,14 @@ sleep 5:
 /etc/httpd/conf.d/pwm.conf:
   file.append:
     - text: |
-        ProxyRequests Off
-        <Proxy *>
-                Order allow,deny
-                Allow from all
-        </Proxy>
         
-        #ProxyPass /pwm/admin !
-        #ProxyPass /pwm/config !
+        ProxyPass / http://localhost:8080/
         
-        ProxyPass /pwm http://localhost:8080/pwm
+        ProxyPassReverse / http://localhost:8080/
         
-        ProxyPassReverse /pwm http://localhost:8080/pwm
-        
-        <Location />
-                Order allow,deny
-                Allow from all
-                ProxyPass http://localhost:8080/pwm/ flushpackets=on
-                ProxyPassReverse http://localhost:8080/pwm/
-                ProxyPassReverseCookiePath /pwm/ /
-        </Location>
+        Header always set Strict-Transport-Security "max-age=63072000; includeSubdomains; preload"
+        Header always set X-Frame-Options DENY
+        Header always set X-Content-Type-Options nosniff
 
 runhttpdservice:
   service.running:
@@ -70,7 +58,7 @@ runatdservice:
         if [[ $(getenforce) = "Enforcing" ]] || [[ $(getenforce) = "Permissive" ]]
         then
             chcon -R --reference=/usr/share/tomcat/webapps \
-                /usr/share/tomcat/webapps/pwm.war
+                /usr/share/tomcat/webapps/ROOT.war
             if [[ $(getsebool httpd_can_network_relay | \
                 cut -d ">" -f 2 | sed 's/[ ]*//g') = "off" ]]
             then
@@ -88,10 +76,10 @@ run selinuxproxy script:
 
 pwmapppath:
   file.blockreplace:
-    - name: /usr/share/tomcat/webapps/pwm/WEB-INF/web.xml
+    - name: /usr/share/tomcat/webapps/ROOT/WEB-INF/web.xml
     - marker_start: "        <param-name>applicationPath</param-name>"
     - marker_end: "    </context-param>"
-    - content: "        <param-value>/usr/share/tomcat/webapps/pwm/WEB-INF</param-value>"
+    - content: "        <param-value>/usr/share/tomcat/webapps/ROOT/WEB-INF</param-value>"
     - show_changes: True
     - backup: '.bak'
 

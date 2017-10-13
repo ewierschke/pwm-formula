@@ -20,7 +20,7 @@ mailxinstall:
         }  # ----------  end of function log  ----------
         
         #log "checking for new users"
-        newusers=$(grep -a "CREATE_USER" /usr/share/tomcat/webapps/pwm/WEB-INF/logs/PWM.log)
+        newusers=$(grep -a "CREATE_USER" /usr/share/tomcat/webapps/ROOT/WEB-INF/logs/PWM.log)
         echo "$newusers" > /usr/local/bin/current-newusers.log
         
         if   [ -e "/usr/local/bin/prior-newusers.log" ]
@@ -71,7 +71,7 @@ mailxinstall:
                 envirname=$(cat /usr/local/bin/envirname)
                 mailtodomain=$(cat /usr/local/bin/mailtodomain)
                 mailfromdomain=$(cat /usr/local/bin/mailfromdomain)
-                mutt -F /root/.muttrc -e 'set content_type=text/html' -s "WARNING: $user created an account in $envirname" pwm-notifications@$mailtodomain < /usr/local/bin/fullemail.html
+                #mutt -F /root/.muttrc -e 'set content_type=text/html' -s "WARNING: $user created an account in $envirname" pwm-notifications@$mailtodomain < /usr/local/bin/fullemail.html
                 mutt -F /root/.muttrc -e 'set content_type=text/html' -s "NEW USER: $user created an account in $envirname" help@$mailfromdomain < /usr/local/bin/fullemail.html
                 v=$[v+3]
              done
@@ -505,7 +505,7 @@ runcrondservice:
     - text: |
         */5 * * * * root /usr/local/bin/watchnewuser.sh
 
-/usr/share/tomcat/webapps/pwm/WEB-INF/jsp/fragment/envwelcome.jsp:
+/usr/share/tomcat/webapps/ROOT/WEB-INF/jsp/fragment/envwelcome.jsp:
   file.append:
     - text: |
         <!DOCTYPE html>
@@ -530,7 +530,7 @@ runcrondservice:
 {% set myvar = 42%}
 addenvtexttologin-{{ myvar }}:
   file.blockreplace:
-    - name: /usr/share/tomcat/webapps/pwm/WEB-INF/jsp/login.jsp
+    - name: /usr/share/tomcat/webapps/ROOT/WEB-INF/jsp/login.jsp
     - marker_start: "        </table>"
     - marker_end: "    </div>"
     - show_changes: True
@@ -538,7 +538,7 @@ addenvtexttologin-{{ myvar }}:
 
 addenvtexttologin-{{ myvar }}-accumulated1:
   file.accumulated:
-    - filename: /usr/share/tomcat/webapps/pwm/WEB-INF/jsp/login.jsp
+    - filename: /usr/share/tomcat/webapps/ROOT/WEB-INF/jsp/login.jsp
     - name: my-accumulator-{{ myvar }}
     - text: '            </pwm:if>'
     - require_in:
@@ -546,7 +546,7 @@ addenvtexttologin-{{ myvar }}-accumulated1:
 
 addenvtexttologin-{{ myvar }}-accumulated2:
   file.accumulated:
-    - filename: /usr/share/tomcat/webapps/pwm/WEB-INF/jsp/login.jsp
+    - filename: /usr/share/tomcat/webapps/ROOT/WEB-INF/jsp/login.jsp
     - name: my-accumulator-{{ myvar }}
     - text: '        </pwm:if>'
     - require_in:
@@ -554,13 +554,13 @@ addenvtexttologin-{{ myvar }}-accumulated2:
 
 addenvtexttologin-{{ myvar }}-accumulated3:
   file.accumulated:
-    - filename: /usr/share/tomcat/webapps/pwm/WEB-INF/jsp/login.jsp
+    - filename: /usr/share/tomcat/webapps/ROOT/WEB-INF/jsp/login.jsp
     - name: my-accumulator-{{ myvar }}
     - text: '    <%@ include file="fragment/envwelcome.jsp" %>'
     - require_in:
       - file: addenvtexttologin-{{ myvar }}
 
-/usr/share/tomcat/webapps/pwm/public/resources/js/newuser.js:
+/usr/share/tomcat/webapps/ROOT/public/resources/js/newuser.js:
   file.append:
     - text: |
         function autoGen(prenom, inits, nom){
@@ -584,7 +584,7 @@ addenvtexttologin-{{ myvar }}-accumulated3:
 
 formjspaddscript:
   file.replace:
-    - name: /usr/share/tomcat/webapps/pwm/WEB-INF/jsp/fragment/form.jsp
+    - name: /usr/share/tomcat/webapps/ROOT/WEB-INF/jsp/fragment/form.jsp
     - pattern:        maxlength="<%=loopConfiguration.getMaximumLength.*
     - count: 1
     - repl: |{% raw %}
