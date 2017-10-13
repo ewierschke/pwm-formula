@@ -114,7 +114,7 @@
     "PWMSecurityGroupStack": {
       "Type": "AWS::CloudFormation::Stack",
       "Properties": {
-        "TemplateURL": "https://s3.amazonaws.com/app-chemistry/templates/pwm_security_group.element.template",
+        "TemplateURL": "https://s3.amazonaws.com/app-chemistry/templates/pwmbranch/pwm_security_group.element.template",
         "Parameters": {
           "VPC": {
             "Ref": "VPC"
