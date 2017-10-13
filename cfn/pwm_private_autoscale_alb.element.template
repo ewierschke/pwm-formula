@@ -73,13 +73,13 @@
       "MaxLength": "25",
       "AllowedPattern": "[a-zA-Z0-9]+\\..+"
     },
-    "MailToDNSDomainName": {
-      "Description": "Fully qualified domain name (FQDN) of the domain e.g. example.com, to which pwm-notifications emails will be sent (future use)",
+    "MailToEmailAddress": {
+      "Description": "Email address to send new user created notification emails",
       "Type": "String",
-      "Default": "example.com",
+      "Default": "help@example.com",
       "MinLength": "3",
       "MaxLength": "25",
-      "AllowedPattern": "[a-zA-Z0-9]+\\..+"
+      "AllowedPattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
     },
     "PrivateSubnetIDs": {
       "Description": "Private Subnet ID where the PWM instance(s) will run. (only select one, load balancing not tested)",
@@ -367,24 +367,25 @@
               }
             },
             "files": {
-                            "/etc/cfn/scripts/watchmaker-install.sh" :
-                            {
-                                "content" :
-                                { "Fn::Join" : [ "", [
-                                  "#!/bin/bash\n\n",
-
-                                  "PYPI_URL=https://pypi.org/simple", "\n",
-
-                                  "pip install --index-url=\"$PYPI_URL\" wheel==0.29.0\n",
-
-                                  "pip install",
-                                  " --index-url=\"$PYPI_URL\"",
-                                  " --upgrade pip setuptools boto3 watchmaker\n\n"
-                                ]]},
-                                "mode" : "000700",
-                                "owner" : "root",
-                                "group" : "root"
-                            },
+              "/etc/cfn/scripts/watchmaker-install.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash\n\n",
+                      "PYPI_URL=https://pypi.org/simple",
+                      "\n",
+                      "pip install --index-url=\"$PYPI_URL\" wheel==0.29.0\n",
+                      "pip install",
+                      " --index-url=\"$PYPI_URL\"",
+                      " --upgrade pip setuptools boto3 watchmaker\n\n"
+                    ]
+                  ]
+                },
+                "mode": "000700",
+                "owner": "root",
+                "group": "root"
+              },
               "/usr/local/bin/authorized_keys_command.sh": {
                 "content": {
                   "Fn::Join": [
@@ -457,9 +458,9 @@
                 "owner": "root",
                 "group": "root"
               },
-              "/usr/local/bin/mailtodomain": {
+              "/usr/local/bin/mailtoaddress": {
                 "content": {
-                  "Ref": "MailToDNSDomainName"
+                  "Ref": "MailToEmailAddress"
                 },
                 "mode": "000644",
                 "owner": "root",
@@ -494,7 +495,7 @@
                   "Fn::Join": [
                     "",
                     [
-                      "yum -y --enablerepo=epel install wget && bash -xe /etc/cfn/scripts/watchmaker-install.sh",
+                      "yum -y --enablerepo=epel install wget python-pip && bash -xe /etc/cfn/scripts/watchmaker-install.sh",
                       "\n"
                     ]
                   ]
@@ -646,12 +647,23 @@
                   ]
                 }
               },
+              "80-firewalld": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "setenforce 0 && firewall-cmd --zone=public --add-service=http --permanent && firewall-cmd --zone=public --add-service=http && setenforce 1",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
               "90-applypwmstate": {
                 "command": {
                   "Fn::Join": [
                     "",
                     [
-                      "CONFIGBUCKETNAME=\"$(cat /usr/local/bin/configbucketname)\" RESOURCEDOMAIN=\"$(cat /usr/local/bin/resourcedomain)\" ENVIRNAME=\"$(cat /usr/local/bin/envirname)\" salt-call --local state.apply pwm",
+                      "CONFIGBUCKETNAME=\"$(cat /usr/local/bin/configbucketname)\" RESOURCEDOMAIN=\"$(cat /usr/local/bin/resourcedomain)\" ENVIRNAME=\"$(cat /usr/local/bin/envirname)\" salt-call --local --retcode-passthrough state.apply pwm",
                       "\n"
                     ]
                   ]
