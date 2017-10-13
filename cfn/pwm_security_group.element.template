@@ -128,7 +128,8 @@
           "Ref": "PWMSecurityGroup"
         }
       }
-    },
+    }
+  },
   "Outputs": {
     "PWMSecurityGroupId": {
       "Value": {
