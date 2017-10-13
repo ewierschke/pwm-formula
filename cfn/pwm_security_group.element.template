@@ -75,21 +75,6 @@
         }
       }
     },
-    "ElbToPWMIngressTcp8080": {
-      "Type": "AWS::EC2::SecurityGroupIngress",
-      "Condition": "UseELB",
-      "Properties": {
-        "GroupId": {
-          "Ref": "PWMSecurityGroup"
-        },
-        "IpProtocol": "tcp",
-        "FromPort": "8080",
-        "ToPort": "8080",
-        "SourceSecurityGroupId": {
-          "Ref": "PWMElbSecurityGroup"
-        }
-      }
-    },
     "PWMElbSecurityGroup": {
       "Type": "AWS::EC2::SecurityGroup",
       "Condition": "UseELB",
@@ -144,22 +129,6 @@
         }
       }
     },
-    "ElbToPWMEgressTcp8080": {
-      "Type": "AWS::EC2::SecurityGroupEgress",
-      "Condition": "UseELB",
-      "Properties": {
-        "GroupId": {
-          "Ref": "PWMElbSecurityGroup"
-        },
-        "IpProtocol": "tcp",
-        "FromPort": "8080",
-        "ToPort": "8080",
-        "DestinationSecurityGroupId": {
-          "Ref": "PWMSecurityGroup"
-        }
-      }
-    }
-  },
   "Outputs": {
     "PWMSecurityGroupId": {
       "Value": {
