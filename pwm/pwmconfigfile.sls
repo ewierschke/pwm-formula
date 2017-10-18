@@ -1,5 +1,6 @@
 include:
   - pwm/pwm
+  - pwm/adpasswordexpirenotify
 
 aws s3 cp s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/PwmConfiguration.xml /usr/share/tomcat/webapps/ROOT/WEB-INF/PwmConfiguration.xml:
   cmd.run
