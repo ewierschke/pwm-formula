@@ -29,12 +29,11 @@
       "MaxLength": "25",
       "AllowedPattern": "[a-zA-Z0-9]+\\..+"
     },
-    "MailToEmailAddress": {
+    "NewUserMailToEmailAddress": {
       "Description": "Email address to send new user created notification emails",
       "Type": "String",
       "Default": "help@example.com",
       "MinLength": "3",
-      "MaxLength": "25",
       "AllowedPattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
     },
     "ALBSslCertificateName": {
@@ -108,6 +107,74 @@
     "PWMConfigBucketName": {
       "Description": "Name of the existing S3 bucket where the PWM config should be pulled and pushed",
       "Type": "String"
+    },
+    "ConfigureADPasswordExpireNotify": {
+      "Description": "Select yes to execute state that configures AD password expiration notification emails",
+      "Type": "String",
+      "Default": "yes",
+      "AllowedValues": [
+        "yes",
+        "no"
+      ]
+    },
+    "PWMPublicURL": {
+      "Description": "Public URL to this PWM instance to be included in notification emails",
+      "Type": "String"
+    },
+    "HelpdeskPublicURL": {
+      "Description": "Public URL of helpdesk system to be included in notification emails",
+      "Type": "String"
+    },
+    "HelpdeskEmailAddress": {
+      "Description": "Email address used by helpdesk system to be included in notification emails",
+      "Type": "String",
+      "Default": "help@example.com",
+      "MinLength": "3",
+      "MaxLength": "50",
+      "AllowedPattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
+    },
+    "MailFromEmailAddress": {
+      "Description": "Email address provided in the from field in notification emails",
+      "Type": "String",
+      "Default": "noreply@example.com",
+      "MinLength": "3",
+      "MaxLength": "50"
+    },
+    "ADSvcAccountUPN": {
+      "Description": "UPN of the service account used to query LDAP directory.",
+      "Type": "String",
+      "Default": "svc_account@example.com"
+    },
+    "ADSvcAccountPassword": {
+      "Description": "Password of the Service Account used to query LDAP directory. Must be at least 8 characters containing letters, numbers and symbols",
+      "Type": "String",
+      "MinLength": "8",
+      "MaxLength": "32",
+      "AllowedPattern": "(?=^.{6,255}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
+      "NoEcho": "true",
+      "Default": "Password123"
+    },
+    "ADHostname": {
+      "Description": "Hostname (FQDN) of the AD server to query for users to notify of password expirations",
+      "Type": "String",
+      "Default": "ad.example.com",
+      "MinLength": "3",
+      "MaxLength": "25",
+      "AllowedPattern": "[a-zA-Z0-9]+\\..+"
+    },
+    "AdminReportMailToEmailAddress": {
+      "Description": "Email address to which to send Admin report of password expirations",
+      "Type": "String",
+      "Default": "admin@example.com",
+      "MinLength": "3",
+      "MaxLength": "50",
+      "AllowedPattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
+    },
+    "ADOUPath": {
+      "Description": "Distinguished Name (DN) of the OU path containing users to which to send password expiration notices",
+      "Type": "String",
+      "Default": "CN=Users,DC=ad,DC=example,DC=com",
+      "MinLength": "1"
     }
   },
   "Resources": {
@@ -220,8 +287,8 @@
           "MailFromDNSDomainName": {
             "Ref": "MailFromDNSDomainName"
           },
-          "MailToEmailAddress": {
-            "Ref": "MailToEmailAddress"
+          "NewUserMailToEmailAddress": {
+            "Ref": "NewUserMailToEmailAddress"
           },
           "PrivateSubnetIDs": {
             "Fn::Join": [
@@ -230,6 +297,36 @@
                 "Ref": "PrivateSubnetIDs"
               }
             ]
+          },
+          "ConfigureADPasswordExpireNotify": {
+            "Ref": "ConfigureADPasswordExpireNotify"
+          },
+          "PWMPublicURL": {
+            "Ref": "PWMPublicURL"
+          },
+          "HelpdeskPublicURL": {
+            "Ref": "HelpdeskPublicURL"
+          },
+          "HelpdeskEmailAddress": {
+            "Ref": "HelpdeskEmailAddress"
+          },
+          "MailFromEmailAddress": {
+            "Ref": "MailFromEmailAddress"
+          },
+          "ADSvcAccountUPN": {
+            "Ref": "ADSvcAccountUPN"
+          },
+          "ADSvcAccountPassword": {
+            "Ref": "ADSvcAccountPassword"
+          },
+          "ADHostname": {
+            "Ref": "ADHostname"
+          },
+          "AdminReportMailToEmailAddress": {
+            "Ref": "AdminReportMailToEmailAddress"
+          },
+          "ADOUPath": {
+            "Ref": "ADOUPath"
           },
           "SecurityGroupIdPWMInstance": {
             "Fn::Join": [

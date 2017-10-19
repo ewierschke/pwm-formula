@@ -26,7 +26,7 @@ runenvadjust:
 
 createdailynotifycronjob:
   cmd.run:
-    - name: eval echo '0 12 \* \* \* root /usr/bin/php /usr/local/bin/ad-password-expire-notify/check_expire.php -o \"${OUPATH}\"' > /etc/cron.d/ad-password-expire-notify
+    - name: export OUPATH=$(cat /usr/local/bin/oupath) && eval echo '0 12 \* \* \* root /usr/bin/php /usr/local/bin/ad-password-expire-notify/check_expire.php -o \"${OUPATH}\"' > /etc/cron.d/ad-password-expire-notify
 
 dailynotifycronmode:
   file.managed:
