@@ -34,5 +34,15 @@ dailynotifycronmode:
     - mode: 644
     - replace: False
 
+testrunmode:
+  file.managed:
+    - name: /usr/local/bin/ad-password-expire-notify/testrun.sh
+    - mode: 700
+    - replace: False
+
+executetestrun:
+  cmd.run:
+    - name: /usr/local/bin/ad-password-expire-notify/testrun.sh
+
 {% endif %}
 {% endif %}
