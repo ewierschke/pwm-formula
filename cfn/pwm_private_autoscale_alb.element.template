@@ -163,6 +163,12 @@
       "Type": "String",
       "Default": "CN=Users,DC=ad,DC=example,DC=com",
       "MinLength": "1"
+    },
+    "CloudWatchLogGroupName": {
+      "Description": "Name of the CloudWatch Log Group where to send logs",
+      "Type": "String",
+      "Default": "PWMLogGroup",
+      "MinLength": "1"
     }
   },
   "Resources": {
@@ -226,6 +232,34 @@
                     ]
                   ]
                 }
+              ]
+            }
+          ]
+        },
+        "Roles": [
+          {
+            "Ref": "PWMInstanceRole"
+          }
+        ]
+      }
+    },
+    "LogGroupAccess": {
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Properties": {
+        "Description": "Policy for PWM instance role to access appropriate Cloudwatch Log Group",
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "logs:DescribeLogStreams"
+              ],
+              "Resource": [
+                "arn:aws:logs:*:*:*"
               ]
             }
           ]
@@ -354,6 +388,7 @@
             "Install": [
               "setup",
               "bootstrap",
+              "cloudwatchlogssetup",
               "finalize"
             ]
           },
@@ -422,6 +457,104 @@
                   "files": [
                     "/etc/cfn/cfn-hup.conf",
                     "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+                  ]
+                }
+              }
+            }
+          },
+          "cloudwatchlogssetup": {
+            "files": {
+              "/usr/local/bin/pwmcloudwatchlog.conf": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "[general]\n",
+                      "state_file= /var/awslogs/agent-state\n",
+                      "[/var/log/httpd/access_log]\n",
+                      "file = /var/log/httpd/access_log\n",
+                      "log_group_name = ",
+                      {
+                        "Ref": "CloudWatchLogGroupName"
+                      },
+                      "\n",
+                      "log_stream_name = {instance_id}/apache_access_log.log\n",
+                      "datetime_format = %d/%b/%Y:%H:%M:%S\n",
+                      "[/usr/share/tomcat/webapps/ROOT/WEB-INF/logs/PWM.log]\n",
+                      "file = /usr/share/tomcat/webapps/ROOT/WEB-INF/logs/PWM.log\n",
+                      "log_group_name = ",
+                      {
+                        "Ref": "CloudWatchLogGroupName"
+                      },
+                      "\n",
+                      "log_stream_name = {instance_id}/PWM.log\n",
+                      "datetime_format = %Y-%m-%d %H:%M:%S\n",
+                      "time_zone = UTC\n"
+                    ]
+                  ]
+                },
+                "mode": "000400",
+                "owner": "root",
+                "group": "root"
+              }
+            },
+            "commands": {
+              "10-wget-agentsetup": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "wget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "11-wget-dependencies": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "wget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/AgentDependencies.tar.gz",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "12-extract-dependencies": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "tar xvf AgentDependencies.tar.gz -C /usr/local/bin/",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "13-install-agent": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "python awslogs-agent-setup.py -n -r ",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      " -c /usr/local/bin/pwmcloudwatchlog.conf --python=/bin/python --dependency-path=/usr/local/bin/AgentDependencies",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "14-adjustforfipsmode": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "sed -i 's|md5|sha256|' /var/awslogs/lib/python2.7/site-packages/cwlogs/push.py",
+                      "\n"
+                    ]
                   ]
                 }
               }
@@ -817,6 +950,18 @@
                     "",
                     [
                       "CONFIGBUCKETNAME=\"$(cat /usr/local/bin/configbucketname)\" RESOURCEDOMAIN=\"$(cat /usr/local/bin/resourcedomain)\" ENVIRNAME=\"$(cat /usr/local/bin/envirname)\" salt-call --local --retcode-passthrough state.apply pwm",
+                      "\n"
+                    ]
+                  ]
+                },
+                "ignoreErrors": "false"
+              },
+              "91-yumupdate": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "yum -y update",
                       "\n"
                     ]
                   ]
