@@ -1,5 +1,6 @@
 include:
   - pwm/pwmconfigfile
+  - pwm/adpasswordexpirenotify
 
 mailxinstall:
   pkg.installed:

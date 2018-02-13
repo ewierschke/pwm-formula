@@ -15,6 +15,13 @@ pkginstall:
       - at
       - postfix
       - cyrus-sasl-plain
+      - chrony
+
+pkgremove:
+  pkg.removed:
+    - names:
+      - ntp
+      - ntpdate
 
 /usr/share/tomcat/webapps/ROOT.war:
   file.managed:
@@ -32,6 +39,11 @@ sleep 5:
 /etc/httpd/conf.d/pwm.conf:
   file.append:
     - text: |
+        LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
+        LogFormat "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" proxy
+        SetEnvIf X-Forwarded-For "^.*\..*\..*\..*" forwarded
+        CustomLog "logs/access_log" combined env=!forwarded
+        CustomLog "logs/access_log" proxy env=forwarded
         
         ProxyPass / http://localhost:8080/
         
@@ -86,6 +98,10 @@ pwmapppath:
 /usr/share/tomcat/conf/tomcat.conf:
   file.append:
     - text: 'JAVA_OPTS="-Djava.security.egd=file:/dev/./urandom -Djava.awt.headless=true -Xmx512m -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC"'
+
+/etc/chrony.conf:
+  file.append:
+    - text: 'server 169.254.169.123 prefer iburst'
 
 /usr/local/bin/rerunhostnamestate:
   file.append:
