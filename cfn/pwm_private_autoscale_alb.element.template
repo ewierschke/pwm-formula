@@ -489,6 +489,16 @@
                       "\n",
                       "log_stream_name = {instance_id}/PWM.log\n",
                       "datetime_format = %Y-%m-%d %H:%M:%S\n",
+                      "time_zone = UTC\n",
+                      "[/var/log/ad-password-check-expire.log]\n",
+                      "file = /var/log/ad-password-check-expire.log\n",
+                      "log_group_name = ",
+                      {
+                        "Ref": "CloudWatchLogGroupName"
+                      },
+                      "\n",
+                      "log_stream_name = {instance_id}/ad-password-check-expire.log\n",
+                      "datetime_format = %Y-%m-%d %H:%M:%S.%f\n",
                       "time_zone = UTC\n"
                     ]
                   ]
