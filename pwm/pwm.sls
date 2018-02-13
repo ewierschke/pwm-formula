@@ -27,6 +27,9 @@ pkgremove:
   file.managed:
     - source: 'https://s3.amazonaws.com/app-chemistry/files/pwm17.war'
     - source_hash: 'https://s3.amazonaws.com/app-chemistry/files/pwm17.war.sha1'
+    - user: tomcat
+    - group: tomcat
+    - replace: False
 
 runtomcatservice:
   service.running:
