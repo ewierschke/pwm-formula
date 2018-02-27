@@ -348,7 +348,7 @@
           "Count": {
             "Ref": "DesiredCapacity"
           },
-          "Timeout": "PT25M"
+          "Timeout": "PT90M"
         }
       },
       "Properties": {
@@ -372,7 +372,7 @@
         "DesiredCapacity": {
           "Ref": "DesiredCapacity"
         },
-        "HealthCheckGracePeriod": "3600",
+        "HealthCheckGracePeriod": "5400",
         "HealthCheckType": "ELB",
         "Tags": [
           {
