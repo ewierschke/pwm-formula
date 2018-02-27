@@ -835,17 +835,6 @@
                   ]
                 }
               },
-              "43-minion_prepb": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "mv /etc/salt/minion.d/watchmaker.conf /usr/local/bin/oldwatchmaker.conf",
-                      "\n"
-                    ]
-                  ]
-                }
-              },
               "44-set_envirname_var": {
                 "command": {
                   "Fn::Join": [
