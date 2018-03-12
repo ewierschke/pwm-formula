@@ -393,7 +393,7 @@
             "Install": [
               "setup",
               "bootstrap",
-              "cloudwatchlogssetup",
+              "cloudwatchagentsetup",
               "finalize"
             ]
           },
@@ -467,108 +467,109 @@
               }
             }
           },
-          "cloudwatchlogssetup": {
-            "files": {
-              "/usr/local/bin/pwmcloudwatchlog.conf": {
-                "content": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "[general]\n",
-                      "state_file= /var/awslogs/agent-state\n",
-                      "[/var/log/httpd/access_log]\n",
-                      "file = /var/log/httpd/access_log\n",
-                      "log_group_name = ",
-                      {
-                        "Ref": "CloudWatchLogGroupName"
-                      },
-                      "\n",
-                      "log_stream_name = {instance_id}/apache_access_log.log\n",
-                      "datetime_format = %d/%b/%Y:%H:%M:%S\n",
-                      "[/usr/share/tomcat/webapps/ROOT/WEB-INF/logs/PWM.log]\n",
-                      "file = /usr/share/tomcat/webapps/ROOT/WEB-INF/logs/PWM.log\n",
-                      "log_group_name = ",
-                      {
-                        "Ref": "CloudWatchLogGroupName"
-                      },
-                      "\n",
-                      "log_stream_name = {instance_id}/PWM.log\n",
-                      "datetime_format = %Y-%m-%d %H:%M:%S\n",
-                      "time_zone = UTC\n",
-                      "[/var/log/ad-password-check-expire.log]\n",
-                      "file = /var/log/ad-password-check-expire.log\n",
-                      "log_group_name = ",
-                      {
-                        "Ref": "CloudWatchLogGroupName"
-                      },
-                      "\n",
-                      "log_stream_name = {instance_id}/ad-password-check-expire.log\n",
-                      "datetime_format = %Y-%m-%d %H:%M:%S.%f\n",
-                      "time_zone = UTC\n"
-                    ]
-                  ]
-                },
-                "mode": "000400",
-                "owner": "root",
-                "group": "root"
-              }
-            },
+          "cloudwatchagentsetup": {
             "commands": {
-              "10-wget-agentsetup": {
+              "10-get-agent": {
                 "command": {
                   "Fn::Join": [
                     "",
                     [
-                      "wget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py",
+                      "wget https://s3.amazonaws.com/amazoncloudwatch-agent/linux/amd64/latest/AmazonCloudWatchAgent.zip",
                       "\n"
                     ]
                   ]
                 }
               },
-              "11-wget-dependencies": {
+              "20-unpack-agent": {
                 "command": {
                   "Fn::Join": [
                     "",
                     [
-                      "wget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/AgentDependencies.tar.gz",
+                      "unzip AmazonCloudWatchAgent.zip -d /usr/local/bin",
                       "\n"
                     ]
                   ]
                 }
               },
-              "12-extract-dependencies": {
+              "30-install-agent": {
                 "command": {
                   "Fn::Join": [
                     "",
                     [
-                      "tar xvf AgentDependencies.tar.gz -C /usr/local/bin/",
+                      "cd /usr/local/bin && bash -xe /usr/local/bin/install.sh",
                       "\n"
                     ]
                   ]
                 }
               },
-              "13-install-agent": {
+              "40-enable-agent": {
                 "command": {
                   "Fn::Join": [
                     "",
                     [
-                      "python awslogs-agent-setup.py -n -r ",
+                      "systemctl enable amazon-cloudwatch-agent.service",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "50-start-agent": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "systemctl start amazon-cloudwatch-agent.service",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "60-get-conf": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "aws s3 cp s3://",
                       {
-                        "Ref": "AWS::Region"
+                        "Ref": "PWMConfigBucketName"
                       },
-                      " -c /usr/local/bin/pwmcloudwatchlog.conf --python=/bin/python --dependency-path=/usr/local/bin/AgentDependencies",
+                      "/18branch/pwmcloudwatchagent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json"
+                    ]
+                  ]
+                }
+              },
+              "61-chmod-conf": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "chmod 640 /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json",
                       "\n"
                     ]
                   ]
                 }
               },
-              "14-adjustforfipsmode": {
+              "62-chown-conf": {
                 "command": {
                   "Fn::Join": [
                     "",
                     [
-                      "sed -i 's|md5|sha256|' /var/awslogs/lib/python2.7/site-packages/cwlogs/push.py",
+                      "chown root:root /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json",
                       "\n"
+                    ]
+                  ]
+                }
+              },
+              "70-inject-custom-agent-config": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "/opt/aws/amazon-cloudwatch-agent/bin/",
+                      "amazon-cloudwatch-agent-ctl",
+                      " -a fetch-config -m ec2 -c",
+                      " file:/opt/aws/amazon-cloudwatch-agent/etc/",
+                      "amazon-cloudwatch-agent.json -s"
                     ]
                   ]
                 }
