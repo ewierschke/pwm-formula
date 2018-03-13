@@ -168,12 +168,6 @@
       "Type": "String",
       "Default": "CN=Users,DC=ad,DC=example,DC=com",
       "MinLength": "1"
-    },
-    "CloudWatchLogGroupName": {
-      "Description": "Name of the CloudWatch Log Group where to send logs",
-      "Type": "String",
-      "Default": "PWM18LogGroup",
-      "MinLength": "1"
     }
   },
   "Resources": {
@@ -248,23 +242,26 @@
         ]
       }
     },
-    "LogGroupAccess": {
+    "CloudWatchAgent": {
       "Type": "AWS::IAM::ManagedPolicy",
       "Properties": {
-        "Description": "Policy for PWM instance role to access appropriate Cloudwatch Log Group",
+        "Description": "CloudWatch Agent Server Policy for PWM instance role",
         "PolicyDocument": {
           "Version": "2012-10-17",
           "Statement": [
             {
               "Effect": "Allow",
               "Action": [
-                "logs:CreateLogGroup",
                 "logs:CreateLogStream",
+                "cloudwatch:PutMetricData",
+                "ec2:DescribeTags",
+                "logs:DescribeLogStreams",
+                "logs:CreateLogGroup",
                 "logs:PutLogEvents",
-                "logs:DescribeLogStreams"
+                "ssm:GetParameter"
               ],
               "Resource": [
-                "arn:aws:logs:*:*:*"
+                "*"
               ]
             }
           ]
