@@ -175,12 +175,6 @@
       "Type": "String",
       "Default": "CN=Users,DC=ad,DC=example,DC=com",
       "MinLength": "1"
-    },
-    "CloudWatchLogGroupName": {
-      "Description": "Name of the CloudWatch Log Group where to send logs",
-      "Type": "String",
-      "Default": "PWMLogGroup",
-      "MinLength": "1"
     }
   },
   "Resources": {
@@ -333,9 +327,6 @@
           },
           "ADOUPath": {
             "Ref": "ADOUPath"
-          },
-          "CloudWatchLogGroupName": {
-            "Ref": "CloudWatchLogGroupName"
           },
           "SecurityGroupIdPWMInstance": {
             "Fn::Join": [
