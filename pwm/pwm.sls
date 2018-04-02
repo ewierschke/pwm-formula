@@ -32,8 +32,9 @@ runtomcatservice:
   service.running:
     - name: tomcat
     - enable: True
+    - reload: True
 
-sleep 5:
+sleep 10:
   cmd.run
 
 /etc/httpd/conf.d/pwm.conf:
