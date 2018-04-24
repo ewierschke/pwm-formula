@@ -23,10 +23,8 @@ pkgremove:
       - ntp
       - ntpdate
 
-/usr/share/tomcat/webapps/ROOT.war:
-  file.managed:
-    - source: 'https://s3.amazonaws.com/app-chemistry/files/pwm18.war'
-    - source_hash: 'https://s3.amazonaws.com/app-chemistry/files/pwm18.war.sha1'
+aws s3 cp s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/files/pwm18.war /usr/share/tomcat/webapps/ROOT.war:
+  cmd.run
 
 runtomcatservice:
   service.running:
