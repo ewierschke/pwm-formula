@@ -621,7 +621,7 @@
                     ]
                   ]
                 },
-                "mode": "000700",
+                "mode": "000755",
                 "owner": "root",
                 "group": "root"
               },

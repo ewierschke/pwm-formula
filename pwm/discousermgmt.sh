@@ -11,11 +11,12 @@
 #    group members is required.
 #    This script is intended to be paired with the use of an SSHd
 #    AuthorizedKeysCommand setting to enable SSH key access.
-#    This script configures the created users to run any sudo commands anywhere 
-#    without password.
+#    This script configures the created users to be able to run only specific 
+#    sudo commands required for ServiceNow Discovery
+#    ref - https://docs.servicenow.com/bundle/kingston-it-operations-management/page/product/discovery/reference/r_SSHCredentialsForm.html#r_SSHCredentialsForm
 #
 #################################################################
-__ScriptName="usermgmt.sh"
+__ScriptName="discousermgmt.sh"
 
 log()
 {
@@ -72,26 +73,26 @@ then
 fi
 
 # Begin main script
-# If usermgmt wasn't previously executed to create lastimportsshusers.log, create blank file for future comparision
-if [ -e "/usr/local/bin/lastimportsshusers.log" ]
-   then echo "lastimportsshusers.log exists" > /dev/null
+# If usermgmt wasn't previously executed to create discolastimportsshusers.log, create blank file for future comparision
+if [ -e "/usr/local/bin/discolastimportsshusers.log" ]
+   then echo "discolastimportsshusers.log exists" > /dev/null
 else
-   touch /usr/local/bin/lastimportsshusers.log | echo "" > /usr/local/bin/lastimportsshusers.log | chmod 600 /usr/local/bin/lastimportsshusers.log
+   touch /usr/local/bin/discolastimportsshusers.log | echo "" > /usr/local/bin/discolastimportsshusers.log
 fi
 #query IAM and create file of current members of group
-aws iam get-group --group-name "${GROUP_NAME}" --query "Users[].[UserName]" --output text > /usr/local/bin/importsshusers.log 2>&1
+aws iam get-group --group-name "${GROUP_NAME}" --query "Users[].[UserName]" --output text > /usr/local/bin/discoimportsshusers.log 2>&1
 if [ $? -eq 255 ]; then
   log "${__ScriptName} aws cli failure - possible issue; EC2 Instance role not setup with proper credentials or policy"
 fi
 #create sorted files for use with comm
-sort < /usr/local/bin/lastimportsshusers.log > /usr/local/bin/lastimportsshusers.sorted.log
-sort < /usr/local/bin/importsshusers.log > /usr/local/bin/importsshusers.sorted.log
+sort < /usr/local/bin/discolastimportsshusers.log > /usr/local/bin/discolastimportsshusers.sorted.log
+sort < /usr/local/bin/importsshusers.log > /usr/local/bin/discoimportsshusers.sorted.log
 #create list of users to be imported that weren't already imported
-#create file sshuserstocreate from list of items in lastimportsshusers that aren't in lastimportsshusers
-comm -23 /usr/local/bin/importsshusers.sorted.log /usr/local/bin/lastimportsshusers.sorted.log > /usr/local/bin/sshuserstocreate.log
+#create file sshuserstocreate from list of items in discolastimportsshusers that aren't in discolastimportsshusers
+comm -23 /usr/local/bin/discoimportsshusers.sorted.log /usr/local/bin/discolastimportsshusers.sorted.log > /usr/local/bin/sshuserstocreate.log
 #create list of users to be deleted that no longer exist in IAM
-#create file sshuserstodelete from list of items in lastimportsshusers that aren't in lastimportsshusers
-comm -13 /usr/local/bin/importsshusers.sorted.log /usr/local/bin/lastimportsshusers.sorted.log > /usr/local/bin/sshuserstodelete.log
+#create file sshuserstodelete from list of items in discolastimportsshusers that aren't in discolastimportsshusers
+comm -13 /usr/local/bin/discoimportsshusers.sorted.log /usr/local/bin/discolastimportsshusers.sorted.log > /usr/local/bin/sshuserstodelete.log
 #create new users with locked password for ssh and add to sudoers.d folder
 while read User
 do
@@ -101,7 +102,14 @@ do
     /usr/sbin/adduser "$User"
     passwd -l "$User"
     if [ $? -ne 3 ]; then
-      echo "$User ALL=(ALL) NOPASSWD:ALL" > "/etc/sudoers.d/$User"
+    (
+      printf "%s ALL=(root) NOPASSWD: /usr/sbin/dmidecode\n" "$User"
+      printf "%s ALL=(root) NOPASSWD: /usr/sbin/lsof\n" "$User"
+      printf "%s ALL=(root) NOPASSWD: /usr/sbin/fdisk -l\n" "$User"
+      printf "%s ALL=(root) NOPASSWD: /usr/sbin/dmsetup table *\n" "$User"
+      printf "%s ALL=(root) NOPASSWD: /usr/sbin/dmsetup ls\n" "$User"
+      printf "%s ALL=(root) NOPASSWD: /usr/sbin/multipath -ll\n" "$User"
+    ) > "/etc/sudoers.d/$User"
       log "User $User created by ${__ScriptName}"
     fi
   fi
@@ -117,9 +125,9 @@ do
 done < /usr/local/bin/sshuserstodelete.log
 shred -u /usr/local/bin/sshuserstodelete.log
 shred -u /usr/local/bin/sshuserstocreate.log
-shred -u /usr/local/bin/importsshusers.sorted.log
-shred -u /usr/local/bin/lastimportsshusers.sorted.log
+shred -u /usr/local/bin/discoimportsshusers.sorted.log
+shred -u /usr/local/bin/discolastimportsshusers.sorted.log
 #get ready for next run
-#move current lastimportsshusers list to lastimportsshusers list
-mv /usr/local/bin/importsshusers.log /usr/local/bin/lastimportsshusers.log
-chmod 600 /usr/local/bin/lastimportsshusers.log
+#move current discolastimportsshusers list to discolastimportsshusers list
+mv /usr/local/bin/discoimportsshusers.log /usr/local/bin/discolastimportsshusers.log
+chmod 600 /usr/local/bin/discolastimportsshusers.log
