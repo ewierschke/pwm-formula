@@ -75,19 +75,21 @@ else
    touch /usr/local/bin/lastimportsshusers.log | echo "" > /usr/local/bin/lastimportsshusers.log | chmod 600 /usr/local/bin/lastimportsshusers.log
 fi
 #query IAM and create file of current members of group
-aws iam get-group --group-name "${GROUP_NAME}" --query "Users[].[UserName]" --output text > /usr/local/bin/lastimportsshusers.log 2>&1
+aws iam get-group --group-name "${GROUP_NAME}" --query "Users[].[UserName]" --output text > /usr/local/bin/importsshusers.log 2>&1
 if [ $? -eq 255 ]; then
   log "${__ScriptName} aws cli failure - possible issue; EC2 Instance role not setup with proper credentials or policy"
 fi
 #create sorted files for use with comm
 sort < /usr/local/bin/lastimportsshusers.log > /usr/local/bin/lastimportsshusers.sorted.log
-sort < /usr/local/bin/lastimportsshusers.log > /usr/local/bin/lastimportsshusers.sorted.log
+chmod 600 /usr/local/bin/lastimportsshusers.sorted.log
+sort < /usr/local/bin/importsshusers.log > /usr/local/bin/importsshusers.sorted.log
+chmod 600 /usr/local/bin/importsshusers.sorted.log
 #create list of users to be imported that weren't already imported
 #create file sshuserstocreate from list of items in lastimportsshusers that aren't in lastimportsshusers
-comm -23 /usr/local/bin/lastimportsshusers.sorted.log /usr/local/bin/lastimportsshusers.sorted.log > /usr/local/bin/sshuserstocreate.log
+comm -23 /usr/local/bin/importsshusers.sorted.log /usr/local/bin/lastimportsshusers.sorted.log > /usr/local/bin/sshuserstocreate.log
 #create list of users to be deleted that no longer exist in IAM
 #create file sshuserstodelete from list of items in lastimportsshusers that aren't in lastimportsshusers
-comm -13 /usr/local/bin/lastimportsshusers.sorted.log /usr/local/bin/lastimportsshusers.sorted.log > /usr/local/bin/sshuserstodelete.log
+comm -13 /usr/local/bin/importsshusers.sorted.log /usr/local/bin/lastimportsshusers.sorted.log > /usr/local/bin/sshuserstodelete.log
 #create new users with locked password for ssh and add to sudoers.d folder
 while read User
 do
@@ -113,4 +115,4 @@ do
 done < /usr/local/bin/sshuserstodelete.log
 #get ready for next run
 #move current lastimportsshusers list to lastimportsshusers list
-mv /usr/local/bin/lastimportsshusers.log /usr/local/bin/lastimportsshusers.log
+mv /usr/local/bin/importsshusers.log /usr/local/bin/lastimportsshusers.log
