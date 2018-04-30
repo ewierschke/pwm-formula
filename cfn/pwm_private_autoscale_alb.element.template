@@ -621,7 +621,7 @@
                     ]
                   ]
                 },
-                "mode": "000755",
+                "mode": "000700",
                 "owner": "root",
                 "group": "root"
               },
@@ -746,6 +746,14 @@
               "/usr/local/bin/oupath": {
                 "content": {
                   "Ref": "ADOUPath"
+                },
+                "mode": "000600",
+                "owner": "root",
+                "group": "root"
+              },
+              "/usr/local/bin/groupname": {
+                "content": {
+                  "Ref": "IAMGroup"
                 },
                 "mode": "000600",
                 "owner": "root",
@@ -882,7 +890,7 @@
                   "Fn::Join": [
                     "",
                     [
-                      "chmod 755 /usr/local/bin/usermgmt.sh & chown root /usr/local/bin/usermgmt.sh & chgrp root /usr/local/bin/usermgmt.sh",
+                      "chmod 700 /usr/local/bin/usermgmt.sh & chown root /usr/local/bin/usermgmt.sh & chgrp root /usr/local/bin/usermgmt.sh",
                       "\n"
                     ]
                   ]
@@ -906,20 +914,6 @@
                     [
                       "sed -i 's:#AuthorizedKeysCommandUser nobody:AuthorizedKeysCommandUser nobody:g' /etc/ssh/sshd_config",
                       "\n"
-                    ]
-                  ]
-                }
-              },
-              "54-create_groupnamefile": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "echo ",
-                      {
-                        "Ref": "IAMGroup"
-                      },
-                      " > /usr/local/bin/groupname\n"
                     ]
                   ]
                 }
