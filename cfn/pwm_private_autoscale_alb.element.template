@@ -643,7 +643,7 @@
                 "content": {
                   "Ref": "PWMConfigBucketName"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -651,7 +651,7 @@
                 "content": {
                   "Ref": "FriendlyEnvironmentName"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -659,7 +659,7 @@
                 "content": {
                   "Ref": "ResourceDNSDomainName"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -667,7 +667,7 @@
                 "content": {
                   "Ref": "MailFromDNSDomainName"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -675,7 +675,7 @@
                 "content": {
                   "Ref": "NewUserMailToEmailAddress"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -683,7 +683,7 @@
                 "content": {
                   "Ref": "PWMPublicURL"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -691,7 +691,7 @@
                 "content": {
                   "Ref": "HelpdeskPublicURL"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -699,7 +699,7 @@
                 "content": {
                   "Ref": "HelpdeskEmailAddress"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -707,7 +707,7 @@
                 "content": {
                   "Ref": "MailFromEmailAddress"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -715,7 +715,7 @@
                 "content": {
                   "Ref": "ADSvcAccountUPN"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -723,7 +723,7 @@
                 "content": {
                   "Ref": "ADSvcAccountPassword"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -731,7 +731,7 @@
                 "content": {
                   "Ref": "ADHostname"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -739,7 +739,7 @@
                 "content": {
                   "Ref": "AdminReportMailToEmailAddress"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -747,7 +747,7 @@
                 "content": {
                   "Ref": "ADOUPath"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               }
