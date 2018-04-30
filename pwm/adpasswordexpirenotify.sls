@@ -31,7 +31,7 @@ createdailynotifycronjob:
 dailynotifycronmode:
   file.managed:
     - name: /etc/cron.d/ad-password-expire-notify
-    - mode: 644
+    - mode: 600
     - replace: False
 
 testrunmode:
