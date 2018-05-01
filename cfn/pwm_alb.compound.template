@@ -80,8 +80,13 @@
       "MinLength": "1",
       "Default": "1"
     },
-    "IAMGroup": {
-      "Description": "ID of the IAM group to be granted SSH access to PWM instances",
+    "AdminIAMGroup": {
+      "Description": "ID of the IAM group to be granted SSH Admin access to PWM instances",
+      "Type": "String"
+    },
+    "DiscoIAMGroup": {
+      "Default": "",
+      "Description": "ID of the IAM group to be granted SSH Discovery access to PWM instances",
       "Type": "String"
     },
     "InstanceType": {
@@ -266,8 +271,11 @@
           "DesiredCapacity": {
             "Ref": "DesiredCapacity"
           },
-          "IAMGroup": {
-            "Ref": "IAMGroup"
+          "AdminIAMGroup": {
+            "Ref": "AdminIAMGroup"
+          },
+          "DiscoIAMGroup": {
+            "Ref": "DiscoIAMGroup"
           },
           "PWMConfigBucketName": {
             "Ref": "PWMConfigBucketName"

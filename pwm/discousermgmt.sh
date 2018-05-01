@@ -86,7 +86,7 @@ if [ $? -eq 255 ]; then
 fi
 #create sorted files for use with comm
 sort < /usr/local/bin/discolastimportsshusers.log > /usr/local/bin/discolastimportsshusers.sorted.log
-sort < /usr/local/bin/importsshusers.log > /usr/local/bin/discoimportsshusers.sorted.log
+sort < /usr/local/bin/discoimportsshusers.log > /usr/local/bin/discoimportsshusers.sorted.log
 #create list of users to be imported that weren't already imported
 #create file sshuserstocreate from list of items in discolastimportsshusers that aren't in discolastimportsshusers
 comm -23 /usr/local/bin/discoimportsshusers.sorted.log /usr/local/bin/discolastimportsshusers.sorted.log > /usr/local/bin/sshuserstocreate.log
