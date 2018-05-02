@@ -11,9 +11,8 @@
 #    group members is required.
 #    This script is intended to be paired with the use of an SSHd
 #    AuthorizedKeysCommand setting to enable SSH key access.
-#    This script configures the created users to be able to run only specific 
-#    sudo commands required for ServiceNow Discovery
-#    ref - https://docs.servicenow.com/bundle/kingston-it-operations-management/page/product/discovery/reference/r_SSHCredentialsForm.html#r_SSHCredentialsForm
+#    This script configures the created users to run any sudo commands anywhere 
+#    without password.
 #
 #################################################################
 Type="admin"

@@ -30,7 +30,9 @@ mailxinstall:
         then
              echo "prior-newusers.log Exists" > /dev/null
         else
-             touch /usr/local/bin/prior-newusers.log | echo "" > /usr/local/bin/prior-newusers.log
+             touch /usr/local/bin/prior-newusers.log
+             echo "" > /usr/local/bin/prior-newusers.log
+             chmod 600 /usr/local/bin/prior-newusers.log
         fi
         
         #compare prior newusers to current newusers
