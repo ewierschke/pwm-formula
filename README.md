@@ -1,5 +1,6 @@
 # pwm-formula
 ## Salt formula for deploying PWM
+https://github.com/pwm-project/pwm
 
 when using with AD requires schema extension and dsacls adjustment
 - details coming

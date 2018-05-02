@@ -1,5 +1,19 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
+  "Conditions": {
+    "ConfigureDiscovery": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "DiscoIAMGroup"
+            },
+            ""
+          ]
+        }
+      ]
+    }
+  },
   "Description": "This template deploys a PWM instance from launch config in an autoscale group behind an ALB using watchmaker.",
   "Parameters": {
     "KeyPairName": {
@@ -88,8 +102,13 @@
       "Description": "ID of the security group for PWM instances",
       "Type": "AWS::EC2::SecurityGroup::Id"
     },
-    "IAMGroup": {
-      "Description": "ID of the IAM group to be granted SSH access to PWM instances",
+    "AdminIAMGroup": {
+      "Description": "ID of the IAM group to be granted SSH Admin access to PWM instances",
+      "Type": "String"
+    },
+    "DiscoIAMGroup": {
+      "Default": "",
+      "Description": "ID of the IAM group to be granted SSH Discovery access to PWM instances",
       "Type": "String"
     },
     "PWMConfigBucketName": {
@@ -268,10 +287,10 @@
         ]
       }
     },
-    "AllowIAMgroupSSHKeyAccess": {
+    "AllowAdminIAMGroupSSHKeyAccess": {
       "Type": "AWS::IAM::Policy",
       "Properties": {
-        "PolicyName": "AllowIAMgroupSSHKeyAccess",
+        "PolicyName": "AllowAdminIAMGroupSSHKeyAccess",
         "PolicyDocument": {
           "Version": "2012-10-17",
           "Statement": [
@@ -291,7 +310,68 @@
                       },
                       ":group/",
                       {
-                        "Ref": "IAMGroup"
+                        "Ref": "AdminIAMGroup"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "iam:ListSSHPublicKeys",
+                "iam:GetSSHPublicKey"
+              ],
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:iam::",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":user/*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "Roles": [
+          {
+            "Ref": "PWMInstanceRole"
+          }
+        ]
+      }
+    },
+    "AllowDiscoIAMGroupSSHKeyAccess": {
+      "Condition": "ConfigureDiscovery",
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "AllowDiscoIAMGroupSSHKeyAccess",
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "iam:GetGroup"
+              ],
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:iam::",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":group/",
+                      {
+                        "Ref": "DiscoIAMGroup"
                       }
                     ]
                   ]
@@ -383,13 +463,23 @@
         "AWS::CloudFormation::Init": {
           "configSets": {
             "Install": [
-              "setup",
+              "cfnsetup",
               "bootstrap",
+              "adminusersetup",
+              {
+                "Fn::If": [
+                  "ConfigureDiscovery",
+                  "discousersetup",
+                  {
+                    "Ref": "AWS::NoValue"
+                  }
+                ]
+              },
               "cloudwatchagentsetup",
               "finalize"
             ]
           },
-          "setup": {
+          "cfnsetup": {
             "files": {
               "/etc/cfn/cfn-hup.conf": {
                 "content": {
@@ -454,6 +544,176 @@
                   "files": [
                     "/etc/cfn/cfn-hup.conf",
                     "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+                  ]
+                }
+              }
+            }
+          },
+          "adminusersetup": {
+            "files": {
+              "/usr/local/bin/authorized_keys_command.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash -e",
+                      "\n",
+                      "if [ -z \"$1\" ]; then",
+                      "\n",
+                      "  exit 1",
+                      "\n",
+                      "fi",
+                      "\n",
+                      "aws iam list-ssh-public-keys --user-name \"$1\" --query \"SSHPublicKeys[?Status == 'Active'].[SSHPublicKeyId]\" --output text | while read KeyId; do",
+                      "\n",
+                      "  aws iam get-ssh-public-key --user-name \"$1\" --ssh-public-key-id \"$KeyId\" --encoding SSH --query \"SSHPublicKey.SSHPublicKeyBody\" --output text",
+                      "\n",
+                      "done",
+                      "\n"
+                    ]
+                  ]
+                },
+                "mode": "000755",
+                "owner": "root",
+                "group": "root"
+              },
+              "/etc/cron.d/adminusermgmt": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "*/8 * * * * root /usr/local/bin/adminusermgmt.sh -G $(cat /usr/local/bin/admingroupname)",
+                      "\n"
+                    ]
+                  ]
+                },
+                "mode": "000644",
+                "owner": "root",
+                "group": "root"
+              },
+              "/usr/local/bin/admingroupname": {
+                "content": {
+                  "Ref": "AdminIAMGroup"
+                },
+                "mode": "000600",
+                "owner": "root",
+                "group": "root"
+              }
+            },
+            "commands": {
+              "10-cp_adminsshusermgmt": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "cp /srv/salt/formulas/pwm-formula/pwm/adminusermgmt.sh /usr/local/bin/adminusermgmt.sh",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "20-ch_adminsshusermgmt": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "chmod 700 /usr/local/bin/adminusermgmt.sh & chown root /usr/local/bin/adminusermgmt.sh & chgrp root /usr/local/bin/adminusermgmt.sh",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "30-configure_sshd_command": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "sed -i 's:#AuthorizedKeysCommand none:AuthorizedKeysCommand /usr/local/bin/authorized_keys_command.sh:g' /etc/ssh/sshd_config",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "40-configure_sshd_commanduser": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "sed -i 's:#AuthorizedKeysCommandUser nobody:AuthorizedKeysCommandUser nobody:g' /etc/ssh/sshd_config",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "50-runadminsshusermgmt": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "/usr/local/bin/adminusermgmt.sh -G $(cat /usr/local/bin/admingroupname)",
+                      "\n"
+                    ]
+                  ]
+                }
+              }
+            }
+          },
+          "discousersetup": {
+            "files": {
+              "/etc/cron.d/discousermgmt": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "*/8 * * * * root /usr/local/bin/discousermgmt.sh -G $(cat /usr/local/bin/discogroupname)",
+                      "\n"
+                    ]
+                  ]
+                },
+                "mode": "000644",
+                "owner": "root",
+                "group": "root"
+              },
+              "/usr/local/bin/discogroupname": {
+                "content": {
+                  "Ref": "DiscoIAMGroup"
+                },
+                "mode": "000600",
+                "owner": "root",
+                "group": "root"
+              }
+            },
+            "commands": {
+              "10-cp_discosshusermgmt": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "cp /srv/salt/formulas/pwm-formula/pwm/discousermgmt.sh /usr/local/bin/discousermgmt.sh",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "20-ch_discosshusermgmt": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "chmod 700 /usr/local/bin/discousermgmt.sh & chown root /usr/local/bin/discousermgmt.sh & chgrp root /usr/local/bin/discousermgmt.sh",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "30-rundiscosshusermgmt": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "/usr/local/bin/discousermgmt.sh -G $(cat /usr/local/bin/discogroupname)",
+                      "\n"
+                    ]
                   ]
                 }
               }
@@ -594,51 +854,11 @@
                 "owner": "root",
                 "group": "root"
               },
-              "/usr/local/bin/authorized_keys_command.sh": {
-                "content": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "#!/bin/bash -e",
-                      "\n",
-                      "if [ -z \"$1\" ]; then",
-                      "\n",
-                      "  exit 1",
-                      "\n",
-                      "fi",
-                      "\n",
-                      "aws iam list-ssh-public-keys --user-name \"$1\" --query \"SSHPublicKeys[?Status == 'Active'].[SSHPublicKeyId]\" --output text | while read KeyId; do",
-                      "\n",
-                      "  aws iam get-ssh-public-key --user-name \"$1\" --ssh-public-key-id \"$KeyId\" --encoding SSH --query \"SSHPublicKey.SSHPublicKeyBody\" --output text",
-                      "\n",
-                      "done",
-                      "\n"
-                    ]
-                  ]
-                },
-                "mode": "000755",
-                "owner": "root",
-                "group": "root"
-              },
-              "/etc/cron.d/usermgmt": {
-                "content": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "*/8 * * * * root /usr/local/bin/usermgmt.sh -G $(cat /usr/local/bin/groupname)",
-                      "\n"
-                    ]
-                  ]
-                },
-                "mode": "000644",
-                "owner": "root",
-                "group": "root"
-              },
               "/usr/local/bin/configbucketname": {
                 "content": {
                   "Ref": "PWMConfigBucketName"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -646,7 +866,7 @@
                 "content": {
                   "Ref": "FriendlyEnvironmentName"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -654,7 +874,7 @@
                 "content": {
                   "Ref": "ResourceDNSDomainName"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -662,7 +882,7 @@
                 "content": {
                   "Ref": "MailFromDNSDomainName"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -670,7 +890,7 @@
                 "content": {
                   "Ref": "NewUserMailToEmailAddress"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -678,7 +898,7 @@
                 "content": {
                   "Ref": "PWMPublicURL"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -686,7 +906,7 @@
                 "content": {
                   "Ref": "HelpdeskPublicURL"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -694,7 +914,7 @@
                 "content": {
                   "Ref": "HelpdeskEmailAddress"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -702,7 +922,7 @@
                 "content": {
                   "Ref": "MailFromEmailAddress"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -710,7 +930,7 @@
                 "content": {
                   "Ref": "ADSvcAccountUPN"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -718,7 +938,7 @@
                 "content": {
                   "Ref": "ADSvcAccountPassword"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -726,7 +946,7 @@
                 "content": {
                   "Ref": "ADHostname"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -734,7 +954,7 @@
                 "content": {
                   "Ref": "AdminReportMailToEmailAddress"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               },
@@ -742,7 +962,7 @@
                 "content": {
                   "Ref": "ADOUPath"
                 },
-                "mode": "000644",
+                "mode": "000600",
                 "owner": "root",
                 "group": "root"
               }
@@ -856,75 +1076,6 @@
                     "",
                     [
                       "echo 'export CONFIGBUCKETNAME=$(cat /usr/local/bin/configbucketname)' >> /root/.bashrc & export CONFIGBUCKETNAME=$(cat /usr/local/bin/configbucketname)",
-                      "\n"
-                    ]
-                  ]
-                }
-              },
-              "50-cp_sshusermgmt": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "cp /srv/salt/formulas/pwm-formula/pwm/usermgmt.sh /usr/local/bin/usermgmt.sh",
-                      "\n"
-                    ]
-                  ]
-                }
-              },
-              "51-ch_sshusermgmt": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "chmod 755 /usr/local/bin/usermgmt.sh & chown root /usr/local/bin/usermgmt.sh & chgrp root /usr/local/bin/usermgmt.sh",
-                      "\n"
-                    ]
-                  ]
-                }
-              },
-              "52-configure_sshd_command": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "sed -i 's:#AuthorizedKeysCommand none:AuthorizedKeysCommand /usr/local/bin/authorized_keys_command.sh:g' /etc/ssh/sshd_config",
-                      "\n"
-                    ]
-                  ]
-                }
-              },
-              "53-configure_sshd_commanduser": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "sed -i 's:#AuthorizedKeysCommandUser nobody:AuthorizedKeysCommandUser nobody:g' /etc/ssh/sshd_config",
-                      "\n"
-                    ]
-                  ]
-                }
-              },
-              "54-create_groupnamefile": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "echo ",
-                      {
-                        "Ref": "IAMGroup"
-                      },
-                      " > /usr/local/bin/groupname\n"
-                    ]
-                  ]
-                }
-              },
-              "55-sshusermgmt": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "/usr/local/bin/usermgmt.sh -G $(cat /usr/local/bin/groupname)",
                       "\n"
                     ]
                   ]

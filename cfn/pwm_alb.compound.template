@@ -1,5 +1,19 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
+  "Conditions": {
+    "UseCMDBSecGroup": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "CMDBSecurityGroup"
+            },
+            ""
+          ]
+        }
+      ]
+    }
+  },
   "Description": "This template creates an instance of PWM for account management, fronted by an Application Load Balancer.",
   "Parameters": {
     "VPC": {
@@ -80,8 +94,13 @@
       "MinLength": "1",
       "Default": "1"
     },
-    "IAMGroup": {
-      "Description": "ID of the IAM group to be granted SSH access to PWM instances",
+    "AdminIAMGroup": {
+      "Description": "ID of the IAM group to be granted SSH Admin access to PWM instances",
+      "Type": "String"
+    },
+    "DiscoIAMGroup": {
+      "Default": "",
+      "Description": "ID of the IAM group to be granted SSH Discovery access to PWM instances",
       "Type": "String"
     },
     "InstanceType": {
@@ -175,6 +194,12 @@
       "Type": "String",
       "Default": "CN=Users,DC=ad,DC=example,DC=com",
       "MinLength": "1"
+    },
+    "CMDBSecurityGroup": {
+      "AllowedPattern": "^$|^sg-(?=(?:.{8}|.{17})$)[a-z0-9]*$",
+      "Default": "",
+      "Description": "Security Group ID of CMDB system from the peered account (Example: sg-12345678).",
+      "Type": "String"
     }
   },
   "Resources": {
@@ -185,6 +210,16 @@
         "Parameters": {
           "VPC": {
             "Ref": "VPC"
+          },
+          "CMDBSecurityGroup": {
+            "Ref": "CMDBSecurityGroup"
+          },
+          "ConnectCMDB": {
+            "Fn::If": [
+              "UseCMDBSecGroup",
+              "true",
+              "false"
+            ]
           },
           "UseELB": "true"
         }
@@ -266,8 +301,11 @@
           "DesiredCapacity": {
             "Ref": "DesiredCapacity"
           },
-          "IAMGroup": {
-            "Ref": "IAMGroup"
+          "AdminIAMGroup": {
+            "Ref": "AdminIAMGroup"
+          },
+          "DiscoIAMGroup": {
+            "Ref": "DiscoIAMGroup"
           },
           "PWMConfigBucketName": {
             "Ref": "PWMConfigBucketName"

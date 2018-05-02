@@ -11,6 +11,21 @@
         "false"
       ]
     },
+    "ConnectCMDB": {
+      "Description": "Set to true if wishing to allow port 22 connections from component security group; otherwise set to false",
+      "Type": "String",
+      "Default": "false",
+      "AllowedValues": [
+        "true",
+        "false"
+      ]
+    },
+    "CMDBSecurityGroup": {
+      "AllowedPattern": "^$|^sg-(?=(?:.{8}|.{17})$)[a-z0-9]*$",
+      "Default": "",
+      "Description": "Security Group id of CMDB system from the peered account (Example: sg-12345678).",
+      "Type": "String"
+    },
     "VPC": {
       "Description": "VPC ID",
       "Type": "AWS::EC2::VPC::Id"
@@ -29,6 +44,22 @@
       "Fn::Equals": [
         {
           "Ref": "UseELB"
+        },
+        "false"
+      ]
+    },
+    "ConnectCMDB": {
+      "Fn::Equals": [
+        {
+          "Ref": "ConnectCMDB"
+        },
+        "true"
+      ]
+    },
+    "NoConnectCMDB": {
+      "Fn::Equals": [
+        {
+          "Ref": "ConnectCMDB"
         },
         "false"
       ]
@@ -72,6 +103,21 @@
         "ToPort": "80",
         "SourceSecurityGroupId": {
           "Ref": "PWMElbSecurityGroup"
+        }
+      }
+    },
+    "CMDBToPWMIngressTcp22": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Condition": "ConnectCMDB",
+      "Properties": {
+        "GroupId": {
+          "Ref": "PWMSecurityGroup"
+        },
+        "IpProtocol": "tcp",
+        "FromPort": "22",
+        "ToPort": "22",
+        "SourceSecurityGroupId": {
+          "Ref": "CMDBSecurityGroup"
         }
       }
     },
