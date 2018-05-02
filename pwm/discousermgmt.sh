@@ -16,7 +16,8 @@
 #    ref - https://docs.servicenow.com/bundle/kingston-it-operations-management/page/product/discovery/reference/r_SSHCredentialsForm.html#r_SSHCredentialsForm
 #
 #################################################################
-__ScriptName="discousermgmt.sh"
+Type="disco"
+__ScriptName="${Type}usermgmt.sh"
 
 log()
 {
@@ -73,26 +74,32 @@ then
 fi
 
 # Begin main script
-# If usermgmt wasn't previously executed to create discolastimportsshusers.log, create blank file for future comparision
-if [ -e "/usr/local/bin/discolastimportsshusers.log" ]
-   then echo "discolastimportsshusers.log exists" > /dev/null
+#check if aws cli is installed
+if ! [ "$(command -v aws)" ]; then
+  die "ERROR: aws cli may not be installed"
+fi
+# If usermgmt wasn't previously executed to create ${Type}lastimportsshusers.log, create blank file for future comparision
+if [ -e "/usr/local/bin/${Type}lastimportsshusers.log" ]
+   then echo "${Type}lastimportsshusers.log exists" > /dev/null
 else
-   touch /usr/local/bin/discolastimportsshusers.log | echo "" > /usr/local/bin/discolastimportsshusers.log
+   touch /usr/local/bin/"${Type}"lastimportsshusers.log 
+   echo "" > /usr/local/bin/"${Type}"lastimportsshusers.log
 fi
 #query IAM and create file of current members of group
-aws iam get-group --group-name "${GROUP_NAME}" --query "Users[].[UserName]" --output text > /usr/local/bin/discoimportsshusers.log 2>&1
+aws iam get-group --group-name "${GROUP_NAME}" --query "Users[].[UserName]" --output text > /usr/local/bin/"${Type}"importsshusers.log 2>&1
+chmod 600 /usr/local/bin/"${Type}"importsshusers.log
 if [ $? -eq 255 ]; then
-  log "${__ScriptName} aws cli failure - possible issue; EC2 Instance role not setup with proper credentials or policy"
+  die "${__ScriptName} aws cli failure - possible issue; cli configuration or EC2 Instance role not setup with proper credentials or policy"
 fi
 #create sorted files for use with comm
-sort < /usr/local/bin/discolastimportsshusers.log > /usr/local/bin/discolastimportsshusers.sorted.log
-sort < /usr/local/bin/discoimportsshusers.log > /usr/local/bin/discoimportsshusers.sorted.log
+sort < /usr/local/bin/"${Type}"lastimportsshusers.log > /usr/local/bin/"${Type}"lastimportsshusers.sorted.log
+sort < /usr/local/bin/"${Type}"importsshusers.log > /usr/local/bin/"${Type}"importsshusers.sorted.log
 #create list of users to be imported that weren't already imported
-#create file sshuserstocreate from list of items in discolastimportsshusers that aren't in discolastimportsshusers
-comm -23 /usr/local/bin/discoimportsshusers.sorted.log /usr/local/bin/discolastimportsshusers.sorted.log > /usr/local/bin/sshuserstocreate.log
-#create list of users to be deleted that no longer exist in IAM
+#create file sshuserstocreate from list of items in ${Type}lastimportsshusers that aren't in ${Type}lastimportsshusers
+comm -23 /usr/local/bin/"${Type}"importsshusers.sorted.log /usr/local/bin/"${Type}"lastimportsshusers.sorted.log > /usr/local/bin/"${Type}"sshuserstocreate.log
+#create list of users to be deleted that no longer exist in IAM group
 #create file sshuserstodelete from list of items in discolastimportsshusers that aren't in discolastimportsshusers
-comm -13 /usr/local/bin/discoimportsshusers.sorted.log /usr/local/bin/discolastimportsshusers.sorted.log > /usr/local/bin/sshuserstodelete.log
+comm -13 /usr/local/bin/"${Type}"importsshusers.sorted.log /usr/local/bin/"${Type}"lastimportsshusers.sorted.log > /usr/local/bin/"${Type}"sshuserstodelete.log
 #create new users with locked password for ssh and add to sudoers.d folder
 while read User
 do
@@ -113,7 +120,7 @@ do
       log "User $User created by ${__ScriptName}"
     fi
   fi
-done < /usr/local/bin/sshuserstocreate.log
+done < /usr/local/bin/"${Type}"sshuserstocreate.log
 #delete users not in IAM group
 while read User
 do
@@ -122,12 +129,12 @@ do
       rm /etc/suoders.d/"$User"
       log "User $User deleted by ${__ScriptName}"
     fi
-done < /usr/local/bin/sshuserstodelete.log
-shred -u /usr/local/bin/sshuserstodelete.log
-shred -u /usr/local/bin/sshuserstocreate.log
-shred -u /usr/local/bin/discoimportsshusers.sorted.log
-shred -u /usr/local/bin/discolastimportsshusers.sorted.log
+done < /usr/local/bin/"${Type}"sshuserstodelete.log
+shred -u /usr/local/bin/"${Type}"sshuserstodelete.log
+shred -u /usr/local/bin/"${Type}"sshuserstocreate.log
+shred -u /usr/local/bin/"${Type}"importsshusers.sorted.log
+shred -u /usr/local/bin/"${Type}"lastimportsshusers.sorted.log
 #get ready for next run
-#move current discolastimportsshusers list to discolastimportsshusers list
-mv /usr/local/bin/discoimportsshusers.log /usr/local/bin/discolastimportsshusers.log
-chmod 600 /usr/local/bin/discolastimportsshusers.log
+#move current ${Type}lastimportsshusers list to ${Type}lastimportsshusers list
+mv /usr/local/bin/"${Type}"importsshusers.log /usr/local/bin/"${Type}"lastimportsshusers.log
+chmod 600 /usr/local/bin/"${Type}"lastimportsshusers.log
