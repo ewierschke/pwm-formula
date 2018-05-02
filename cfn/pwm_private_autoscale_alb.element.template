@@ -582,12 +582,12 @@
                 "owner": "root",
                 "group": "root"
               },
-              "/etc/cron.d/usermgmt": {
+              "/etc/cron.d/adminusermgmt": {
                 "content": {
                   "Fn::Join": [
                     "",
                     [
-                      "*/8 * * * * root /usr/local/bin/usermgmt.sh -G $(cat /usr/local/bin/admingroupname)",
+                      "*/8 * * * * root /usr/local/bin/adminusermgmt.sh -G $(cat /usr/local/bin/admingroupname)",
                       "\n"
                     ]
                   ]
@@ -606,23 +606,23 @@
               }
             },
             "commands": {
-              "10-cp_sshusermgmt": {
+              "10-cp_adminsshusermgmt": {
                 "command": {
                   "Fn::Join": [
                     "",
                     [
-                      "cp /srv/salt/formulas/pwm-formula/pwm/usermgmt.sh /usr/local/bin/usermgmt.sh",
+                      "cp /srv/salt/formulas/pwm-formula/pwm/adminusermgmt.sh /usr/local/bin/adminusermgmt.sh",
                       "\n"
                     ]
                   ]
                 }
               },
-              "20-ch_sshusermgmt": {
+              "20-ch_adminsshusermgmt": {
                 "command": {
                   "Fn::Join": [
                     "",
                     [
-                      "chmod 700 /usr/local/bin/usermgmt.sh & chown root /usr/local/bin/usermgmt.sh & chgrp root /usr/local/bin/usermgmt.sh",
+                      "chmod 700 /usr/local/bin/adminusermgmt.sh & chown root /usr/local/bin/adminusermgmt.sh & chgrp root /usr/local/bin/adminusermgmt.sh",
                       "\n"
                     ]
                   ]
@@ -650,12 +650,12 @@
                   ]
                 }
               },
-              "50-sshusermgmt": {
+              "50-runadminsshusermgmt": {
                 "command": {
                   "Fn::Join": [
                     "",
                     [
-                      "/usr/local/bin/usermgmt.sh -G $(cat /usr/local/bin/admingroupname)",
+                      "/usr/local/bin/adminusermgmt.sh -G $(cat /usr/local/bin/admingroupname)",
                       "\n"
                     ]
                   ]
@@ -689,7 +689,7 @@
               }
             },
             "commands": {
-              "10-cp_sshusermgmt": {
+              "10-cp_discosshusermgmt": {
                 "command": {
                   "Fn::Join": [
                     "",
@@ -700,7 +700,7 @@
                   ]
                 }
               },
-              "20-ch_sshusermgmt": {
+              "20-ch_discosshusermgmt": {
                 "command": {
                   "Fn::Join": [
                     "",
@@ -711,7 +711,7 @@
                   ]
                 }
               },
-              "30-sshusermgmt": {
+              "30-rundiscosshusermgmt": {
                 "command": {
                   "Fn::Join": [
                     "",

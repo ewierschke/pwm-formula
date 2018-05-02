@@ -16,7 +16,7 @@
 #    ref - https://docs.servicenow.com/bundle/kingston-it-operations-management/page/product/discovery/reference/r_SSHCredentialsForm.html#r_SSHCredentialsForm
 #
 #################################################################
-Type="disco"
+Type="admin"
 __ScriptName="${Type}usermgmt.sh"
 
 log()
@@ -109,14 +109,7 @@ do
     /usr/sbin/adduser "$User"
     passwd -l "$User"
     if [ $? -ne 3 ]; then
-    (
-      printf "%s ALL=(root) NOPASSWD: /usr/sbin/dmidecode\n" "$User"
-      printf "%s ALL=(root) NOPASSWD: /usr/sbin/lsof\n" "$User"
-      printf "%s ALL=(root) NOPASSWD: /usr/sbin/fdisk -l\n" "$User"
-      printf "%s ALL=(root) NOPASSWD: /usr/sbin/dmsetup table *\n" "$User"
-      printf "%s ALL=(root) NOPASSWD: /usr/sbin/dmsetup ls\n" "$User"
-      printf "%s ALL=(root) NOPASSWD: /usr/sbin/multipath -ll\n" "$User"
-    ) > "/etc/sudoers.d/$User"
+      echo "$User ALL=(ALL) NOPASSWD:ALL" > "/etc/sudoers.d/$User"
       log "User $User created by ${__ScriptName}"
     fi
   fi
