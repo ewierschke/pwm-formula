@@ -9,10 +9,17 @@ pwmconfowner:
     - name: /usr/share/tomcat/webapps/ROOT/WEB-INF/PwmConfiguration.xml
     - user: tomcat
     - group: tomcat
+    - mode: 600
     - replace: False
 
 aws s3 cp s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/sasl_passwd /etc/postfix/sasl_passwd:
   cmd.run
+
+saslpasswdchmod:
+  file.managed:
+    - name: /etc/postfix/sasl_passwd
+    - mode: 600
+    - replace: False
 
 service tomcat stop:
   cmd.run
@@ -56,13 +63,13 @@ service tomcat start:
 pwmconfmgmtmode:
   file.managed:
     - name: /usr/local/bin/pwmconfmgmt
-    - mode: 777
+    - mode: 700
     - replace: False
 
 inotifypwmconfigmode:
   file.managed:
     - name: /usr/local/bin/inotifypwmconfig
-    - mode: 777
+    - mode: 700
     - replace: False
 
 runinotifyscript:
@@ -75,7 +82,7 @@ aws s3 cp s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/postfix_conf.sh /us
 postfixconfmode:
   file.managed:
     - name: /usr/local/bin/postfix_conf.sh
-    - mode: 777
+    - mode: 700
     - replace: False
 
 sleepprepostfixconf:

@@ -88,7 +88,7 @@ runatdservice:
             fi
         fi
 
-chmod 777 /usr/local/bin/selinuxproxy.sh:
+chmod 744 /usr/local/bin/selinuxproxy.sh:
   cmd.run
 
 run selinuxproxy script:
@@ -107,7 +107,7 @@ run selinuxproxy script:
   file.append:
     - text: 'salt-call --local state.apply pwm/hostname'
 
-chmod 777 /usr/local/bin/rerunhostnamestate:
+chmod 744 /usr/local/bin/rerunhostnamestate:
   cmd.run
 
 runhostnamestate:

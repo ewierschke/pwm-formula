@@ -23,12 +23,15 @@ mailerinstall:
         #log "checking for new users"
         newusers=$(grep -a "CREATE_USER" /usr/share/tomcat/webapps/ROOT/WEB-INF/logs/PWM.log)
         echo "$newusers" > /usr/local/bin/current-newusers.log
+        chmod 600 /usr/local/bin/current-newusers.log
         
         if   [ -e "/usr/local/bin/prior-newusers.log" ]
         then
              echo "prior-newusers.log Exists" > /dev/null
         else
-             touch /usr/local/bin/prior-newusers.log | echo "" > /usr/local/bin/prior-newusers.log
+             touch /usr/local/bin/prior-newusers.log 
+             echo "" > /usr/local/bin/prior-newusers.log
+             chmod 600 /usr/local/bin/prior-newusers.log
         fi
         
         #compare prior newusers to current newusers
@@ -74,14 +77,15 @@ mailerinstall:
              rm -rf /usr/local/bin/fullemail.html
              for (( c=1; c<=$count; c++ ))
              do
-                rm -rf /usr/local/bin/emailsnip$c.html
+                shred -u /usr/local/bin/emailsnip$c.html
              done
-             rm -rf /usr/local/bin/emailconcatsnip.html
-             rm -rf /usr/local/bin/newuserentries
-             rm -rf /usr/local/bin/onlyjson
-             rm -rf /usr/local/bin/cleanjson
-             rm -rf /usr/local/bin/prearray
+             shred -u /usr/local/bin/emailconcatsnip.html
+             shred -u /usr/local/bin/newuserentries
+             shred -u /usr/local/bin/onlyjson
+             shred -u /usr/local/bin/cleanjson
+             shred -u /usr/local/bin/prearray
              echo "$newusers" > /usr/local/bin/prior-newusers.log
+             chmod 600 /usr/local/bin/prior-newusers.log
              log "emailed list of new users to postfix via mutt"
         else
              echo nothing > /dev/null
@@ -477,7 +481,7 @@ mailerinstall:
 createmuttrcmode:
   file.managed:
     - name: /usr/local/bin/createmuttrc.sh
-    - mode: 777
+    - mode: 700
     - replace: False
 
 run createmuttrc script:
@@ -487,7 +491,7 @@ run createmuttrc script:
 watchnewusermode:
   file.managed:
     - name: /usr/local/bin/watchnewuser.sh
-    - mode: 777
+    - mode: 700
     - replace: False
 
 runcrondservice:
