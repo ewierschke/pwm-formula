@@ -502,7 +502,7 @@ runcrondservice:
 /etc/crontab:
   file.append:
     - text: |
-        */5 * * * * root /usr/local/bin/watchnewuser.sh
+        */1 * * * * root /usr/local/bin/watchnewuser.sh
 
 /usr/share/tomcat/webapps/ROOT/WEB-INF/jsp/fragment/envwelcome.jsp:
   file.append:
