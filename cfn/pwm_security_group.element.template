@@ -1,41 +1,10 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "This templates creates one security group for PWM instances, and one for their load balancer",
-  "Parameters": {
-    "UseELB": {
-      "Description": "Set to true if using an ELB in front of PWM; otherwise set to false",
-      "Type": "String",
-      "Default": "true",
-      "AllowedValues": [
-        "true",
-        "false"
-      ]
-    },
-    "ConnectCMDB": {
-      "Description": "Set to true if wishing to allow port 22 connections from component security group; otherwise set to false",
-      "Type": "String",
-      "Default": "false",
-      "AllowedValues": [
-        "true",
-        "false"
-      ]
-    },
-    "CMDBSecurityGroup": {
-      "AllowedPattern": "^$|^sg-(?=(?:.{8}|.{17})$)[a-z0-9]*$",
-      "Default": "",
-      "Description": "Security Group id of CMDB system from the peered account (Example: sg-12345678).",
-      "Type": "String"
-    },
-    "VPC": {
-      "Description": "VPC ID",
-      "Type": "AWS::EC2::VPC::Id"
-    }
-  },
   "Conditions": {
-    "UseELB": {
+    "ConnectCMDB": {
       "Fn::Equals": [
         {
-          "Ref": "UseELB"
+          "Ref": "ConnectCMDB"
         },
         "true"
       ]
@@ -48,14 +17,6 @@
         "false"
       ]
     },
-    "ConnectCMDB": {
-      "Fn::Equals": [
-        {
-          "Ref": "ConnectCMDB"
-        },
-        "true"
-      ]
-    },
     "NoConnectCMDB": {
       "Fn::Equals": [
         {
@@ -63,72 +24,125 @@
         },
         "false"
       ]
+    },
+    "UseELB": {
+      "Fn::Equals": [
+        {
+          "Ref": "UseELB"
+        },
+        "true"
+      ]
+    }
+  },
+  "Description": "This templates creates one security group for PWM instances, and one for their load balancer",
+  "Outputs": {
+    "PWMElbSecurityGroupId": {
+      "Condition": "UseELB",
+      "Description": "Security Group ID for the PWM Elastic Load Balancer",
+      "Value": {
+        "Ref": "PWMElbSecurityGroup"
+      }
+    },
+    "PWMSecurityGroupId": {
+      "Description": "Security Group ID for the PWM instances",
+      "Value": {
+        "Ref": "PWMSecurityGroup"
+      }
+    }
+  },
+  "Parameters": {
+    "UseELB": {
+      "AllowedValues": [
+        "false",
+        "true"
+      ],
+      "Default": "true",
+      "Description": "Set to true if using an ELB in front of PWM; otherwise set to false",
+      "Type": "String"
+    },
+    "ConnectCMDB": {
+      "AllowedValues": [
+        "true",
+        "false"
+      ],
+      "Default": "false",
+      "Description": "Set to true if wishing to allow port 22 connections from component security group; otherwise set to false",
+      "Type": "String"
+    },
+    "CMDBSecurityGroup": {
+      "AllowedPattern": "^$|^sg-(?=(?:.{8}|.{17})$)[a-z0-9]*$",
+      "Default": "",
+      "Description": "Security Group id of CMDB system from the peered account (Example: sg-12345678).",
+      "Type": "String"
+    },
+    "VPC": {
+      "Description": "VPC ID",
+      "Type": "AWS::EC2::VPC::Id"
     }
   },
   "Resources": {
-    "PWMSecurityGroup": {
-      "Type": "AWS::EC2::SecurityGroup",
-      "Properties": {
-        "GroupDescription": "Enable PWM access from ELB",
-        "VpcId": {
-          "Ref": "VPC"
-        },
-        "Tags": [
-          {
-            "Key": "Name",
-            "Value": {
-              "Fn::Join": [
-                "",
-                [
-                  "pwm-",
-                  {
-                    "Ref": "AWS::StackName"
-                  }
-                ]
-              ]
-            }
-          }
-        ]
-      }
-    },
-    "ElbToPWMIngressTcp80": {
-      "Type": "AWS::EC2::SecurityGroupIngress",
-      "Condition": "UseELB",
-      "Properties": {
-        "GroupId": {
-          "Ref": "PWMSecurityGroup"
-        },
-        "IpProtocol": "tcp",
-        "FromPort": "80",
-        "ToPort": "80",
-        "SourceSecurityGroupId": {
-          "Ref": "PWMElbSecurityGroup"
-        }
-      }
-    },
     "CMDBToPWMIngressTcp22": {
-      "Type": "AWS::EC2::SecurityGroupIngress",
       "Condition": "ConnectCMDB",
       "Properties": {
+        "FromPort": "22",
         "GroupId": {
           "Ref": "PWMSecurityGroup"
         },
         "IpProtocol": "tcp",
-        "FromPort": "22",
-        "ToPort": "22",
         "SourceSecurityGroupId": {
           "Ref": "CMDBSecurityGroup"
-        }
-      }
+        },
+        "ToPort": "22"
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress"
+    },
+    "ElbToPWMEgressTcp80": {
+      "Condition": "UseELB",
+      "Properties": {
+        "DestinationSecurityGroupId": {
+          "Ref": "PWMSecurityGroup"
+        },
+        "FromPort": "80",
+        "GroupId": {
+          "Ref": "PWMElbSecurityGroup"
+        },
+        "IpProtocol": "tcp",
+        "ToPort": "80"
+      },
+      "Type": "AWS::EC2::SecurityGroupEgress"
+    },
+    "ElbToPWMIngressTcp80": {
+      "Condition": "UseELB",
+      "Properties": {
+        "FromPort": "80",
+        "GroupId": {
+          "Ref": "PWMSecurityGroup"
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Ref": "PWMElbSecurityGroup"
+        },
+        "ToPort": "80"
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress"
+    },
+    "PublicToElbIngressTcp443": {
+      "Condition": "UseELB",
+      "Properties": {
+        "CidrIp": "0.0.0.0/0",
+        "FromPort": "443",
+        "GroupId": {
+          "Ref": "PWMElbSecurityGroup"
+        },
+        "IpProtocol": "tcp",
+        "ToPort": "443"
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress"
     },
     "PWMElbSecurityGroup": {
-      "Type": "AWS::EC2::SecurityGroup",
       "Condition": "UseELB",
       "Properties": {
         "GroupDescription": "Enable PWM ELB access from the Internet",
-        "VpcId": {
-          "Ref": "VPC"
-        },
         "Tags": [
           {
             "Key": "Name",
@@ -144,51 +158,37 @@
               ]
             }
           }
-        ]
-      }
-    },
-    "PublicToElbIngressTcp443": {
-      "Type": "AWS::EC2::SecurityGroupIngress",
-      "Condition": "UseELB",
-      "Properties": {
-        "GroupId": {
-          "Ref": "PWMElbSecurityGroup"
-        },
-        "IpProtocol": "tcp",
-        "FromPort": "443",
-        "ToPort": "443",
-        "CidrIp": "0.0.0.0/0"
-      }
-    },
-    "ElbToPWMEgressTcp80": {
-      "Type": "AWS::EC2::SecurityGroupEgress",
-      "Condition": "UseELB",
-      "Properties": {
-        "GroupId": {
-          "Ref": "PWMElbSecurityGroup"
-        },
-        "IpProtocol": "tcp",
-        "FromPort": "80",
-        "ToPort": "80",
-        "DestinationSecurityGroupId": {
-          "Ref": "PWMSecurityGroup"
+        ],
+        "VpcId": {
+          "Ref": "VPC"
         }
-      }
-    }
-  },
-  "Outputs": {
-    "PWMSecurityGroupId": {
-      "Value": {
-        "Ref": "PWMSecurityGroup"
       },
-      "Description": "Security Group ID for the PWM instances"
+      "Type": "AWS::EC2::SecurityGroup"
     },
-    "PWMElbSecurityGroupId": {
-      "Condition": "UseELB",
-      "Value": {
-        "Ref": "PWMElbSecurityGroup"
+    "PWMSecurityGroup": {
+      "Properties": {
+        "GroupDescription": "Enable PWM access from ELB",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  "pwm-",
+                  {
+                    "Ref": "AWS::StackName"
+                  }
+                ]
+              ]
+            }
+          }
+        ],
+        "VpcId": {
+          "Ref": "VPC"
+        }
       },
-      "Description": "Security Group ID for the PWM Elastic Load Balancer"
+      "Type": "AWS::EC2::SecurityGroup"
     }
   }
 }

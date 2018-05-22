@@ -1,33 +1,5 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "This template creates a public Elastic Load Balancer using HTTPS on port 443 and a healthcheck for PWM",
-  "Parameters": {
-    "SslCertificateName": {
-      "Description": "The name (for IAM) or identifier (for ACM) of the SSL certificate to associate with the ALB. The cert must already exist in the service.",
-      "Type": "String"
-    },
-    "SslCertificateService": {
-      "Description": "The service hosting the SSL certificate. Must be ACM or IAM.",
-      "Type": "String",
-      "Default": "ACM",
-      "AllowedValues": [
-        "ACM",
-        "IAM"
-      ]
-    },
-    "PublicSubnetIDs": {
-      "Description": "A list of Public subnet IDs to attach to the load balancer.",
-      "Type": "List<AWS::EC2::Subnet::Id>"
-    },
-    "SecurityGroupId": {
-      "Description": "ID of the security group for ELB",
-      "Type": "AWS::EC2::SecurityGroup::Id"
-    },
-    "TargetGroupId": {
-      "Description": "ARN of the target group for ALB",
-      "Type": "String"
-    }
-  },
   "Conditions": {
     "UseACM": {
       "Fn::Equals": [
@@ -38,9 +10,53 @@
       ]
     }
   },
+  "Description": "This template creates a public Elastic Load Balancer using HTTPS on port 443 and a healthcheck for PWM",
+  "Outputs": {
+    "LoadBalancerDns": {
+      "Description": "DNS name for the PWM ALB",
+      "Value": {
+        "Fn::GetAtt": [
+          "ALB",
+          "DNSName"
+        ]
+      }
+    },
+    "LoadBalancerName": {
+      "Description": "Name of the PWM Application Load Balancer",
+      "Value": {
+        "Ref": "ALB"
+      }
+    }
+  },
+  "Parameters": {
+    "PublicSubnetIDs": {
+      "Description": "A list of Public subnet IDs to attach to the load balancer.",
+      "Type": "List<AWS::EC2::Subnet::Id>"
+    },
+    "SecurityGroupId": {
+      "Description": "ID of the security group for ELB",
+      "Type": "AWS::EC2::SecurityGroup::Id"
+    },
+    "SslCertificateName": {
+      "Description": "The name (for IAM) or identifier (for ACM) of the SSL certificate to associate with the ALB. The cert must already exist in the service.",
+      "Type": "String"
+    },
+    "SslCertificateService": {
+      "AllowedValues": [
+        "ACM",
+        "IAM"
+      ],
+      "Default": "ACM",
+      "Description": "The service hosting the SSL certificate. Must be ACM or IAM.",
+      "Type": "String"
+    },
+    "TargetGroupId": {
+      "Description": "ARN of the target group for ALB",
+      "Type": "String"
+    }
+  },
   "Resources": {
     "ALB": {
-      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
       "Properties": {
         "Scheme": "internet-facing",
         "SecurityGroups": [
@@ -67,24 +83,11 @@
             }
           }
         ]
-      }
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer"
     },
     "ALBListeners": {
-      "Type": "AWS::ElasticLoadBalancingV2::Listener",
       "Properties": {
-        "DefaultActions": [
-          {
-            "Type": "forward",
-            "TargetGroupArn": {
-              "Ref": "TargetGroupId"
-            }
-          }
-        ],
-        "LoadBalancerArn": {
-          "Ref": "ALB"
-        },
-        "Port": "443",
-        "Protocol": "HTTPS",
         "Certificates": [
           {
             "CertificateArn": {
@@ -133,25 +136,22 @@
               ]
             }
           }
-        ]
-      }
-    }
-  },
-  "Outputs": {
-    "LoadBalancerName": {
-      "Description": "Name of the PWM Application Load Balancer",
-      "Value": {
-        "Ref": "ALB"
-      }
-    },
-    "LoadBalancerDns": {
-      "Description": "DNS name for the PWM ALB",
-      "Value": {
-        "Fn::GetAtt": [
-          "ALB",
-          "DNSName"
-        ]
-      }
+        ],
+        "DefaultActions": [
+          {
+            "TargetGroupArn": {
+              "Ref": "TargetGroupId"
+            },
+            "Type": "forward"
+          }
+        ],
+        "LoadBalancerArn": {
+          "Ref": "ALB"
+        },
+        "Port": "443",
+        "Protocol": "HTTPS"
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::Listener"
     }
   }
 }
