@@ -16,24 +16,90 @@
   },
   "Description": "This template deploys a PWM instance from launch config in an autoscale group behind an ALB using watchmaker.",
   "Parameters": {
-    "BootstrapURL": {
-      "Description": "URL to the SystemPrep Bootstrapper",
-      "Type": "String",
-      "Default": "https://s3.amazonaws.com/systemprep/BootStrapScripts/SystemPrep-Bootstrap--Linux.sh"
+    "ADHostname": {
+      "AllowedPattern": "[a-zA-Z0-9]+\\..+",
+      "Default": "ad.example.com",
+      "Description": "Hostname (FQDN) of the AD server to query for users to notify of password expirations",
+      "MaxLength": "25",
+      "MinLength": "3",
+      "Type": "String"
     },
-    "KeyPairName": {
-      "Description": "Public/private key pairs allow you to securely connect to your instance after it launches",
-      "Type": "AWS::EC2::KeyPair::KeyName"
+    "AdminIAMGroup": {
+      "Description": "ID of the IAM group to be granted SSH Admin access to PWM instances",
+      "Type": "String"
+    },
+    "AdminReportMailToEmailAddress": {
+      "AllowedPattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$",
+      "Default": "admin@example.com",
+      "Description": "Email address to which to send Admin report of password expirations",
+      "MinLength": "3",
+      "MaxLength": "50",
+      "Type": "String"
+    },
+    "ADOUPath": {
+      "Default": "CN=Users,DC=ad,DC=example,DC=com",
+      "Description": "Distinguished Name (DN) of the OU path containing users to which to send password expiration notices",
+      "MinLength": "1",
+      "Type": "String"
+    },
+    "ADSvcAccountPassword": {
+      "AllowedPattern": "(?=^.{6,255}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
+      "Default": "Password123",
+      "Description": "Password of the Service Account used to query LDAP directory. Must be at least 8 characters containing letters, numbers and symbols",
+      "MaxLength": "32",
+      "MinLength": "8",
+      "NoEcho": "true",
+      "Type": "String"
+    },
+    "ADSvcAccountUPN": {
+      "Default": "svc_account@example.com",
+      "Description": "UPN of the service account used to query LDAP directory.",
+      "Type": "String"
     },
     "AmiId": {
       "Description": "AMI ID",
-      "Type": "String",
-      "Default": ""
+      "Type": "String"
+    },
+    "ConfigureADPasswordExpireNotify": {
+      "AllowedValues": [
+        "no",
+        "yes"
+      ],
+      "Default": "yes",
+      "Description": "Select yes to execute state that configures AD password expiration notification emails",
+      "Type": "String"
+    },
+    "DesiredCapacity": {
+      "Default": "1",
+      "Description": "The number of instances the autoscale group will spin up initially",
+      "MinLength": "1",
+      "Type": "String"
+    },
+    "DiscoIAMGroup": {
+      "Default": "",
+      "Description": "ID of the IAM group to be granted SSH Discovery access to PWM instances",
+      "Type": "String"
+    },
+    "FriendlyEnvironmentName": {
+      "Default": "Example",
+      "Description": "Friendly name of the Environment in which PWM is being installed, for use in emails and branding (future use)",
+      "MaxLength": "25",
+      "MinLength": "3",
+      "Type": "String"
+    },
+    "HelpdeskEmailAddress": {
+      "AllowedPattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$",
+      "Default": "help@example.com",
+      "Description": "Email address used by helpdesk system to be included in notification emails",
+      "MaxLength": "50",
+      "MinLength": "3",
+      "Type": "String"
+    },
+    "HelpdeskPublicURL": {
+      "Description": "Public URL of helpdesk system to be included in notification emails",
+      "Type": "String"
     },
     "InstanceType": {
-      "Description": "Amazon EC2 instance type for the PWM Instance (using Aug16 ACB CentOS6 AMI)",
-      "Type": "String",
-      "Default": "t2.micro",
       "AllowedValues": [
         "t2.micro",
         "t2.small",
@@ -44,266 +110,94 @@
         "c4.xlarge",
         "m4.large",
         "m4.xlarge"
-      ]
+      ],
+      "Default": "t2.micro",
+      "Description": "Amazon EC2 instance type for the PWM Instance (using Aug16 ACB CentOS6 AMI)",
+      "Type": "String"
     },
-    "DesiredCapacity": {
-      "Description": "The number of instances the autoscale group will spin up initially",
-      "Type": "String",
-      "MinLength": "1",
-      "Default": "1"
+    "KeyPairName": {
+      "Description": "Public/private key pairs allow you to securely connect to your instance after it launches",
+      "Type": "AWS::EC2::KeyPair::KeyName"
     },
-    "MinCapacity": {
-      "Description": "The minimum number of instances for the autoscale group",
-      "Type": "String",
-      "MinLength": "1",
-      "Default": "1"
+    "MailFromDNSDomainName": {
+      "AllowedPattern": "[a-zA-Z0-9]+\\..+",
+      "Default": "example.com",
+      "Description": "Fully qualified domain name (FQDN) of the domain e.g. example.com, from which email will originate, usually the same as ResourceDNSDomainName (future use)",
+      "MaxLength": "25",
+      "MinLength": "3",
+      "Type": "String"
+    },
+    "MailFromEmailAddress": {
+      "Default": "noreply@example.com",
+      "Description": "Email address provided in the from field in notification emails",
+      "MaxLength": "50",
+      "MinLength": "3",
+      "Type": "String"
     },
     "MaxCapacity": {
+      "Default": "1",
       "Description": "The maximum number of instances for the autoscale group",
-      "Type": "String",
       "MinLength": "1",
-      "Default": "1"
+      "Type": "String"
+    },
+    "MinCapacity": {
+      "Default": "1",
+      "Description": "The minimum number of instances for the autoscale group",
+      "MinLength": "1",
+      "Type": "String"
+    },
+    "NewUserMailToEmailAddress": {
+      "AllowedPattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$",
+      "Default": "help@example.com",
+      "Description": "Email address to send new user created notification emails",
+      "MinLength": "3",
+      "Type": "String"
+    },
+    "PrivateSubnetIDs": {
+      "Description": "Private Subnet ID where the PWM instance(s) will run. (only select one, load balancing not tested)",
+      "Type": "List<AWS::EC2::Subnet::Id>"
     },
     "PWMALBTargetGroupName": {
       "Description": "Name of the ALB PWM Target Group",
       "Type": "String",
       "MinLength": "1"
     },
-    "FriendlyEnvironmentName": {
-      "Description": "Friendly name of the Environment in which PWM is being installed, for use in emails and branding (future use)",
-      "Type": "String",
-      "Default": "Example",
-      "MinLength": "3",
-      "MaxLength": "25"
-    },
-    "ResourceDNSDomainName": {
-      "Description": "Fully qualified domain name (FQDN) of the domain e.g. example.com, where environment resources reside, usually the same as MailFromDNSDomainName (future use)",
-      "Type": "String",
-      "Default": "example.com",
-      "MinLength": "3",
-      "MaxLength": "25",
-      "AllowedPattern": "[a-zA-Z0-9]+\\..+"
-    },
-    "MailFromDNSDomainName": {
-      "Description": "Fully qualified domain name (FQDN) of the domain e.g. example.com, from which email will originate, usually the same as ResourceDNSDomainName (future use)",
-      "Type": "String",
-      "Default": "example.com",
-      "MinLength": "3",
-      "MaxLength": "25",
-      "AllowedPattern": "[a-zA-Z0-9]+\\..+"
-    },
-    "NewUserMailToEmailAddress": {
-      "Description": "Email address to send new user created notification emails",
-      "Type": "String",
-      "Default": "help@example.com",
-      "MinLength": "3",
-      "AllowedPattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
-    },
-    "PrivateSubnetIDs": {
-      "Description": "Private Subnet ID where the PWM instance(s) will run. (only select one, load balancing not tested)",
-      "Type": "List<AWS::EC2::Subnet::Id>"
-    },
-    "SecurityGroupIdPWMInstance": {
-      "Description": "ID of the security group for PWM instances",
-      "Type": "AWS::EC2::SecurityGroup::Id"
-    },
-    "AdminIAMGroup": {
-      "Description": "ID of the IAM group to be granted SSH Admin access to PWM instances",
-      "Type": "String"
-    },
-    "DiscoIAMGroup": {
-      "Default": "",
-      "Description": "ID of the IAM group to be granted SSH Discovery access to PWM instances",
-      "Type": "String"
-    },
     "PWMConfigBucketName": {
       "Description": "Name of the S3 bucket where the PWM config should be pulled and stored",
       "Type": "String"
-    },
-    "ConfigureADPasswordExpireNotify": {
-      "Description": "Select yes to execute state that configures AD password expiration notification emails",
-      "Type": "String",
-      "Default": "yes",
-      "AllowedValues": [
-        "yes",
-        "no"
-      ]
     },
     "PWMPublicURL": {
       "Description": "Public URL to this PWM instance to be included in notification emails",
       "Type": "String"
     },
-    "HelpdeskPublicURL": {
-      "Description": "Public URL of helpdesk system to be included in notification emails",
+    "PWMSNSTopicARN": {
+      "Description": "ARN of the SNS Topic to which to send auto scale action notifications",
       "Type": "String"
     },
-    "HelpdeskEmailAddress": {
-      "Description": "Email address used by helpdesk system to be included in notification emails",
-      "Type": "String",
-      "Default": "help@example.com",
-      "MinLength": "3",
-      "MaxLength": "50",
-      "AllowedPattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
-    },
-    "MailFromEmailAddress": {
-      "Description": "Email address provided in the from field in notification emails",
-      "Type": "String",
-      "Default": "noreply@example.com",
-      "MinLength": "3",
-      "MaxLength": "50"
-    },
-    "ADSvcAccountUPN": {
-      "Description": "UPN of the service account used to query LDAP directory.",
-      "Type": "String",
-      "Default": "svc_account@example.com"
-    },
-    "ADSvcAccountPassword": {
-      "Description": "Password of the Service Account used to query LDAP directory. Must be at least 8 characters containing letters, numbers and symbols",
-      "Type": "String",
-      "MinLength": "8",
-      "MaxLength": "32",
-      "AllowedPattern": "(?=^.{6,255}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
-      "NoEcho": "true",
-      "Default": "Password123"
-    },
-    "ADHostname": {
-      "Description": "Hostname (FQDN) of the AD server to query for users to notify of password expirations",
-      "Type": "String",
-      "Default": "ad.example.com",
-      "MinLength": "3",
+    "ResourceDNSDomainName": {
+      "AllowedPattern": "[a-zA-Z0-9]+\\..+",
+      "Default": "example.com",
+      "Description": "Fully qualified domain name (FQDN) of the domain e.g. example.com, where environment resources reside, usually the same as MailFromDNSDomainName (future use)",
       "MaxLength": "25",
-      "AllowedPattern": "[a-zA-Z0-9]+\\..+"
-    },
-    "AdminReportMailToEmailAddress": {
-      "Description": "Email address to which to send Admin report of password expirations",
-      "Type": "String",
-      "Default": "admin@example.com",
       "MinLength": "3",
-      "MaxLength": "50",
-      "AllowedPattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
+      "Type": "String"
     },
-    "ADOUPath": {
-      "Description": "Distinguished Name (DN) of the OU path containing users to which to send password expiration notices",
-      "Type": "String",
-      "Default": "CN=Users,DC=ad,DC=example,DC=com",
-      "MinLength": "1"
+    "SecurityGroupIdPWMInstance": {
+      "Description": "ID of the security group for PWM instances",
+      "Type": "AWS::EC2::SecurityGroup::Id"
     }
   },
   "Resources": {
-    "PWMInstanceProfile": {
-      "Type": "AWS::IAM::InstanceProfile",
-      "Properties": {
-        "Path": "/",
-        "Roles": [
-          {
-            "Ref": "PWMInstanceRole"
-          }
-        ]
-      }
-    },
-    "PWMInstanceRole": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Principal": {
-                "Service": [
-                  "ec2.amazonaws.com"
-                ]
-              },
-              "Action": [
-                "sts:AssumeRole"
-              ]
-            }
-          ]
-        },
-        "Path": "/"
-      }
-    },
-    "PWMConfigInstanceS3Access": {
-      "Type": "AWS::IAM::ManagedPolicy",
-      "Properties": {
-        "Description": "Policy for PWM instance role to access appropriate s3 bucket for pwm config",
-        "PolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Action": [
-                "s3:GetObject",
-                "s3:PutObject",
-                "s3:PutObjectAcl"
-              ],
-              "Resource": [
-                {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "arn:aws:s3:::",
-                      {
-                        "Ref": "PWMConfigBucketName"
-                      },
-                      "/*"
-                    ]
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        "Roles": [
-          {
-            "Ref": "PWMInstanceRole"
-          }
-        ]
-      }
-    },
-    "CloudWatchAgent": {
-      "Type": "AWS::IAM::ManagedPolicy",
-      "Properties": {
-        "Description": "CloudWatch Agent Server Policy for PWM instance role",
-        "PolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Action": [
-                "logs:CreateLogStream",
-                "cloudwatch:PutMetricData",
-                "ec2:DescribeTags",
-                "logs:DescribeLogStreams",
-                "logs:CreateLogGroup",
-                "logs:PutLogEvents",
-                "ssm:GetParameter"
-              ],
-              "Resource": [
-                "*"
-              ]
-            }
-          ]
-        },
-        "Roles": [
-          {
-            "Ref": "PWMInstanceRole"
-          }
-        ]
-      }
-    },
     "AllowAdminIAMGroupSSHKeyAccess": {
-      "Type": "AWS::IAM::Policy",
       "Properties": {
         "PolicyName": "AllowAdminIAMGroupSSHKeyAccess",
         "PolicyDocument": {
-          "Version": "2012-10-17",
           "Statement": [
             {
-              "Effect": "Allow",
               "Action": [
                 "iam:GetGroup"
               ],
+              "Effect": "Allow",
               "Resource": [
                 {
                   "Fn::Join": [
@@ -323,11 +217,11 @@
               ]
             },
             {
-              "Effect": "Allow",
               "Action": [
-                "iam:ListSSHPublicKeys",
-                "iam:GetSSHPublicKey"
+                "iam:GetSSHPublicKey",
+                "iam:ListSSHPublicKeys"
               ],
+              "Effect": "Allow",
               "Resource": [
                 {
                   "Fn::Join": [
@@ -343,28 +237,28 @@
                 }
               ]
             }
-          ]
+          ],
+          "Version": "2012-10-17"
         },
         "Roles": [
           {
             "Ref": "PWMInstanceRole"
           }
         ]
-      }
+      },
+      "Type": "AWS::IAM::Policy"
     },
     "AllowDiscoIAMGroupSSHKeyAccess": {
       "Condition": "ConfigureDiscovery",
-      "Type": "AWS::IAM::Policy",
       "Properties": {
         "PolicyName": "AllowDiscoIAMGroupSSHKeyAccess",
         "PolicyDocument": {
-          "Version": "2012-10-17",
           "Statement": [
             {
-              "Effect": "Allow",
               "Action": [
                 "iam:GetGroup"
               ],
+              "Effect": "Allow",
               "Resource": [
                 {
                   "Fn::Join": [
@@ -384,11 +278,11 @@
               ]
             },
             {
-              "Effect": "Allow",
               "Action": [
-                "iam:ListSSHPublicKeys",
-                "iam:GetSSHPublicKey"
+                "iam:GetSSHPublicKey",
+                "iam:ListSSHPublicKeys"
               ],
+              "Effect": "Allow",
               "Resource": [
                 {
                   "Fn::Join": [
@@ -404,53 +298,85 @@
                 }
               ]
             }
-          ]
+          ],
+          "Version": "2012-10-17"
         },
         "Roles": [
           {
             "Ref": "PWMInstanceRole"
           }
         ]
-      }
+      },
+      "Type": "AWS::IAM::Policy"
+    },
+    "CloudWatchAgent": {
+      "Properties": {
+        "Description": "CloudWatch Agent Server Policy for PWM instance role",
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "cloudwatch:PutMetricData",
+                "ec2:DescribeTags",
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:DescribeLogStreams",
+                "logs:PutLogEvents",
+                "ssm:GetParameter"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                "*"
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "Roles": [
+          {
+            "Ref": "PWMInstanceRole"
+          }
+        ]
+      },
+      "Type": "AWS::IAM::ManagedPolicy"
     },
     "PWMAutoScalingGroup": {
-      "Type": "AWS::AutoScaling::AutoScalingGroup",
-      "UpdatePolicy": {
-        "AutoScalingReplacingUpdate": {
-          "WillReplace": "true"
-        }
-      },
       "CreationPolicy": {
         "ResourceSignal": {
           "Count": {
             "Ref": "DesiredCapacity"
           },
-          "Timeout": "PT90M"
+          "Timeout": "PT25M"
         }
       },
       "Properties": {
-        "VPCZoneIdentifier": {
-          "Ref": "PrivateSubnetIDs"
+        "DesiredCapacity": {
+          "Ref": "DesiredCapacity"
         },
+        "HealthCheckGracePeriod": "3600",
+        "HealthCheckType": "ELB",
         "LaunchConfigurationName": {
           "Ref": "PWMLaunchConfig"
-        },
-        "TargetGroupARNs": [
-          {
-            "Ref": "PWMALBTargetGroupName"
-          }
-        ],
-        "MinSize": {
-          "Ref": "MinCapacity"
         },
         "MaxSize": {
           "Ref": "MaxCapacity"
         },
-        "DesiredCapacity": {
-          "Ref": "DesiredCapacity"
+        "MinSize": {
+          "Ref": "MinCapacity"
         },
-        "HealthCheckGracePeriod": "5400",
-        "HealthCheckType": "ELB",
+        "NotificationConfigurations": [
+          {
+            "NotificationTypes": [
+              "autoscaling:EC2_INSTANCE_LAUNCH",
+              "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
+              "autoscaling:EC2_INSTANCE_TERMINATE",
+              "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"
+            ],
+            "TopicARN": {
+              "Ref": "PWMSNSTopicARN"
+            }
+          }
+        ],
         "Tags": [
           {
             "Key": "Name",
@@ -459,32 +385,116 @@
             },
             "PropagateAtLaunch": "true"
           }
-        ]
+        ],
+        "TargetGroupARNs": [
+          {
+            "Ref": "PWMALBTargetGroupName"
+          }
+        ],
+        "VPCZoneIdentifier": {
+          "Ref": "PrivateSubnetIDs"
+        }
+      },
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "UpdatePolicy": {
+        "AutoScalingReplacingUpdate": {
+          "WillReplace": "true"
+        }
       }
     },
+    "PWMConfigInstanceS3Access": {
+      "Properties": {
+        "Description": "Policy for PWM instance role to access appropriate s3 bucket for pwm config",
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:PutObjectAcl"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:s3:::",
+                      {
+                        "Ref": "PWMConfigBucketName"
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "Roles": [
+          {
+            "Ref": "PWMInstanceRole"
+          }
+        ]
+      },
+      "Type": "AWS::IAM::ManagedPolicy"
+    },
+    "PWMInstanceProfile": {
+      "Properties": {
+        "Path": "/",
+        "Roles": [
+          {
+            "Ref": "PWMInstanceRole"
+          }
+        ]
+      },
+      "Type": "AWS::IAM::InstanceProfile"
+    },
+    "PWMInstanceRole": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "sts:AssumeRole"
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "ec2.amazonaws.com"
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "Path": "/"
+      },
+      "Type": "AWS::IAM::Role"
+    },
     "PWMLaunchConfig": {
-      "Type": "AWS::AutoScaling::LaunchConfiguration",
       "Metadata": {
         "AWS::CloudFormation::Init": {
           "configSets": {
             "Install": [
-              "cfnsetup",
-              "bootstrap",
-              "adminusersetup",
+              "a-cfnsetup",
+              "b-bootstrap",
+              "c-adminusersetup",
               {
                 "Fn::If": [
                   "ConfigureDiscovery",
-                  "discousersetup",
+                  "d-discousersetup",
                   {
                     "Ref": "AWS::NoValue"
                   }
                 ]
               },
-              "cloudwatchagentsetup",
-              "finalize"
+              "e-cloudwatchagentsetup",
+              "f-finalize"
             ]
           },
-          "cfnsetup": {
+          "a-cfnsetup": {
             "files": {
               "/etc/cfn/cfn-hup.conf": {
                 "content": {
@@ -509,9 +519,9 @@
                     ]
                   ]
                 },
+                "group": "root",
                 "mode": "000400",
-                "owner": "root",
-                "group": "root"
+                "owner": "root"
               },
               "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
                 "content": {
@@ -536,9 +546,9 @@
                     ]
                   ]
                 },
+                "group": "root",
                 "mode": "000400",
-                "owner": "root",
-                "group": "root"
+                "owner": "root"
               }
             },
             "services": {
@@ -554,424 +564,7 @@
               }
             }
           },
-          "adminusersetup": {
-            "files": {
-              "/usr/local/bin/authorized_keys_command.sh": {
-                "content": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "#!/bin/bash -e",
-                      "\n",
-                      "if [ -z \"$1\" ]; then",
-                      "\n",
-                      "  exit 1",
-                      "\n",
-                      "fi",
-                      "\n",
-                      "aws iam list-ssh-public-keys --user-name \"$1\" --query \"SSHPublicKeys[?Status == 'Active'].[SSHPublicKeyId]\" --output text | while read KeyId; do",
-                      "\n",
-                      "  aws iam get-ssh-public-key --user-name \"$1\" --ssh-public-key-id \"$KeyId\" --encoding SSH --query \"SSHPublicKey.SSHPublicKeyBody\" --output text",
-                      "\n",
-                      "done",
-                      "\n"
-                    ]
-                  ]
-                },
-                "mode": "000755",
-                "owner": "root",
-                "group": "root"
-              },
-              "/etc/cron.d/adminusermgmt": {
-                "content": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "*/8 * * * * root /usr/local/bin/adminusermgmt.sh -G $(cat /usr/local/bin/admingroupname)",
-                      "\n"
-                    ]
-                  ]
-                },
-                "mode": "000644",
-                "owner": "root",
-                "group": "root"
-              },
-              "/usr/local/bin/admingroupname": {
-                "content": {
-                  "Ref": "AdminIAMGroup"
-                },
-                "mode": "000600",
-                "owner": "root",
-                "group": "root"
-              }
-            },
-            "commands": {
-              "10-cp_adminsshusermgmt": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "cp /srv/salt/formulas/pwm-formula/pwm/adminusermgmt.sh /usr/local/bin/adminusermgmt.sh",
-                      "\n"
-                    ]
-                  ]
-                }
-              },
-              "20-ch_adminsshusermgmt": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "chmod 700 /usr/local/bin/adminusermgmt.sh & chown root /usr/local/bin/adminusermgmt.sh & chgrp root /usr/local/bin/adminusermgmt.sh",
-                      "\n"
-                    ]
-                  ]
-                }
-              },
-              "30-configure_sshd_command": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "sed -i 's:#AuthorizedKeysCommand none:AuthorizedKeysCommand /usr/local/bin/authorized_keys_command.sh:g' /etc/ssh/sshd_config",
-                      "\n"
-                    ]
-                  ]
-                }
-              },
-              "40-configure_sshd_commanduser": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "sed -i 's:#AuthorizedKeysCommandUser nobody:AuthorizedKeysCommandUser nobody:g' /etc/ssh/sshd_config",
-                      "\n"
-                    ]
-                  ]
-                }
-              },
-              "50-runadminsshusermgmt": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "/usr/local/bin/adminusermgmt.sh -G $(cat /usr/local/bin/admingroupname)",
-                      "\n"
-                    ]
-                  ]
-                }
-              }
-            }
-          },
-          "discousersetup": {
-            "files": {
-              "/etc/cron.d/discousermgmt": {
-                "content": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "*/8 * * * * root /usr/local/bin/discousermgmt.sh -G $(cat /usr/local/bin/discogroupname)",
-                      "\n"
-                    ]
-                  ]
-                },
-                "mode": "000644",
-                "owner": "root",
-                "group": "root"
-              },
-              "/usr/local/bin/discogroupname": {
-                "content": {
-                  "Ref": "DiscoIAMGroup"
-                },
-                "mode": "000600",
-                "owner": "root",
-                "group": "root"
-              }
-            },
-            "commands": {
-              "10-cp_discosshusermgmt": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "cp /srv/salt/formulas/pwm-formula/pwm/discousermgmt.sh /usr/local/bin/discousermgmt.sh",
-                      "\n"
-                    ]
-                  ]
-                }
-              },
-              "20-ch_discosshusermgmt": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "chmod 700 /usr/local/bin/discousermgmt.sh & chown root /usr/local/bin/discousermgmt.sh & chgrp root /usr/local/bin/discousermgmt.sh",
-                      "\n"
-                    ]
-                  ]
-                }
-              },
-              "30-rundiscosshusermgmt": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "/usr/local/bin/discousermgmt.sh -G $(cat /usr/local/bin/discogroupname)",
-                      "\n"
-                    ]
-                  ]
-                }
-              }
-            }
-          },
-          "cloudwatchagentsetup": {
-            "commands": {
-              "10-get-agent": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "wget https://s3.amazonaws.com/amazoncloudwatch-agent/linux/amd64/latest/AmazonCloudWatchAgent.zip",
-                      "\n"
-                    ]
-                  ]
-                }
-              },
-              "20-unpack-agent": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "unzip AmazonCloudWatchAgent.zip -d /usr/local/bin",
-                      "\n"
-                    ]
-                  ]
-                }
-              },
-              "30-install-agent": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "cd /usr/local/bin && bash -xe /usr/local/bin/install.sh",
-                      "\n"
-                    ]
-                  ]
-                }
-              },
-              "40-enable-agent": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "systemctl enable amazon-cloudwatch-agent.service",
-                      "\n"
-                    ]
-                  ]
-                }
-              },
-              "50-start-agent": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "systemctl start amazon-cloudwatch-agent.service",
-                      "\n"
-                    ]
-                  ]
-                }
-              },
-              "60-get-conf": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "aws s3 cp s3://",
-                      {
-                        "Ref": "PWMConfigBucketName"
-                      },
-                      "/18branch/pwmcloudwatchagent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json"
-                    ]
-                  ]
-                }
-              },
-              "61-chmod-conf": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "chmod 640 /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json",
-                      "\n"
-                    ]
-                  ]
-                }
-              },
-              "62-chown-conf": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "chown root:root /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json",
-                      "\n"
-                    ]
-                  ]
-                }
-              },
-              "70-inject-custom-agent-config": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "/opt/aws/amazon-cloudwatch-agent/bin/",
-                      "amazon-cloudwatch-agent-ctl",
-                      " -a fetch-config -m ec2 -c",
-                      " file:/opt/aws/amazon-cloudwatch-agent/etc/",
-                      "amazon-cloudwatch-agent.json -s"
-                    ]
-                  ]
-                }
-              }
-            }
-          },
-          "bootstrap": {
-            "packages": {
-              "yum": {
-                "git": []
-              }
-            },
-            "files": {
-              "/etc/cfn/scripts/watchmaker-install.sh": {
-                "content": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "#!/bin/bash\n\n",
-                      "PYPI_URL=https://pypi.org/simple",
-                      "\n",
-                      "pip install --index-url=\"$PYPI_URL\" wheel==0.29.0\n",
-                      "pip install",
-                      " --index-url=\"$PYPI_URL\"",
-                      " --upgrade pip setuptools boto3 watchmaker\n\n"
-                    ]
-                  ]
-                },
-                "mode": "000700",
-                "owner": "root",
-                "group": "root"
-              },
-              "/usr/local/bin/configbucketname": {
-                "content": {
-                  "Ref": "PWMConfigBucketName"
-                },
-                "mode": "000600",
-                "owner": "root",
-                "group": "root"
-              },
-              "/usr/local/bin/envirname": {
-                "content": {
-                  "Ref": "FriendlyEnvironmentName"
-                },
-                "mode": "000600",
-                "owner": "root",
-                "group": "root"
-              },
-              "/usr/local/bin/resourcedomain": {
-                "content": {
-                  "Ref": "ResourceDNSDomainName"
-                },
-                "mode": "000600",
-                "owner": "root",
-                "group": "root"
-              },
-              "/usr/local/bin/mailfromdomain": {
-                "content": {
-                  "Ref": "MailFromDNSDomainName"
-                },
-                "mode": "000600",
-                "owner": "root",
-                "group": "root"
-              },
-              "/usr/local/bin/mailtoaddress": {
-                "content": {
-                  "Ref": "NewUserMailToEmailAddress"
-                },
-                "mode": "000600",
-                "owner": "root",
-                "group": "root"
-              },
-              "/usr/local/bin/pwmurl": {
-                "content": {
-                  "Ref": "PWMPublicURL"
-                },
-                "mode": "000600",
-                "owner": "root",
-                "group": "root"
-              },
-              "/usr/local/bin/osturl": {
-                "content": {
-                  "Ref": "HelpdeskPublicURL"
-                },
-                "mode": "000600",
-                "owner": "root",
-                "group": "root"
-              },
-              "/usr/local/bin/ostemail": {
-                "content": {
-                  "Ref": "HelpdeskEmailAddress"
-                },
-                "mode": "000600",
-                "owner": "root",
-                "group": "root"
-              },
-              "/usr/local/bin/emailfrom": {
-                "content": {
-                  "Ref": "MailFromEmailAddress"
-                },
-                "mode": "000600",
-                "owner": "root",
-                "group": "root"
-              },
-              "/usr/local/bin/svcacctupn": {
-                "content": {
-                  "Ref": "ADSvcAccountUPN"
-                },
-                "mode": "000600",
-                "owner": "root",
-                "group": "root"
-              },
-              "/usr/local/bin/svcacctpass": {
-                "content": {
-                  "Ref": "ADSvcAccountPassword"
-                },
-                "mode": "000600",
-                "owner": "root",
-                "group": "root"
-              },
-              "/usr/local/bin/ldaphostname": {
-                "content": {
-                  "Ref": "ADHostname"
-                },
-                "mode": "000600",
-                "owner": "root",
-                "group": "root"
-              },
-              "/usr/local/bin/adminemailto": {
-                "content": {
-                  "Ref": "AdminReportMailToEmailAddress"
-                },
-                "mode": "000600",
-                "owner": "root",
-                "group": "root"
-              },
-              "/usr/local/bin/oupath": {
-                "content": {
-                  "Ref": "ADOUPath"
-                },
-                "mode": "000600",
-                "owner": "root",
-                "group": "root"
-              }
-            },
+          "b-bootstrap": {
             "commands": {
               "10-install-epel": {
                 "command": {
@@ -1121,9 +714,426 @@
                 },
                 "ignoreErrors": "false"
               }
+            },
+            "files": {
+              "/etc/cfn/scripts/watchmaker-install.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash\n\n",
+                      "PYPI_URL=https://pypi.org/simple",
+                      "\n",
+                      "pip install --index-url=\"$PYPI_URL\" wheel==0.29.0\n",
+                      "pip install",
+                      " --index-url=\"$PYPI_URL\"",
+                      " --upgrade pip setuptools boto3 watchmaker\n\n"
+                    ]
+                  ]
+                },
+                "group": "root",
+                "mode": "000700",
+                "owner": "root"
+              },
+              "/usr/local/bin/adminemailto": {
+                "content": {
+                  "Ref": "AdminReportMailToEmailAddress"
+                },
+                "group": "root",
+                "mode": "000600",
+                "owner": "root"
+              },
+              "/usr/local/bin/configbucketname": {
+                "content": {
+                  "Ref": "PWMConfigBucketName"
+                },
+                "group": "root",
+                "mode": "000600",
+                "owner": "root"
+              },
+              "/usr/local/bin/emailfrom": {
+                "content": {
+                  "Ref": "MailFromEmailAddress"
+                },
+                "group": "root",
+                "mode": "000600",
+                "owner": "root"
+              },
+              "/usr/local/bin/envirname": {
+                "content": {
+                  "Ref": "FriendlyEnvironmentName"
+                },
+                "group": "root",
+                "mode": "000600",
+                "owner": "root"
+              },
+              "/usr/local/bin/resourcedomain": {
+                "content": {
+                  "Ref": "ResourceDNSDomainName"
+                },
+                "group": "root",
+                "mode": "000600",
+                "owner": "root"
+              },
+              "/usr/local/bin/ldaphostname": {
+                "content": {
+                  "Ref": "ADHostname"
+                },
+                "group": "root",
+                "mode": "000600",
+                "owner": "root"
+              },
+              "/usr/local/bin/mailfromdomain": {
+                "content": {
+                  "Ref": "MailFromDNSDomainName"
+                },
+                "group": "root",
+                "mode": "000600",
+                "owner": "root"
+              },
+              "/usr/local/bin/mailtoaddress": {
+                "content": {
+                  "Ref": "NewUserMailToEmailAddress"
+                },
+                "group": "root",
+                "mode": "000600",
+                "owner": "root"
+              },
+              "/usr/local/bin/oupath": {
+                "content": {
+                  "Ref": "ADOUPath"
+                },
+                "group": "root",
+                "mode": "000600",
+                "owner": "root"
+              },
+              "/usr/local/bin/ostemail": {
+                "content": {
+                  "Ref": "HelpdeskEmailAddress"
+                },
+                "group": "root",
+                "mode": "000600",
+                "owner": "root"
+              },
+              "/usr/local/bin/osturl": {
+                "content": {
+                  "Ref": "HelpdeskPublicURL"
+                },
+                "group": "root",
+                "mode": "000600",
+                "owner": "root"
+              },
+              "/usr/local/bin/pwmurl": {
+                "content": {
+                  "Ref": "PWMPublicURL"
+                },
+                "group": "root",
+                "mode": "000600",
+                "owner": "root"
+              },
+              "/usr/local/bin/svcacctpass": {
+                "content": {
+                  "Ref": "ADSvcAccountPassword"
+                },
+                "group": "root",
+                "mode": "000600",
+                "owner": "root"
+              },
+              "/usr/local/bin/svcacctupn": {
+                "content": {
+                  "Ref": "ADSvcAccountUPN"
+                },
+                "group": "root",
+                "mode": "000600",
+                "owner": "root"
+              }
+            },
+            "packages": {
+              "yum": {
+                "git": []
+              }
             }
           },
-          "finalize": {
+          "c-adminusersetup": {
+            "commands": {
+              "10-cp_adminsshusermgmt": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "cp /srv/salt/formulas/pwm-formula/pwm/adminusermgmt.sh /usr/local/bin/adminusermgmt.sh",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "20-ch_adminsshusermgmt": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "chmod 700 /usr/local/bin/adminusermgmt.sh & chown root /usr/local/bin/adminusermgmt.sh & chgrp root /usr/local/bin/adminusermgmt.sh",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "30-configure_sshd_command": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "sed -i 's:#AuthorizedKeysCommand none:AuthorizedKeysCommand /usr/local/bin/authorized_keys_command.sh:g' /etc/ssh/sshd_config",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "40-configure_sshd_commanduser": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "sed -i 's:#AuthorizedKeysCommandUser nobody:AuthorizedKeysCommandUser nobody:g' /etc/ssh/sshd_config",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "50-runadminsshusermgmt": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "/usr/local/bin/adminusermgmt.sh -G $(cat /usr/local/bin/admingroupname)",
+                      "\n"
+                    ]
+                  ]
+                }
+              }
+            },
+            "files": {
+              "/etc/cron.d/adminusermgmt": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "*/8 * * * * root /usr/local/bin/adminusermgmt.sh -G $(cat /usr/local/bin/admingroupname)",
+                      "\n"
+                    ]
+                  ]
+                },
+                "group": "root",
+                "mode": "000644",
+                "owner": "root"
+              },
+              "/usr/local/bin/admingroupname": {
+                "content": {
+                  "Ref": "AdminIAMGroup"
+                },
+                "group": "root",
+                "mode": "000600",
+                "owner": "root"
+              },
+              "/usr/local/bin/authorized_keys_command.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash -e",
+                      "\n",
+                      "if [ -z \"$1\" ]; then",
+                      "\n",
+                      "  exit 1",
+                      "\n",
+                      "fi",
+                      "\n",
+                      "aws iam list-ssh-public-keys --user-name \"$1\" --query \"SSHPublicKeys[?Status == 'Active'].[SSHPublicKeyId]\" --output text | while read KeyId; do",
+                      "\n",
+                      "  aws iam get-ssh-public-key --user-name \"$1\" --ssh-public-key-id \"$KeyId\" --encoding SSH --query \"SSHPublicKey.SSHPublicKeyBody\" --output text",
+                      "\n",
+                      "done",
+                      "\n"
+                    ]
+                  ]
+                },
+                "group": "root",
+                "mode": "000755",
+                "owner": "root"
+              }
+            }
+          },
+          "d-discousersetup": {
+            "commands": {
+              "10-cp_discosshusermgmt": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "cp /srv/salt/formulas/pwm-formula/pwm/discousermgmt.sh /usr/local/bin/discousermgmt.sh",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "20-ch_discosshusermgmt": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "chmod 700 /usr/local/bin/discousermgmt.sh & chown root /usr/local/bin/discousermgmt.sh & chgrp root /usr/local/bin/discousermgmt.sh",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "30-rundiscosshusermgmt": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "/usr/local/bin/discousermgmt.sh -G $(cat /usr/local/bin/discogroupname)",
+                      "\n"
+                    ]
+                  ]
+                }
+              }
+            },
+            "files": {
+              "/etc/cron.d/discousermgmt": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "*/8 * * * * root /usr/local/bin/discousermgmt.sh -G $(cat /usr/local/bin/discogroupname)",
+                      "\n"
+                    ]
+                  ]
+                },
+                "group": "root",
+                "mode": "000644",
+                "owner": "root"
+              },
+              "/usr/local/bin/discogroupname": {
+                "content": {
+                  "Ref": "DiscoIAMGroup"
+                },
+                "group": "root",
+                "mode": "000600",
+                "owner": "root"
+              }
+            }
+          },
+          "e-cloudwatchagentsetup": {
+            "commands": {
+              "10-get-agent": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "wget https://s3.amazonaws.com/amazoncloudwatch-agent/linux/amd64/latest/AmazonCloudWatchAgent.zip",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "20-unpack-agent": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "unzip AmazonCloudWatchAgent.zip -d /usr/local/bin",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "30-install-agent": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "cd /usr/local/bin && bash -xe /usr/local/bin/install.sh",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "40-enable-agent": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "systemctl enable amazon-cloudwatch-agent.service",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "50-start-agent": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "systemctl start amazon-cloudwatch-agent.service",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "60-get-conf": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "aws s3 cp s3://",
+                      {
+                        "Ref": "PWMConfigBucketName"
+                      },
+                      "/18branch/pwmcloudwatchagent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json"
+                    ]
+                  ]
+                }
+              },
+              "61-chmod-conf": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "chmod 640 /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "62-chown-conf": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "chown root:root /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "70-inject-custom-agent-config": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "/opt/aws/amazon-cloudwatch-agent/bin/",
+                      "amazon-cloudwatch-agent-ctl",
+                      " -a fetch-config -m ec2 -c",
+                      " file:/opt/aws/amazon-cloudwatch-agent/etc/",
+                      "amazon-cloudwatch-agent.json -s"
+                    ]
+                  ]
+                }
+              }
+            }
+          },
+          "f-finalize": {
             "commands": {
               "10-signal-success": {
                 "command": {
@@ -1151,15 +1161,6 @@
         }
       },
       "Properties": {
-        "ImageId": {
-          "Ref": "AmiId"
-        },
-        "InstanceType": {
-          "Ref": "InstanceType"
-        },
-        "KeyName": {
-          "Ref": "KeyPairName"
-        },
         "BlockDeviceMappings": [
           {
             "DeviceName": "/dev/sda1",
@@ -1170,14 +1171,23 @@
             }
           }
         ],
+        "IamInstanceProfile": {
+          "Ref": "PWMInstanceProfile"
+        },
+        "ImageId": {
+          "Ref": "AmiId"
+        },
+        "InstanceType": {
+          "Ref": "InstanceType"
+        },
+        "KeyName": {
+          "Ref": "KeyPairName"
+        },
         "SecurityGroups": [
           {
             "Ref": "SecurityGroupIdPWMInstance"
           }
         ],
-        "IamInstanceProfile": {
-          "Ref": "PWMInstanceProfile"
-        },
         "UserData": {
           "Fn::Base64": {
             "Fn::Join": [
@@ -1215,17 +1225,6 @@
                 "  pip install",
                 " --index-url=\"$PYPI_URL\"",
                 " --upgrade --upgrade-strategy only-if-needed https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\n\n",
-                "#OLD# Fix python urllib3 warnings install aws-cfn-bootstrap\n",
-                "#yum -y install gcc python-devel libffi-devel openssl-devel aws-cfn-bootstrap\n",
-                "#pip install",
-                " --index-url=\"$PYPI_URL\"",
-                " --trusted-host=\"$PYPI_HOST\"",
-                " --upgrade pyopenssl ndg-httpsclient pyasn1\n\n",
-                "# Get cfn utils\n",
-                "#pip install",
-                " --index-url=\"$PYPI_URL\"",
-                " --trusted-host=\"$PYPI_HOST\"",
-                " --upgrade https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\n\n",
                 "  # Fixup cfn utils\n",
                 "  INITDIR=$(find -L /opt/aws/apitools/cfn-init/init -name redhat",
                 " 2> /dev/null || echo /usr/init/redhat)\n",
@@ -1279,7 +1278,8 @@
             ]
           }
         }
-      }
+      },
+      "Type": "AWS::AutoScaling::LaunchConfiguration"
     }
   }
 }

@@ -1,6 +1,14 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "This template creates an ALB Target Group for PWM",
+  "Outputs": {
+    "TargetGroupName": {
+      "Description": "Name of the PWM ALB Target Group",
+      "Value": {
+        "Ref": "ALBTargetGroup"
+      }
+    }
+  },
   "Parameters": {
     "VPC": {
       "Description": "VPC ID",
@@ -9,7 +17,6 @@
   },
   "Resources": {
     "ALBTargetGroup": {
-      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
       "Properties": {
         "HealthCheckIntervalSeconds": "30",
         "HealthCheckPath": "/",
@@ -17,24 +24,17 @@
         "HealthCheckProtocol": "HTTP",
         "HealthCheckTimeoutSeconds": "5",
         "HealthyThresholdCount": "5",
-        "Port": "80",
-        "Protocol": "HTTP",
         "Matcher": {
           "HttpCode": "302"
         },
+        "Port": "80",
+        "Protocol": "HTTP",
         "UnhealthyThresholdCount": "10",
         "VpcId": {
           "Ref": "VPC"
         }
-      }
-    }
-  },
-  "Outputs": {
-    "TargetGroupName": {
-      "Description": "Name of the PWM ALB Target Group",
-      "Value": {
-        "Ref": "ALBTargetGroup"
-      }
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup"
     }
   }
 }
