@@ -31,7 +31,7 @@ sleeppretomcatrestart:
 service tomcat start:
   cmd.run
 
-/usr/local/bin/pwmconfmgmt:
+/usr/local/bin/pwmconfmgmt.sh:
   file.append:
     - text: |
         #!/bin/sh
@@ -51,30 +51,30 @@ service tomcat start:
         logger "s3 put conffile sha1"
 
 
-/usr/local/bin/inotifypwmconfig:
+/usr/local/bin/inotifypwmconfig.sh:
   file.append:
     - text: | 
         #!/bin/sh
         while inotifywait -e modify -e create -e delete -o /var/log/inotify --format '%w%f-%e' /usr/share/tomcat/webapps/ROOT/WEB-INF/; do
-            /usr/local/bin/pwmconfmgmt
+            /usr/local/bin/pwmconfmgmt.sh
         done
         
 
 pwmconfmgmtmode:
   file.managed:
-    - name: /usr/local/bin/pwmconfmgmt
+    - name: /usr/local/bin/pwmconfmgmt.sh
     - mode: 700
     - replace: False
 
 inotifypwmconfigmode:
   file.managed:
-    - name: /usr/local/bin/inotifypwmconfig
+    - name: /usr/local/bin/inotifypwmconfig.sh
     - mode: 700
     - replace: False
 
 runinotifyscript:
   cmd.run:
-    - name: at now + 20 minutes -f /usr/local/bin/inotifypwmconfig
+    - name: at now + 20 minutes -f /usr/local/bin/inotifypwmconfig.sh
 
 aws s3 cp s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/postfix_conf.sh /usr/local/bin/postfix_conf.sh:
   cmd.run
