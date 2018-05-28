@@ -35,6 +35,7 @@ runtomcatservice:
   service.running:
     - name: tomcat
     - enable: True
+    - reload: True
 
 sleep 10:
   cmd.run
