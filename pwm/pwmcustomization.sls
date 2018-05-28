@@ -2,7 +2,7 @@ include:
   - pwm/pwmconfigfile
   - pwm/adpasswordexpirenotify
 
-mailxinstall:
+mailerinstall:
   pkg.installed:
     - names:
       - mutt
@@ -62,22 +62,16 @@ mailxinstall:
                 sed -i "s/__time__/$__time__/g" /usr/local/bin/emailsnip$c.html
                 sed -i "s/__ip__/$__ip__/g" /usr/local/bin/emailsnip$c.html
                 v=$[v+3]
-             done
-             #concat html table snippets into one file
-             for (( c=1; c<=$count; c++ ))
-             do  
-                #get username
-                user=${myarray[$v]}
                 #remove last fullemail
                 rm -rf /usr/local/bin/fullemail.html
                 #create full email
                 cat /usr/local/bin/emailpart1.html /usr/local/bin/emailsnip$c.html /usr/local/bin/emailpart2.html > /usr/local/bin/fullemail.html
                 #send email
                 envirname=$(cat /usr/local/bin/envirname)
-                mailtodomain=$(cat /usr/local/bin/mailtodomain)
+                mailtoaddress=$(cat /usr/local/bin/mailtoaddress)
                 mailfromdomain=$(cat /usr/local/bin/mailfromdomain)
-                #mutt -F /root/.muttrc -e 'set content_type=text/html' -s "WARNING: $user created an account in $envirname" pwm-notifications@$mailtodomain < /usr/local/bin/fullemail.html
-                mutt -F /root/.muttrc -e 'set content_type=text/html' -s "NEW USER: $user created an account in $envirname" help@$mailfromdomain < /usr/local/bin/fullemail.html
+                #mutt -F /root/.muttrc -e 'set content_type=text/html' -s "WARNING: $__username__ created an account in $envirname" pwm-notifications@$mailtodomain < /usr/local/bin/fullemail.html
+                mutt -F /root/.muttrc -e 'set content_type=text/html' -s "NEW USER: $__username__ created an account in $envirname" $mailtoaddress < /usr/local/bin/fullemail.html
                 v=$[v+3]
              done
              #cleanup for next run
@@ -109,7 +103,7 @@ mailxinstall:
                                         <table border="0" cellpadding="0" cellspacing="0">
                                           <tbody>
                                             <tr>
-                                              <td> <p>__username__ created an account __time__ from the following IP address: __ip__</p> </td>
+                                              <td> <p>__username__ created an account __time__ GMT from the following IP address: __ip__</p> </td>
                                             </tr>
                                           </tbody>
                                         </table>
