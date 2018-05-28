@@ -26,6 +26,11 @@ pkgremove:
 aws s3 cp s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/files/pwm18.war /usr/share/tomcat/webapps/ROOT.war:
   cmd.run
 
+/usr/share/tomcat/webapps/ROOT.war:
+  file.managed:
+    - user: tomcat
+    - group: tomcat
+
 runtomcatservice:
   service.running:
     - name: tomcat
