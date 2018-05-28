@@ -11,6 +11,7 @@ mailerinstall:
 /usr/local/bin/watchnewuser.sh:
   file.append:
     - text: |
+        #!/bin/sh
         # This is a script that will grep a log file and send an email when a specified pattern is encountered.
         __ScriptName="watchnewuser.sh"
         
@@ -29,7 +30,7 @@ mailerinstall:
         then
              echo "prior-newusers.log Exists" > /dev/null
         else
-             touch /usr/local/bin/prior-newusers.log 
+             touch /usr/local/bin/prior-newusers.log
              echo "" > /usr/local/bin/prior-newusers.log
              chmod 600 /usr/local/bin/prior-newusers.log
         fi
@@ -74,7 +75,7 @@ mailerinstall:
                 v=$[v+3]
              done
              #cleanup for next run
-             rm -rf /usr/local/bin/fullemail.html
+             shred -u /usr/local/bin/fullemail.html
              for (( c=1; c<=$count; c++ ))
              do
                 shred -u /usr/local/bin/emailsnip$c.html
