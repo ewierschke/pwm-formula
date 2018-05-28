@@ -520,7 +520,6 @@ runcrondservice:
             <p style="text-align: center; color: #7e7e7e; font-size: 15px; font-family: avenir; font-weight: $aileron-ultra-light;">&nbsp;</p>
             <p style="text-align: center;"><strong>=====</strong></p>
             <p style="text-align: center;"><strong>Welcome to the {{ salt['environ.get']('ENVIRNAME') }} account management system. &nbsp;</strong></p>
-            <p style="text-align: center;">If you have already been provided a username but need to setup your password please select 'Activate Account'.</p>
             <p style="text-align: center;">If you do not yet have a username please select 'New User Registration'.</p>
             <p style="text-align: center;">Otherwise, login with your credentials, or select 'Forgotten Password' to recover your credentials.</p>
             <p>&nbsp;</p>
