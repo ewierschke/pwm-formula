@@ -21,14 +21,15 @@ saslpasswdchmod:
     - mode: 600
     - replace: False
 
+service tomcat stop:
+  cmd.run
+
 sleeppretomcatrestart:
   cmd.run:
     - name: sleep 3
 
-restarttomcattopickupnewconf:
-  module.run:
-    - name: service.restart
-    - m_name: tomcat
+service tomcat start:
+  cmd.run
 
 /usr/local/bin/pwmconfmgmt.sh:
   file.append:
@@ -83,6 +84,10 @@ postfixconfmode:
     - name: /usr/local/bin/postfix_conf.sh
     - mode: 700
     - replace: False
+
+sleepprepostfixconf:
+  cmd.run:
+    - name: sleep 5
 
 runpostfixconf:
   cmd.run:
