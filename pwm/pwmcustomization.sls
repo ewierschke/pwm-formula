@@ -72,7 +72,6 @@ mailerinstall:
                 mailfromdomain=$(cat /usr/local/bin/mailfromdomain)
                 #mutt -F /root/.muttrc -e 'set content_type=text/html' -s "WARNING: $__username__ created an account in $envirname" pwm-notifications@$mailtodomain < /usr/local/bin/fullemail.html
                 mutt -F /root/.muttrc -e 'set content_type=text/html' -s "NEW USER: $__username__ created an account in $envirname" $mailtoaddress < /usr/local/bin/fullemail.html
-                v=$[v+3]
              done
              #cleanup for next run
              shred -u /usr/local/bin/fullemail.html
