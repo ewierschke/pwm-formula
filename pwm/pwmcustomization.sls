@@ -48,7 +48,8 @@ mailerinstall:
              count=$((diffcount-1))
              while IFS="," read a b c foo; do echo $foo >> /usr/local/bin/onlyjson; done < /usr/local/bin/newuserentries
              cut -b 14- /usr/local/bin/onlyjson > /usr/local/bin/cleanjson
-             cat /usr/local/bin/cleanjson | jq '.targetID, .timestamp, .sourceAddress' >> /usr/local/bin/prearray
+             #json keys differ in pwm18-changed to perpetratorID
+             cat /usr/local/bin/cleanjson | jq '.perpetratorID, .timestamp, .sourceAddress' >> /usr/local/bin/prearray
              readarray -t myarray < /usr/local/bin/prearray
              #create html table snippets for email
              v=0
