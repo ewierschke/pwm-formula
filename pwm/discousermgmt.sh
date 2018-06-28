@@ -108,7 +108,7 @@ do
   else
     /usr/sbin/adduser "$User"
     passwd -l "$User"
-    if [ $? -ne 3 ]; then
+    if [ $? -eq 0 ]; then
     (
       printf "%s ALL=(root) NOPASSWD: /usr/sbin/dmidecode\n" "$User"
       printf "%s ALL=(root) NOPASSWD: /usr/sbin/lsof\n" "$User"

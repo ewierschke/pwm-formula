@@ -107,7 +107,7 @@ do
   else
     /usr/sbin/adduser "$User"
     passwd -l "$User"
-    if [ $? -ne 3 ]; then
+    if [ $? -eq 0 ]; then
       echo "$User ALL=(ALL) NOPASSWD:ALL" > "/etc/sudoers.d/$User"
       log "User $User created by ${__ScriptName}"
     fi
