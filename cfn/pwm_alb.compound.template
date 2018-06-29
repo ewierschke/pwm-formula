@@ -62,6 +62,7 @@
             "ConfigureOstNewUserNotificationviaAPI",
             "ConfigureOstNewUserNotificationviaEmail",
             "FriendlyEnvironmentName",
+            "HelpdeskAPIKey",
             "MailFromDNSDomainName",
             "MailFromPWMEmailAddress",
             "NewUserMailToEmailAddress",
@@ -384,6 +385,12 @@
           "ConfigureADPasswordExpireNotify": {
             "Ref": "ConfigureADPasswordExpireNotify"
           },
+          "ConfigureOstNewUserNotificationviaAPI": {
+            "Ref": "ConfigureOstNewUserNotificationviaAPI"
+          },
+          "ConfigureOstNewUserNotificationviaEmail": {
+            "Ref": "ConfigureOstNewUserNotificationviaEmail"
+          },
           "DesiredCapacity": {
             "Ref": "DesiredCapacity"
           },
@@ -392,6 +399,9 @@
           },
           "FriendlyEnvironmentName": {
             "Ref": "FriendlyEnvironmentName"
+          },
+          "HelpdeskAPIKey": {
+            "Ref": "HelpdeskAPIKey"
           },
           "HelpdeskEmailAddress": {
             "Ref": "HelpdeskEmailAddress"
@@ -410,6 +420,9 @@
           },
           "MailFromEmailAddress": {
             "Ref": "MailFromEmailAddress"
+          },
+          "MailFromPWMEmailAddress": {
+            "Ref": "MailFromPWMEmailAddress"
           },
           "MaxCapacity": {
             "Ref": "MaxCapacity"
