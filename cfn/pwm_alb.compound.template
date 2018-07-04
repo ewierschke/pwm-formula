@@ -59,8 +59,12 @@
             "default": "PWM Application Configuration"
           },
           "Parameters": [
+            "ConfigureOstNewUserNotificationviaAPI",
+            "ConfigureOstNewUserNotificationviaEmail",
             "FriendlyEnvironmentName",
+            "HelpdeskAPIKey",
             "MailFromDNSDomainName",
+            "MailFromPWMEmailAddress",
             "NewUserMailToEmailAddress",
             "PWMConfigBucketName",
             "PWMPublicURL",
@@ -197,6 +201,24 @@
       "Description": "Select yes to execute state that configures AD password expiration notification emails",
       "Type": "String"
     },
+    "ConfigureOstNewUserNotificationviaAPI": {
+      "AllowedValues": [
+        "no",
+        "yes"
+      ],
+      "Default": "yes",
+      "Description": "Select yes to execute state that configures AD password expiration notification emails",
+      "Type": "String"
+    },
+    "ConfigureOstNewUserNotificationviaEmail": {
+      "AllowedValues": [
+        "no",
+        "yes"
+      ],
+      "Default": "no",
+      "Description": "Select yes to execute state that configures AD password expiration notification emails",
+      "Type": "String"
+    },
     "DesiredCapacity": {
       "Default": "1",
       "Description": "The number of PWM instances the autoscale group will spin up initially",
@@ -213,6 +235,12 @@
       "Description": "Friendly name of the Environment in which PWM is being installed, for use in emails and branding",
       "MaxLength": "25",
       "MinLength": "3",
+      "Type": "String"
+    },
+    "HelpdeskAPIKey": {
+      "Default": "THISISAFAKEAPIKEY",
+      "Description": "When ConfigureOstNewUserNotificationviaAPI is configured to yes, this API Key is used to submit new user tickets",
+      "NoEcho": "true",
       "Type": "String"
     },
     "HelpdeskEmailAddress": {
@@ -264,6 +292,13 @@
     "MailFromEmailAddress": {
       "Default": "noreply@example.com",
       "Description": "Email address provided in the from field in notification emails",
+      "MaxLength": "50",
+      "MinLength": "3",
+      "Type": "String"
+    },
+    "MailFromPWMEmailAddress": {
+      "Default": "pwm@example.com",
+      "Description": "Email address used in API submissions to the helpdesk system via API",
       "MaxLength": "50",
       "MinLength": "3",
       "Type": "String"
@@ -350,6 +385,12 @@
           "ConfigureADPasswordExpireNotify": {
             "Ref": "ConfigureADPasswordExpireNotify"
           },
+          "ConfigureOstNewUserNotificationviaAPI": {
+            "Ref": "ConfigureOstNewUserNotificationviaAPI"
+          },
+          "ConfigureOstNewUserNotificationviaEmail": {
+            "Ref": "ConfigureOstNewUserNotificationviaEmail"
+          },
           "DesiredCapacity": {
             "Ref": "DesiredCapacity"
           },
@@ -358,6 +399,9 @@
           },
           "FriendlyEnvironmentName": {
             "Ref": "FriendlyEnvironmentName"
+          },
+          "HelpdeskAPIKey": {
+            "Ref": "HelpdeskAPIKey"
           },
           "HelpdeskEmailAddress": {
             "Ref": "HelpdeskEmailAddress"
@@ -376,6 +420,9 @@
           },
           "MailFromEmailAddress": {
             "Ref": "MailFromEmailAddress"
+          },
+          "MailFromPWMEmailAddress": {
+            "Ref": "MailFromPWMEmailAddress"
           },
           "MaxCapacity": {
             "Ref": "MaxCapacity"

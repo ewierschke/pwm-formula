@@ -69,6 +69,24 @@
       "Description": "Select yes to execute state that configures AD password expiration notification emails",
       "Type": "String"
     },
+    "ConfigureOstNewUserNotificationviaAPI": {
+      "AllowedValues": [
+        "no",
+        "yes"
+      ],
+      "Default": "yes",
+      "Description": "Select yes to execute state that configures AD password expiration notification emails",
+      "Type": "String"
+    },
+    "ConfigureOstNewUserNotificationviaEmail": {
+      "AllowedValues": [
+        "no",
+        "yes"
+      ],
+      "Default": "no",
+      "Description": "Select yes to execute state that configures AD password expiration notification emails",
+      "Type": "String"
+    },
     "DesiredCapacity": {
       "Default": "1",
       "Description": "The number of instances the autoscale group will spin up initially",
@@ -85,6 +103,12 @@
       "Description": "Friendly name of the Environment in which PWM is being installed, for use in emails and branding (future use)",
       "MaxLength": "25",
       "MinLength": "3",
+      "Type": "String"
+    },
+    "HelpdeskAPIKey": {
+      "Default": "THISISAFAKEAPIKEY",
+      "Description": "When ConfigureOstNewUserNotificationviaAPI is configured to yes, this API Key is used to submit new user tickets",
+      "NoEcho": "true",
       "Type": "String"
     },
     "HelpdeskEmailAddress": {
@@ -130,6 +154,13 @@
     "MailFromEmailAddress": {
       "Default": "noreply@example.com",
       "Description": "Email address provided in the from field in notification emails",
+      "MaxLength": "50",
+      "MinLength": "3",
+      "Type": "String"
+    },
+    "MailFromPWMEmailAddress": {
+      "Default": "pwm@example.com",
+      "Description": "Email address used in API submissions to the helpdesk system via API",
       "MaxLength": "50",
       "MinLength": "3",
       "Type": "String"
@@ -621,7 +652,7 @@
                   ]
                 }
               },
-              "41-grain_setup": {
+              "41-adpassnotify_grain_setup": {
                 "command": {
                   "Fn::Join": [
                     "",
@@ -635,7 +666,35 @@
                   ]
                 }
               },
-              "42-minion_prepa": {
+              "42-newuserviaemail_grain_setup": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "echo \"setupnewusernotifyviaemail: '",
+                      {
+                        "Ref": "ConfigureOstNewUserNotificationviaEmail"
+                      },
+                      "'\" >> /etc/salt/grains"
+                    ]
+                  ]
+                }
+              },
+              "43-newuserviaapi_grain_setup": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "echo \"setupnewusernotifyviaapi: '",
+                      {
+                        "Ref": "ConfigureOstNewUserNotificationviaAPI"
+                      },
+                      "'\" >> /etc/salt/grains"
+                    ]
+                  ]
+                }
+              },
+              "45-minion_prepa": {
                 "command": {
                   "Fn::Join": [
                     "",
@@ -646,7 +705,7 @@
                   ]
                 }
               },
-              "44-set_envirname_var": {
+              "51-set_envirname_var": {
                 "command": {
                   "Fn::Join": [
                     "",
@@ -657,7 +716,7 @@
                   ]
                 }
               },
-              "45-set_resourcedomain_var": {
+              "52-set_resourcedomain_var": {
                 "command": {
                   "Fn::Join": [
                     "",
@@ -668,7 +727,7 @@
                   ]
                 }
               },
-              "46-set_configbucket_var": {
+              "53-set_configbucket_var": {
                 "command": {
                   "Fn::Join": [
                     "",
@@ -759,6 +818,14 @@
                 "mode": "000600",
                 "owner": "root"
               },
+              "/usr/local/bin/emailfrompwm": {
+                "content": {
+                  "Ref": "MailFromPWMEmailAddress"
+                },
+                "group": "root",
+                "mode": "000600",
+                "owner": "root"
+              },
               "/usr/local/bin/envirname": {
                 "content": {
                   "Ref": "FriendlyEnvironmentName"
@@ -802,6 +869,14 @@
               "/usr/local/bin/oupath": {
                 "content": {
                   "Ref": "ADOUPath"
+                },
+                "group": "root",
+                "mode": "000600",
+                "owner": "root"
+              },
+              "/usr/local/bin/ostapikey": {
+                "content": {
+                  "Ref": "HelpdeskAPIKey"
                 },
                 "group": "root",
                 "mode": "000600",
