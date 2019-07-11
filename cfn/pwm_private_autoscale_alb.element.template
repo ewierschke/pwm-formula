@@ -522,7 +522,8 @@
                 ]
               },
               "e-cloudwatchagentsetup",
-              "f-finalize"
+              "f-inspectoragentsetup",
+              "g-finalize"
             ]
           },
           "a-cfnsetup": {
@@ -1208,7 +1209,33 @@
               }
             }
           },
-          "f-finalize": {
+          "f-inspectoragentsetup": {
+            "commands": {
+              "10-get-agent": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "wget https://inspector-agent.amazonaws.com/linux/latest/install",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "20-run-install-script": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "bash install",
+                      "\n"
+                    ]
+                  ]
+                }
+              }
+            }
+          },
+          "g-finalize": {
             "commands": {
               "10-signal-success": {
                 "command": {
