@@ -1216,18 +1216,62 @@
                   "Fn::Join": [
                     "",
                     [
-                      "wget https://inspector-agent.amazonaws.com/linux/latest/install",
+                      "wget -O inspectorinstall https://inspector-agent.amazonaws.com/linux/latest/install",
                       "\n"
                     ]
                   ]
                 }
               },
-              "20-run-install-script": {
+              "20-disable-gpgcheck": {
                 "command": {
                   "Fn::Join": [
                     "",
                     [
-                      "bash install",
+                      "sed -i 's:gpgcheck=1:gpgcheck=0:g' /etc/yum.conf",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "21-disable-localpkg_gpgcheck": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "sed -i 's:localpkg_gpgcheck = 1:localpkg_gpgcheck = 0:g' /etc/yum.conf",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "30-run-install-script": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "bash inspectorinstall",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "40-enable-gpgcheck": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "sed -i 's:gpgcheck=0:gpgcheck=1:g' /etc/yum.conf",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "41-enable-localpkg_gpgcheck": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "sed -i 's:localpkg_gpgcheck = 0:localpkg_gpgcheck = 1:g' /etc/yum.conf",
                       "\n"
                     ]
                   ]
