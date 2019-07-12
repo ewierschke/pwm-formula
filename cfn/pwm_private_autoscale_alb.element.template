@@ -1281,7 +1281,18 @@
           },
           "g-finalize": {
             "commands": {
-              "10-signal-success": {
+              "10-safety-yum-update": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "yum -y update",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "20-signal-success": {
                 "command": {
                   "Fn::Join": [
                     "",
