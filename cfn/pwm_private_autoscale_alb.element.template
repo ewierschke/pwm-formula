@@ -523,7 +523,8 @@
               },
               "e-cloudwatchagentsetup",
               "f-inspectoragentsetup",
-              "g-finalize"
+              "g-ssmagentsetup",
+              "h-finalize"
             ]
           },
           "a-cfnsetup": {
@@ -1279,7 +1280,66 @@
               }
             }
           },
-          "g-finalize": {
+          "g-ssmagentsetup": {
+            "commands": {
+              "10-disable-gpgcheck": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "sed -i 's:gpgcheck=1:gpgcheck=0:g' /etc/yum.conf",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "11-disable-localpkg_gpgcheck": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "sed -i 's:localpkg_gpgcheck = 1:localpkg_gpgcheck = 0:g' /etc/yum.conf",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "20-run-install-script": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "30-enable-gpgcheck": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "sed -i 's:gpgcheck=0:gpgcheck=1:g' /etc/yum.conf",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "31-enable-localpkg_gpgcheck": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "sed -i 's:localpkg_gpgcheck = 0:localpkg_gpgcheck = 1:g' /etc/yum.conf",
+                      "\n"
+                    ]
+                  ]
+                }
+              }
+            }
+          },
+          "h-finalize": {
             "commands": {
               "10-safety-yum-update": {
                 "command": {
