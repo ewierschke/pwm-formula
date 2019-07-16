@@ -282,7 +282,6 @@
     "AllowDiscoIAMGroupSSHKeyAccess": {
       "Condition": "ConfigureDiscovery",
       "Properties": {
-        "PolicyName": "AllowDiscoIAMGroupSSHKeyAccess",
         "PolicyDocument": {
           "Statement": [
             {
@@ -332,6 +331,7 @@
           ],
           "Version": "2012-10-17"
         },
+        "PolicyName": "AllowDiscoIAMGroupSSHKeyAccess",
         "Roles": [
           {
             "Ref": "PWMInstanceRole"
@@ -340,9 +340,46 @@
       },
       "Type": "AWS::IAM::Policy"
     },
-    "CloudWatchAgent": {
+    "pwmConfigInstanceS3Access": {
       "Properties": {
-        "Description": "CloudWatch Agent Server Policy for PWM instance role",
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:PutObjectAcl"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:s3:::",
+                      {
+                        "Ref": "PWMConfigBucketName"
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "pwmConfigInstanceS3Access",
+        "Roles": [
+          {
+            "Ref": "PWMInstanceRole"
+          }
+        ]
+      },
+      "Type": "AWS::IAM::Policy"
+    },
+    "pwmCloudWatchAgent": {
+      "Properties": {
         "PolicyDocument": {
           "Statement": [
             {
@@ -363,13 +400,73 @@
           ],
           "Version": "2012-10-17"
         },
+        "PolicyName": "pwmCloudWatchAgent",
         "Roles": [
           {
             "Ref": "PWMInstanceRole"
           }
         ]
       },
-      "Type": "AWS::IAM::ManagedPolicy"
+      "Type": "AWS::IAM::Policy"
+    },
+    "pwmSSMManagedInstanceCore": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "ssm:DescribeAssociation",
+                "ssm:GetDeployablePatchSnapshotForInstance",
+                "ssm:GetDocument",
+                "ssm:DescribeDocument",
+                "ssm:GetManifest",
+                "ssm:GetParameter",
+                "ssm:GetParameters",
+                "ssm:ListAssociations",
+                "ssm:ListInstanceAssociations",
+                "ssm:PutInventory",
+                "ssm:PutComplianceItems",
+                "ssm:PutConfigurePackageResult",
+                "ssm:UpdateAssociationStatus",
+                "ssm:UpdateInstanceAssociationStatus",
+                "ssm:UpdateInstanceInformation"
+              ],
+              "Resource": "*"
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "ssmmessages:CreateControlChannel",
+                "ssmmessages:CreateDataChannel",
+                "ssmmessages:OpenControlChannel",
+                "ssmmessages:OpenDataChannel"
+              ],
+              "Resource": "*"
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "ec2messages:AcknowledgeMessage",
+                "ec2messages:DeleteMessage",
+                "ec2messages:FailMessage",
+                "ec2messages:GetEndpoint",
+                "ec2messages:GetMessages",
+                "ec2messages:SendReply"
+              ],
+              "Resource": "*"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "pwmSSMManagedInstanceCore",
+        "Roles": [
+          {
+            "Ref": "PWMInstanceRole"
+          }
+        ]
+      },
+      "Type": "AWS::IAM::Policy"
     },
     "PWMAutoScalingGroup": {
       "CreationPolicy": {
@@ -432,44 +529,6 @@
           "WillReplace": "true"
         }
       }
-    },
-    "PWMConfigInstanceS3Access": {
-      "Properties": {
-        "Description": "Policy for PWM instance role to access appropriate s3 bucket for pwm config",
-        "PolicyDocument": {
-          "Statement": [
-            {
-              "Action": [
-                "s3:GetObject",
-                "s3:PutObject",
-                "s3:PutObjectAcl"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "arn:aws:s3:::",
-                      {
-                        "Ref": "PWMConfigBucketName"
-                      },
-                      "/*"
-                    ]
-                  ]
-                }
-              ]
-            }
-          ],
-          "Version": "2012-10-17"
-        },
-        "Roles": [
-          {
-            "Ref": "PWMInstanceRole"
-          }
-        ]
-      },
-      "Type": "AWS::IAM::ManagedPolicy"
     },
     "PWMInstanceProfile": {
       "Properties": {
