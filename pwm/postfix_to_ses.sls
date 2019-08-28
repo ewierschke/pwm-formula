@@ -34,4 +34,4 @@ get_ses_rotate_script:
 
 run_ses_rotate_script:
   cmd.run:
-    - name: bash /usr/local/bin/rotatesescredsforiamuser.sh -A {{ salt['environ.get']('SNSSUBSCRIPTIONEMAIL') }} -D {{ salt['environ.get']('MAILFROMDNSDOMAINNAME') }} -U {{ salt['environ.get']('PWMSESIAMUSERNAME') }}
+    - name: bash /usr/local/bin/rotatesescredsforiamuser.sh -A {{ salt['environ.get']('SNSSUBSCRIPTIONEMAIL') }} -D {{ salt['environ.get']('MAILFROMDNSDOMAINNAME') }} -U {{ salt['environ.get']('pwmSESIAMUSERNAME') }}
