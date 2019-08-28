@@ -288,7 +288,7 @@
         },
         "Roles": [
           {
-            "Ref": "PWMInstanceRole"
+            "Ref": "pwmInstanceRole"
           }
         ]
       },
@@ -349,7 +349,7 @@
         "PolicyName": "AllowDiscoIAMGroupSSHKeyAccess",
         "Roles": [
           {
-            "Ref": "PWMInstanceRole"
+            "Ref": "pwmInstanceRole"
           }
         ]
       },
@@ -387,7 +387,7 @@
         "PolicyName": "pwmConfigInstanceS3Access",
         "Roles": [
           {
-            "Ref": "PWMInstanceRole"
+            "Ref": "pwmInstanceRole"
           }
         ]
       },
@@ -454,7 +454,7 @@
         "PolicyName": "pwmCloudWatchAgent",
         "Roles": [
           {
-            "Ref": "PWMInstanceRole"
+            "Ref": "pwmInstanceRole"
           }
         ]
       },
@@ -513,7 +513,7 @@
         "PolicyName": "pwmSSMManagedInstanceCore",
         "Roles": [
           {
-            "Ref": "PWMInstanceRole"
+            "Ref": "pwmInstanceRole"
           }
         ]
       },
@@ -628,13 +628,13 @@
         "Path": "/",
         "Roles": [
           {
-            "Ref": "PWMInstanceRole"
+            "Ref": "pwmInstanceRole"
           }
         ]
       },
       "Type": "AWS::IAM::InstanceProfile"
     },
-    "PWMInstanceRole": {
+    "pwmInstanceRole": {
       "Properties": {
         "AssumeRolePolicyDocument": {
           "Statement": [
