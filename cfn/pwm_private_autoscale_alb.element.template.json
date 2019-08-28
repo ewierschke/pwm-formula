@@ -14,7 +14,7 @@
       ]
     }
   },
-  "Description": "This template deploys a PWM instance from launch config in an autoscale group behind an ALB using watchmaker.",
+  "Description": "This template deploys a pwm instance from launch config in an autoscale group behind an ALB using watchmaker.",
   "Parameters": {
     "ADHostname": {
       "AllowedPattern": "[a-zA-Z0-9]+\\..+",
@@ -25,7 +25,7 @@
       "Type": "String"
     },
     "AdminIAMGroup": {
-      "Description": "ID of the IAM group to be granted SSH Admin access to PWM instances",
+      "Description": "ID of the IAM group to be granted SSH Admin access to pwm instances",
       "Type": "String"
     },
     "AdminReportMailToEmailAddress": {
@@ -95,12 +95,12 @@
     },
     "DiscoIAMGroup": {
       "Default": "",
-      "Description": "ID of the IAM group to be granted SSH Discovery access to PWM instances",
+      "Description": "ID of the IAM group to be granted SSH Discovery access to pwm instances",
       "Type": "String"
     },
     "FriendlyEnvironmentName": {
       "Default": "Example",
-      "Description": "Friendly name of the Environment in which PWM is being installed, for use in emails and branding (future use)",
+      "Description": "Friendly name of the Environment in which pwm is being installed, for use in emails and branding (future use)",
       "MaxLength": "25",
       "MinLength": "3",
       "Type": "String"
@@ -136,7 +136,7 @@
         "m4.xlarge"
       ],
       "Default": "t2.micro",
-      "Description": "Amazon EC2 instance type for the PWM Instance (using Aug16 ACB CentOS6 AMI)",
+      "Description": "Amazon EC2 instance type for the pwm Instance (using Aug16 ACB CentOS6 AMI)",
       "Type": "String"
     },
     "KeyPairName": {
@@ -158,7 +158,7 @@
       "MinLength": "3",
       "Type": "String"
     },
-    "MailFromPWMEmailAddress": {
+    "MailFrompwmEmailAddress": {
       "Default": "pwm@example.com",
       "Description": "Email address used in API submissions to the helpdesk system via API",
       "MaxLength": "50",
@@ -185,20 +185,20 @@
       "Type": "String"
     },
     "PrivateSubnetIDs": {
-      "Description": "Private Subnet ID where the PWM instance(s) will run. (only select one, load balancing not tested)",
+      "Description": "Private Subnet ID where the pwm instance(s) will run. (only select one, load balancing not tested)",
       "Type": "List<AWS::EC2::Subnet::Id>"
     },
     "pwmALBTargetGroupName": {
-      "Description": "Name of the ALB PWM Target Group",
+      "Description": "Name of the ALB pwm Target Group",
       "Type": "String",
       "MinLength": "1"
     },
     "pwmConfigBucketName": {
-      "Description": "Name of the S3 bucket where the PWM config should be pulled and stored",
+      "Description": "Name of the S3 bucket where the pwm config should be pulled and stored",
       "Type": "String"
     },
     "pwmPublicURL": {
-      "Description": "Public URL to this PWM instance to be included in notification emails",
+      "Description": "Public URL to this pwm instance to be included in notification emails",
       "Type": "String"
     },
     "pwmSNSTopicARN": {
@@ -213,8 +213,8 @@
       "MinLength": "3",
       "Type": "String"
     },
-    "SecurityGroupIdPWMInstance": {
-      "Description": "ID of the security group for PWM instances",
+    "SecurityGroupIdpwmInstance": {
+      "Description": "ID of the security group for pwm instances",
       "Type": "AWS::EC2::SecurityGroup::Id"
     },
     "pwmSESIAMUserName": {
@@ -561,7 +561,7 @@
       },
       "Type": "AWS::IAM::Policy"
     },
-    "PWMAutoScalingGroup": {
+    "pwmAutoScalingGroup": {
       "CreationPolicy": {
         "ResourceSignal": {
           "Count": {
@@ -577,7 +577,7 @@
         "HealthCheckGracePeriod": "3600",
         "HealthCheckType": "ELB",
         "LaunchConfigurationName": {
-          "Ref": "PWMLaunchConfig"
+          "Ref": "pwmLaunchConfig"
         },
         "MaxSize": {
           "Ref": "MaxCapacity"
@@ -594,7 +594,7 @@
               "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"
             ],
             "TopicARN": {
-              "Ref": "PWMSNSTopicARN"
+              "Ref": "pwmSNSTopicARN"
             }
           }
         ],
@@ -609,7 +609,7 @@
         ],
         "TargetGroupARNs": [
           {
-            "Ref": "PWMALBTargetGroupName"
+            "Ref": "pwmALBTargetGroupName"
           }
         ],
         "VPCZoneIdentifier": {
@@ -623,7 +623,7 @@
         }
       }
     },
-    "PWMInstanceProfile": {
+    "pwmInstanceProfile": {
       "Properties": {
         "Path": "/",
         "Roles": [
@@ -656,7 +656,7 @@
       },
       "Type": "AWS::IAM::Role"
     },
-    "PWMLaunchConfig": {
+    "pwmLaunchConfig": {
       "Metadata": {
         "AWS::CloudFormation::Init": {
           "configSets": {
@@ -715,13 +715,13 @@
                     [
                       "[cfn-auto-reloader-hook]\n",
                       "triggers=post.update\n",
-                      "path=Resources.PWMLaunchConfig.Metadata.AWS::CloudFormation::Init\n",
+                      "path=Resources.pwmLaunchConfig.Metadata.AWS::CloudFormation::Init\n",
                       "action=/opt/aws/bin/cfn-init -v -c update",
                       " --stack ",
                       {
                         "Ref": "AWS::StackName"
                       },
-                      " --resource PWMLaunchConfig",
+                      " --resource pwmLaunchConfig",
                       " --region ",
                       {
                         "Ref": "AWS::Region"
@@ -912,7 +912,7 @@
                   "Fn::Join": [
                     "",
                     [
-                      "CONFIGBUCKETNAME=\"$(cat /usr/local/bin/configbucketname)\" RESOURCEDOMAIN=\"$(cat /usr/local/bin/resourcedomain)\" ENVIRNAME=\"$(cat /usr/local/bin/envirname)\" SNSSUBSCRIPTIONEMAIL=\"$(cat /usr/local/bin/snssubscriptionemail)\" MAILFROMDNSDOMAINNAME=\"$(cat /usr/local/bin/mailfromdomain)\" PWMSESIAMUSERNAME=\"$(cat /usr/local/bin/pwmsesiamusername)\"salt-call --local --retcode-passthrough state.apply pwm",
+                      "CONFIGBUCKETNAME=\"$(cat /usr/local/bin/configbucketname)\" RESOURCEDOMAIN=\"$(cat /usr/local/bin/resourcedomain)\" ENVIRNAME=\"$(cat /usr/local/bin/envirname)\" SNSSUBSCRIPTIONEMAIL=\"$(cat /usr/local/bin/snssubscriptionemail)\" MAILFROMDNSDOMAINNAME=\"$(cat /usr/local/bin/mailfromdomain)\" pwmSESIAMUSERNAME=\"$(cat /usr/local/bin/pwmsesiamusername)\"salt-call --local --retcode-passthrough state.apply pwm",
                       "\n"
                     ]
                   ]
@@ -974,7 +974,7 @@
               },
               "/usr/local/bin/emailfrompwm": {
                 "content": {
-                  "Ref": "MailFromPWMEmailAddress"
+                  "Ref": "MailFrompwmEmailAddress"
                 },
                 "group": "root",
                 "mode": "000600",
@@ -1530,7 +1530,7 @@
                       {
                         "Ref": "AWS::StackName"
                       },
-                      "   --resource PWMAutoScalingGroup",
+                      "   --resource pwmAutoScalingGroup",
                       "   --region ",
                       {
                         "Ref": "AWS::Region"
@@ -1557,7 +1557,7 @@
           }
         ],
         "IamInstanceProfile": {
-          "Ref": "PWMInstanceProfile"
+          "Ref": "pwmInstanceProfile"
         },
         "ImageId": {
           "Ref": "AmiId"
@@ -1570,7 +1570,7 @@
         },
         "SecurityGroups": [
           {
-            "Ref": "SecurityGroupIdPWMInstance"
+            "Ref": "SecurityGroupIdpwmInstance"
           }
         ],
         "UserData": {
@@ -1639,7 +1639,7 @@
                 {
                   "Ref": "AWS::StackName"
                 },
-                " --resource PWMLaunchConfig",
+                " --resource pwmLaunchConfig",
                 " --region ",
                 {
                   "Ref": "AWS::Region"
@@ -1651,7 +1651,7 @@
                 {
                   "Ref": "AWS::StackName"
                 },
-                "  --resource PWMAutoScalingGroup",
+                "  --resource pwmAutoScalingGroup",
                 "  --region ",
                 {
                   "Ref": "AWS::Region"

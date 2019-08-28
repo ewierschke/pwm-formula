@@ -14,7 +14,7 @@
       ]
     }
   },
-  "Description": "This template creates an instance of PWM for account management, fronted by an Application Load Balancer.",
+  "Description": "This template creates an instance of pwm for account management, fronted by an Application Load Balancer.",
   "Metadata": {
     "AWS::CloudFormation::Interface": {
       "ParameterGroups": [
@@ -56,7 +56,7 @@
         },
         {
           "Label": {
-            "default": "PWM Application Configuration"
+            "default": "pwm Application Configuration"
           },
           "Parameters": [
             "ConfigureOstNewUserNotificationviaAPI",
@@ -64,7 +64,7 @@
             "FriendlyEnvironmentName",
             "HelpdeskAPIKey",
             "MailFromDNSDomainName",
-            "MailFromPWMEmailAddress",
+            "MailFrompwmEmailAddress",
             "NewUserMailToEmailAddress",
             "pwmConfigBucketName",
             "pwmPublicURL",
@@ -91,39 +91,39 @@
     }
   },
   "Outputs": {
-    "PWMALBSecurityGroupId": {
-      "Description": "Security Group ID for the PWM Application Load Balancer",
+    "pwmALBSecurityGroupId": {
+      "Description": "Security Group ID for the pwm Application Load Balancer",
       "Value": {
         "Fn::GetAtt": [
-          "PWMSecurityGroupStack",
-          "Outputs.PWMElbSecurityGroupId"
+          "pwmSecurityGroupStack",
+          "Outputs.pwmElbSecurityGroupId"
         ]
       }
     },
-    "PWMLoadBalancerDns": {
-      "Description": "DNS name for the PWM ALB",
+    "pwmLoadBalancerDns": {
+      "Description": "DNS name for the pwm ALB",
       "Value": {
         "Fn::GetAtt": [
-          "PWMALBStack",
+          "pwmALBStack",
           "Outputs.LoadBalancerDns"
         ]
       }
     },
-    "PWMLoadBalancerName": {
-      "Description": "Name of the PWM Application Load Balancer",
+    "pwmLoadBalancerName": {
+      "Description": "Name of the pwm Application Load Balancer",
       "Value": {
         "Fn::GetAtt": [
-          "PWMALBStack",
+          "pwmALBStack",
           "Outputs.LoadBalancerName"
         ]
       }
     },
-    "PWMSecurityGroupId": {
-      "Description": "Security Group ID for the PWM instances",
+    "pwmSecurityGroupId": {
+      "Description": "Security Group ID for the pwm instances",
       "Value": {
         "Fn::GetAtt": [
-          "PWMSecurityGroupStack",
-          "Outputs.PWMSecurityGroupId"
+          "pwmSecurityGroupStack",
+          "Outputs.pwmSecurityGroupId"
         ]
       }
     }
@@ -138,7 +138,7 @@
       "Type": "String"
     },
     "AdminIAMGroup": {
-      "Description": "ID of the IAM group to be granted SSH Admin access to PWM instances",
+      "Description": "ID of the IAM group to be granted SSH Admin access to pwm instances",
       "Type": "String"
     },
     "AdminReportMailToEmailAddress": {
@@ -221,18 +221,18 @@
     },
     "DesiredCapacity": {
       "Default": "1",
-      "Description": "The number of PWM instances the autoscale group will spin up initially",
+      "Description": "The number of pwm instances the autoscale group will spin up initially",
       "MinLength": "1",
       "Type": "String"
     },
     "DiscoIAMGroup": {
       "Default": "",
-      "Description": "ID of the IAM group to be granted SSH Discovery access to PWM instances",
+      "Description": "ID of the IAM group to be granted SSH Discovery access to pwm instances",
       "Type": "String"
     },
     "FriendlyEnvironmentName": {
       "Default": "EXAMPLE",
-      "Description": "Friendly name of the Environment in which PWM is being installed, for use in emails and branding",
+      "Description": "Friendly name of the Environment in which pwm is being installed, for use in emails and branding",
       "MaxLength": "25",
       "MinLength": "3",
       "Type": "String"
@@ -268,7 +268,7 @@
         "m4.xlarge"
       ],
       "Default": "t2.micro",
-      "Description": "Amazon EC2 instance type for the PWM Instances",
+      "Description": "Amazon EC2 instance type for the pwm Instances",
       "Type": "String"
     },
     "KeyPairName": {
@@ -277,7 +277,7 @@
     },
     "MinCapacity": {
       "Default": "1",
-      "Description": "The minimum number of PWM instances for the autoscale group",
+      "Description": "The minimum number of pwm instances for the autoscale group",
       "MinLength": "1",
       "Type": "String"
     },
@@ -296,7 +296,7 @@
       "MinLength": "3",
       "Type": "String"
     },
-    "MailFromPWMEmailAddress": {
+    "MailFrompwmEmailAddress": {
       "Default": "pwm@example.com",
       "Description": "Email address used in API submissions to the helpdesk system via API",
       "MaxLength": "50",
@@ -305,7 +305,7 @@
     },
     "MaxCapacity": {
       "Default": "1",
-      "Description": "The maximum number of PWM instances for the autoscale group",
+      "Description": "The maximum number of pwm instances for the autoscale group",
       "MinLength": "1",
       "Type": "String"
     },
@@ -317,7 +317,7 @@
       "Type": "String"
     },
     "PrivateSubnetIDs": {
-      "Description": "List of Private Subnet IDs where the PWM instances will run. (only select one, load balancing not tested)",
+      "Description": "List of Private Subnet IDs where the pwm instances will run. (only select one, load balancing not tested)",
       "Type": "List<AWS::EC2::Subnet::Id>"
     },
     "PublicSubnetIDs": {
@@ -325,11 +325,11 @@
       "Type": "List<AWS::EC2::Subnet::Id>"
     },
     "pwmConfigBucketName": {
-      "Description": "Name of the existing S3 bucket where the PWM config should be pulled and pushed",
+      "Description": "Name of the existing S3 bucket where the pwm config should be pulled and pushed",
       "Type": "String"
     },
     "pwmPublicURL": {
-      "Description": "Public URL to this PWM instance to be included in notification emails",
+      "Description": "Public URL to this pwm instance to be included in notification emails",
       "Type": "String"
     },
     "ResourceDNSDomainName": {
@@ -361,11 +361,11 @@
     }
   },
   "Resources": {
-    "PWMAutoScaleStack": {
+    "pwmAutoScaleStack": {
       "DependsOn": [
-        "PWMALBTargetGroupStack",
-        "PWMSecurityGroupStack",
-        "PWMSNSTopicSubscriptStack"
+        "pwmALBTargetGroupStack",
+        "pwmSecurityGroupStack",
+        "pwmSNSTopicSubscriptStack"
       ],
       "Properties": {
         "Parameters": {
@@ -429,8 +429,8 @@
           "MailFromEmailAddress": {
             "Ref": "MailFromEmailAddress"
           },
-          "MailFromPWMEmailAddress": {
-            "Ref": "MailFromPWMEmailAddress"
+          "MailFrompwmEmailAddress": {
+            "Ref": "MailFrompwmEmailAddress"
           },
           "MaxCapacity": {
             "Ref": "MaxCapacity"
@@ -451,7 +451,7 @@
           },
           "pwmALBTargetGroupName": {
             "Fn::GetAtt": [
-              "PWMALBTargetGroupStack",
+              "pwmALBTargetGroupStack",
               "Outputs.TargetGroupName"
             ]
           },
@@ -463,7 +463,7 @@
           },
           "pwmSNSTopicARN": {
             "Fn::GetAtt": [
-              "PWMSNSTopicSubscriptStack",
+              "pwmSNSTopicSubscriptStack",
               "Outputs.SNSTopicARN"
             ]
           },
@@ -479,14 +479,14 @@
           "pwmScapOutputBucketName": {
             "Ref": "pwmScapOutputBucketName"
           },
-          "SecurityGroupIdPWMInstance": {
+          "SecurityGroupIdpwmInstance": {
             "Fn::Join": [
               ",",
               [
                 {
                   "Fn::GetAtt": [
-                    "PWMSecurityGroupStack",
-                    "Outputs.PWMSecurityGroupId"
+                    "pwmSecurityGroupStack",
+                    "Outputs.pwmSecurityGroupId"
                   ]
                 }
               ]
@@ -497,10 +497,10 @@
       },
       "Type": "AWS::CloudFormation::Stack"
     },
-    "PWMALBStack": {
+    "pwmALBStack": {
       "DependsOn": [
-        "PWMALBTargetGroupStack",
-        "PWMSecurityGroupStack"
+        "pwmALBTargetGroupStack",
+        "pwmSecurityGroupStack"
       ],
       "Properties": {
         "Parameters": {
@@ -514,8 +514,8 @@
           },
           "SecurityGroupId": {
             "Fn::GetAtt": [
-              "PWMSecurityGroupStack",
-              "Outputs.PWMElbSecurityGroupId"
+              "pwmSecurityGroupStack",
+              "Outputs.pwmElbSecurityGroupId"
             ]
           },
           "SslCertificateName": {
@@ -526,7 +526,7 @@
           },
           "TargetGroupId": {
             "Fn::GetAtt": [
-              "PWMALBTargetGroupStack",
+              "pwmALBTargetGroupStack",
               "Outputs.TargetGroupName"
             ]
           }
@@ -535,7 +535,7 @@
       },
       "Type": "AWS::CloudFormation::Stack"
     },
-    "PWMALBTargetGroupStack": {
+    "pwmALBTargetGroupStack": {
       "Properties": {
         "Parameters": {
           "VPC": {
@@ -546,7 +546,7 @@
       },
       "Type": "AWS::CloudFormation::Stack"
     },
-    "PWMSecurityGroupStack": {
+    "pwmSecurityGroupStack": {
       "Properties": {
         "Parameters": {
           "CMDBSecurityGroup": {
@@ -568,7 +568,7 @@
       },
       "Type": "AWS::CloudFormation::Stack"
     },
-    "PWMSNSTopicSubscriptStack": {
+    "pwmSNSTopicSubscriptStack": {
       "Properties": {
         "Parameters": {
           "SNSSubscriptionEmail": {

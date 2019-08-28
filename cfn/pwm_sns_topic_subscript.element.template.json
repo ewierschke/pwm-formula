@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "This template creates an SNS topic and subscription for PWM instance action notifications",
+  "Description": "This template creates an SNS topic and subscription for pwm instance action notifications",
   "Outputs": {
     "SNSTopicARN": {
       "Description": "Topic ARN of newly created SNS topic",

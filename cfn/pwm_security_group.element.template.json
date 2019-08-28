@@ -34,19 +34,19 @@
       ]
     }
   },
-  "Description": "This templates creates one security group for PWM instances, and one for their load balancer",
+  "Description": "This templates creates one security group for pwm instances, and one for their load balancer",
   "Outputs": {
-    "PWMElbSecurityGroupId": {
+    "pwmElbSecurityGroupId": {
       "Condition": "UseELB",
-      "Description": "Security Group ID for the PWM Elastic Load Balancer",
+      "Description": "Security Group ID for the pwm Elastic Load Balancer",
       "Value": {
-        "Ref": "PWMElbSecurityGroup"
+        "Ref": "pwmElbSecurityGroup"
       }
     },
-    "PWMSecurityGroupId": {
-      "Description": "Security Group ID for the PWM instances",
+    "pwmSecurityGroupId": {
+      "Description": "Security Group ID for the pwm instances",
       "Value": {
-        "Ref": "PWMSecurityGroup"
+        "Ref": "pwmSecurityGroup"
       }
     }
   },
@@ -57,7 +57,7 @@
         "true"
       ],
       "Default": "true",
-      "Description": "Set to true if using an ELB in front of PWM; otherwise set to false",
+      "Description": "Set to true if using an ELB in front of pwm; otherwise set to false",
       "Type": "String"
     },
     "ConnectCMDB": {
@@ -81,12 +81,12 @@
     }
   },
   "Resources": {
-    "CMDBToPWMIngressTcp22": {
+    "CMDBTopwmIngressTcp22": {
       "Condition": "ConnectCMDB",
       "Properties": {
         "FromPort": "22",
         "GroupId": {
-          "Ref": "PWMSecurityGroup"
+          "Ref": "pwmSecurityGroup"
         },
         "IpProtocol": "tcp",
         "SourceSecurityGroupId": {
@@ -96,31 +96,31 @@
       },
       "Type": "AWS::EC2::SecurityGroupIngress"
     },
-    "ElbToPWMEgressTcp80": {
+    "ElbTopwmEgressTcp80": {
       "Condition": "UseELB",
       "Properties": {
         "DestinationSecurityGroupId": {
-          "Ref": "PWMSecurityGroup"
+          "Ref": "pwmSecurityGroup"
         },
         "FromPort": "80",
         "GroupId": {
-          "Ref": "PWMElbSecurityGroup"
+          "Ref": "pwmElbSecurityGroup"
         },
         "IpProtocol": "tcp",
         "ToPort": "80"
       },
       "Type": "AWS::EC2::SecurityGroupEgress"
     },
-    "ElbToPWMIngressTcp80": {
+    "ElbTopwmIngressTcp80": {
       "Condition": "UseELB",
       "Properties": {
         "FromPort": "80",
         "GroupId": {
-          "Ref": "PWMSecurityGroup"
+          "Ref": "pwmSecurityGroup"
         },
         "IpProtocol": "tcp",
         "SourceSecurityGroupId": {
-          "Ref": "PWMElbSecurityGroup"
+          "Ref": "pwmElbSecurityGroup"
         },
         "ToPort": "80"
       },
@@ -132,17 +132,17 @@
         "CidrIp": "0.0.0.0/0",
         "FromPort": "443",
         "GroupId": {
-          "Ref": "PWMElbSecurityGroup"
+          "Ref": "pwmElbSecurityGroup"
         },
         "IpProtocol": "tcp",
         "ToPort": "443"
       },
       "Type": "AWS::EC2::SecurityGroupIngress"
     },
-    "PWMElbSecurityGroup": {
+    "pwmElbSecurityGroup": {
       "Condition": "UseELB",
       "Properties": {
-        "GroupDescription": "Enable PWM ELB access from the Internet",
+        "GroupDescription": "Enable pwm ELB access from the Internet",
         "Tags": [
           {
             "Key": "Name",
@@ -165,9 +165,9 @@
       },
       "Type": "AWS::EC2::SecurityGroup"
     },
-    "PWMSecurityGroup": {
+    "pwmSecurityGroup": {
       "Properties": {
-        "GroupDescription": "Enable PWM access from ELB",
+        "GroupDescription": "Enable pwm access from ELB",
         "Tags": [
           {
             "Key": "Name",

@@ -10,10 +10,10 @@
       ]
     }
   },
-  "Description": "This template creates a public Elastic Load Balancer using HTTPS on port 443 and a healthcheck for PWM",
+  "Description": "This template creates a public Elastic Load Balancer using HTTPS on port 443 and a healthcheck for pwm",
   "Outputs": {
     "LoadBalancerDns": {
-      "Description": "DNS name for the PWM ALB",
+      "Description": "DNS name for the pwm ALB",
       "Value": {
         "Fn::GetAtt": [
           "ALB",
@@ -22,7 +22,7 @@
       }
     },
     "LoadBalancerName": {
-      "Description": "Name of the PWM Application Load Balancer",
+      "Description": "Name of the pwm Application Load Balancer",
       "Value": {
         "Ref": "ALB"
       }

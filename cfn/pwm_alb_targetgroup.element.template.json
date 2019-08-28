@@ -1,9 +1,9 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "This template creates an ALB Target Group for PWM",
+  "Description": "This template creates an ALB Target Group for pwm",
   "Outputs": {
     "TargetGroupName": {
-      "Description": "Name of the PWM ALB Target Group",
+      "Description": "Name of the pwm ALB Target Group",
       "Value": {
         "Ref": "ALBTargetGroup"
       }
