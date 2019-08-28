@@ -66,8 +66,8 @@
             "MailFromDNSDomainName",
             "MailFromPWMEmailAddress",
             "NewUserMailToEmailAddress",
-            "PWMConfigBucketName",
-            "PWMPublicURL",
+            "pwmConfigBucketName",
+            "pwmPublicURL",
             "ResourceDNSDomainName"
           ]
         },
@@ -456,10 +456,10 @@
             ]
           },
           "pwmConfigBucketName": {
-            "Ref": "PWMConfigBucketName"
+            "Ref": "pwmConfigBucketName"
           },
           "pwmPublicURL": {
-            "Ref": "PWMPublicURL"
+            "Ref": "pwmPublicURL"
           },
           "pwmSNSTopicARN": {
             "Fn::GetAtt": [

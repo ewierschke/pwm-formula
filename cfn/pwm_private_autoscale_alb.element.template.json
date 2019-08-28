@@ -1054,7 +1054,7 @@
               },
               "/usr/local/bin/pwmurl": {
                 "content": {
-                  "Ref": "PWMPublicURL"
+                  "Ref": "pwmPublicURL"
                 },
                 "group": "root",
                 "mode": "000600",
