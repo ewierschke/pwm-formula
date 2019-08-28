@@ -216,6 +216,21 @@
     "SecurityGroupIdPWMInstance": {
       "Description": "ID of the security group for PWM instances",
       "Type": "AWS::EC2::SecurityGroup::Id"
+    },
+    "pwmSESIAMUserName": {
+      "Description": "IAM Username used for SES email sending (must be unique per deployment)",
+      "Type": "String"
+    },
+    "SNSSubscriptionEmail": {
+      "AllowedPattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$",
+      "Default": "deployer@example.com",
+      "Description": "Email address to which AWS SNS events and SES IAM Account rotate confirmations are sent.",
+      "MinLength": "3",
+      "Type": "String"
+    },
+    "pwmScapOutputBucketName": {
+      "Description": "Name of the S3 bucket where the scap scan output will be copied",
+      "Type": "String"
     }
   },
   "Resources": {
@@ -378,6 +393,42 @@
       },
       "Type": "AWS::IAM::Policy"
     },
+    "pwmScapOutputS3Access": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:PutObject"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:s3:::",
+                      {
+                        "Ref": "pwmScapOutputBucketName"
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "pwmScapOutputS3Access",
+        "Roles": [
+          {
+            "Ref": "pwmInstanceRole"
+          }
+        ]
+      },
+      "Type": "AWS::IAM::Policy"
+    },
     "pwmCloudWatchAgent": {
       "Properties": {
         "PolicyDocument": {
@@ -463,6 +514,48 @@
         "Roles": [
           {
             "Ref": "PWMInstanceRole"
+          }
+        ]
+      },
+      "Type": "AWS::IAM::Policy"
+    },
+    "pwmManageSESIAMAccessKey": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "iam:CreateAccessKey",
+                "iam:UpdateAccessKey",
+                "iam:DeleteAccessKey",
+                "iam:ListAccessKeys"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:iam::",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":user/",
+                      {
+                        "Ref": "pwmSESIAMUserName"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "pwmManageSESIAMAccessKey",
+        "Roles": [
+          {
+            "Ref": "pwmInstanceRole"
           }
         ]
       },
@@ -569,7 +662,7 @@
           "configSets": {
             "Install": [
               "a-cfnsetup",
-              "b-bootstrap",
+              "b-wamandpwm",
               "c-adminusersetup",
               {
                 "Fn::If": [
@@ -656,7 +749,7 @@
               }
             }
           },
-          "b-bootstrap": {
+          "b-wamandpwm": {
             "commands": {
               "10-install-epel": {
                 "command": {
@@ -680,23 +773,27 @@
                   ]
                 }
               },
-              "20-watchmaker-prep": {
+              "20-watchmaker-prep+launch": {
                 "command": {
                   "Fn::Join": [
                     "",
                     [
-                      "yum -y --enablerepo=epel install wget python-pip && bash -xe /etc/cfn/scripts/watchmaker-install.sh",
+                      "PYPI_URL=https://pypi.org/simple && export LC_ALL=en_US.UTF-8 && export LANG=en_US.UTF-8 && python3 -m ensurepip --upgrade --default-pip && pip install --index-url=\"$PYPI_URL\" --upgrade pip setuptools && pip install --index-url=\"$PYPI_URL\" --upgrade watchmaker && watchmaker --log-level debug -n --log-dir=/var/log/watchmaker",
                       "\n"
                     ]
                   ]
                 }
               },
-              "30-watchmaker-launch": {
+              "30-put-scap-output": {
                 "command": {
                   "Fn::Join": [
                     "",
                     [
-                      "watchmaker --log-level debug -n --log-dir=/var/log/watchmaker",
+                      "ec2id=$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id) && aws s3 cp /root/scap/output/ s3://",
+                      {
+                        "Ref": "pwmScapOutputBucketName"
+                      },
+                      "/pwm/$ec2id/ --recursive",
                       "\n"
                     ]
                   ]
@@ -815,12 +912,27 @@
                   "Fn::Join": [
                     "",
                     [
-                      "CONFIGBUCKETNAME=\"$(cat /usr/local/bin/configbucketname)\" RESOURCEDOMAIN=\"$(cat /usr/local/bin/resourcedomain)\" ENVIRNAME=\"$(cat /usr/local/bin/envirname)\" salt-call --local --retcode-passthrough state.apply pwm",
+                      "CONFIGBUCKETNAME=\"$(cat /usr/local/bin/configbucketname)\" RESOURCEDOMAIN=\"$(cat /usr/local/bin/resourcedomain)\" ENVIRNAME=\"$(cat /usr/local/bin/envirname)\" SNSSUBSCRIPTIONEMAIL=\"$(cat /usr/local/bin/snssubscriptionemail)\" MAILFROMDNSDOMAINNAME=\"$(cat /usr/local/bin/mailfromdomain)\" PWMSESIAMUSERNAME=\"$(cat /usr/local/bin/pwmsesiamusername)\"salt-call --local --retcode-passthrough state.apply pwm",
                       "\n"
                     ]
                   ]
                 },
                 "ignoreErrors": "false"
+              },
+              "92-get-httpd-logging-config": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "aws s3 cp s3://",
+                      {
+                        "Ref": "pwmConfigBucketName"
+                      },
+                      "/pwmhttpd.conf /etc/httpd/conf.d/pwmhttpd.conf",
+                      "\n"
+                    ]
+                  ]
+                }
               },
               "91-yumupdate": {
                 "command": {
@@ -836,25 +948,6 @@
               }
             },
             "files": {
-              "/etc/cfn/scripts/watchmaker-install.sh": {
-                "content": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "#!/bin/bash\n\n",
-                      "PYPI_URL=https://pypi.org/simple",
-                      "\n",
-                      "pip install --index-url=\"$PYPI_URL\" wheel==0.29.0\n",
-                      "pip install",
-                      " --index-url=\"$PYPI_URL\"",
-                      " --upgrade pip setuptools boto3 watchmaker\n\n"
-                    ]
-                  ]
-                },
-                "group": "root",
-                "mode": "000700",
-                "owner": "root"
-              },
               "/usr/local/bin/adminemailto": {
                 "content": {
                   "Ref": "AdminReportMailToEmailAddress"
@@ -978,6 +1071,22 @@
               "/usr/local/bin/svcacctupn": {
                 "content": {
                   "Ref": "ADSvcAccountUPN"
+                },
+                "group": "root",
+                "mode": "000600",
+                "owner": "root"
+              },
+              "/usr/local/bin/snssubscriptionemail": {
+                "content": {
+                  "Ref": "SNSSubscriptionEmail"
+                },
+                "group": "root",
+                "mode": "000600",
+                "owner": "root"
+              },
+              "/usr/local/bin/pwmsesiamusername": {
+                "content": {
+                  "Ref": "pwmSESIAMUsername"
                 },
                 "group": "root",
                 "mode": "000600",

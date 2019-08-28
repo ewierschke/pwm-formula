@@ -12,14 +12,14 @@ pwmconfowner:
     - mode: 600
     - replace: False
 
-aws s3 cp s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/sasl_passwd /etc/postfix/sasl_passwd:
-  cmd.run
+#aws s3 cp s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/sasl_passwd /etc/postfix/sasl_passwd:
+#  cmd.run
 
-saslpasswdchmod:
-  file.managed:
-    - name: /etc/postfix/sasl_passwd
-    - mode: 600
-    - replace: False
+#saslpasswdchmod:
+#  file.managed:
+#    - name: /etc/postfix/sasl_passwd
+#    - mode: 600
+#    - replace: False
 
 service tomcat stop:
   cmd.run
@@ -76,32 +76,32 @@ runinotifyscript:
   cmd.run:
     - name: at now + 20 minutes -f /usr/local/bin/inotifypwmconfig.sh
 
-aws s3 cp s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/postfix_conf.sh /usr/local/bin/postfix_conf.sh:
-  cmd.run
+#aws s3 cp s3://{{ salt['environ.get']('CONFIGBUCKETNAME') }}/postfix_conf.sh /usr/local/bin/postfix_conf.sh:
+#  cmd.run
 
-postfixconfmode:
-  file.managed:
-    - name: /usr/local/bin/postfix_conf.sh
-    - mode: 700
-    - replace: False
+#postfixconfmode:
+#  file.managed:
+#    - name: /usr/local/bin/postfix_conf.sh
+#    - mode: 700
+#    - replace: False
 
-sleepprepostfixconf:
-  cmd.run:
-    - name: sleep 5
+#sleepprepostfixconf:
+#  cmd.run:
+#    - name: sleep 5
 
-runpostfixconf:
-  cmd.run:
-    - name: /usr/local/bin/postfix_conf.sh
+#runpostfixconf:
+#  cmd.run:
+#    - name: /usr/local/bin/postfix_conf.sh
 
-postmapsasl:
-  cmd.run:
-    - name: postmap /etc/postfix/sasl_passwd
+#postmapsasl:
+#  cmd.run:
+#    - name: postmap /etc/postfix/sasl_passwd
 
-selinuxjavatolclpostfix:
-  cmd.run:
-    - name: setsebool -P nis_enabled 1
+#selinuxjavatolclpostfix:
+#  cmd.run:
+#    - name: setsebool -P nis_enabled 1
 
-enablepostfix:
-  service.running:
-    - name: postfix
-    - enable: True
+#enablepostfix:
+#  service.running:
+#    - name: postfix
+#    - enable: True

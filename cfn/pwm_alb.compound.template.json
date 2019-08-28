@@ -350,6 +350,14 @@
     "VPC": {
       "Description": "VPC ID",
       "Type": "AWS::EC2::VPC::Id"
+    },
+    "pwmSESIAMUserName": {
+      "Description": "IAM Username used for SES email sending (must be unique per deployment)",
+      "Type": "String"
+    },
+    "pwmScapOutputBucketName": {
+      "Description": "Name of the S3 bucket where the scap scan output will be copied",
+      "Type": "String"
     }
   },
   "Resources": {
@@ -461,6 +469,15 @@
           },
           "ResourceDNSDomainName": {
             "Ref": "ResourceDNSDomainName"
+          },
+          "SNSSubscriptionEmail": {
+            "Ref": "SNSSubscriptionEmail"
+          },
+          "pwmSESIAMUserName": {
+            "Ref": "pwmSESIAMUserName"
+          },
+          "pwmScapOutputBucketName": {
+            "Ref": "pwmScapOutputBucketName"
           },
           "SecurityGroupIdPWMInstance": {
             "Fn::Join": [

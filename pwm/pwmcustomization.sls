@@ -1,5 +1,6 @@
 include:
   - pwm/pwmconfigfile
+  - pwm/postfix_to_ses
   - pwm/adpasswordexpirenotify
   - pwm/newusernotifyviaemail
   - pwm/newusernotifyviaapi
