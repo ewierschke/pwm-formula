@@ -188,20 +188,20 @@
       "Description": "Private Subnet ID where the PWM instance(s) will run. (only select one, load balancing not tested)",
       "Type": "List<AWS::EC2::Subnet::Id>"
     },
-    "PWMALBTargetGroupName": {
+    "pwmALBTargetGroupName": {
       "Description": "Name of the ALB PWM Target Group",
       "Type": "String",
       "MinLength": "1"
     },
-    "PWMConfigBucketName": {
+    "pwmConfigBucketName": {
       "Description": "Name of the S3 bucket where the PWM config should be pulled and stored",
       "Type": "String"
     },
-    "PWMPublicURL": {
+    "pwmPublicURL": {
       "Description": "Public URL to this PWM instance to be included in notification emails",
       "Type": "String"
     },
-    "PWMSNSTopicARN": {
+    "pwmSNSTopicARN": {
       "Description": "ARN of the SNS Topic to which to send auto scale action notifications",
       "Type": "String"
     },
@@ -373,7 +373,7 @@
                     [
                       "arn:aws:s3:::",
                       {
-                        "Ref": "PWMConfigBucketName"
+                        "Ref": "pwmConfigBucketName"
                       },
                       "/*"
                     ]
@@ -958,7 +958,7 @@
               },
               "/usr/local/bin/configbucketname": {
                 "content": {
-                  "Ref": "PWMConfigBucketName"
+                  "Ref": "pwmConfigBucketName"
                 },
                 "group": "root",
                 "mode": "000600",
@@ -1086,7 +1086,7 @@
               },
               "/usr/local/bin/pwmsesiamusername": {
                 "content": {
-                  "Ref": "pwmSESIAMUsername"
+                  "Ref": "pwmSESIAMUserName"
                 },
                 "group": "root",
                 "mode": "000600",
@@ -1333,7 +1333,7 @@
                     [
                       "aws s3 cp s3://",
                       {
-                        "Ref": "PWMConfigBucketName"
+                        "Ref": "pwmConfigBucketName"
                       },
                       "/18branch/pwmcloudwatchagent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json"
                     ]

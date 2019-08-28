@@ -324,11 +324,11 @@
       "Description": "A list of Public subnet IDs to attach to the load balancer.",
       "Type": "List<AWS::EC2::Subnet::Id>"
     },
-    "PWMConfigBucketName": {
+    "pwmConfigBucketName": {
       "Description": "Name of the existing S3 bucket where the PWM config should be pulled and pushed",
       "Type": "String"
     },
-    "PWMPublicURL": {
+    "pwmPublicURL": {
       "Description": "Public URL to this PWM instance to be included in notification emails",
       "Type": "String"
     },
@@ -449,19 +449,19 @@
               }
             ]
           },
-          "PWMALBTargetGroupName": {
+          "pwmALBTargetGroupName": {
             "Fn::GetAtt": [
               "PWMALBTargetGroupStack",
               "Outputs.TargetGroupName"
             ]
           },
-          "PWMConfigBucketName": {
+          "pwmConfigBucketName": {
             "Ref": "PWMConfigBucketName"
           },
-          "PWMPublicURL": {
+          "pwmPublicURL": {
             "Ref": "PWMPublicURL"
           },
-          "PWMSNSTopicARN": {
+          "pwmSNSTopicARN": {
             "Fn::GetAtt": [
               "PWMSNSTopicSubscriptStack",
               "Outputs.SNSTopicARN"
