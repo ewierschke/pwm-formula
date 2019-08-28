@@ -912,27 +912,12 @@
                   "Fn::Join": [
                     "",
                     [
-                      "CONFIGBUCKETNAME=\"$(cat /usr/local/bin/configbucketname)\" RESOURCEDOMAIN=\"$(cat /usr/local/bin/resourcedomain)\" ENVIRNAME=\"$(cat /usr/local/bin/envirname)\" SNSSUBSCRIPTIONEMAIL=\"$(cat /usr/local/bin/snssubscriptionemail)\" MAILFROMDNSDOMAINNAME=\"$(cat /usr/local/bin/mailfromdomain)\" pwmSESIAMUSERNAME=\"$(cat /usr/local/bin/pwmsesiamusername)\"salt-call --local --retcode-passthrough state.apply pwm",
+                      "CONFIGBUCKETNAME=\"$(cat /usr/local/bin/configbucketname)\" RESOURCEDOMAIN=\"$(cat /usr/local/bin/resourcedomain)\" ENVIRNAME=\"$(cat /usr/local/bin/envirname)\" SNSSUBSCRIPTIONEMAIL=\"$(cat /usr/local/bin/snssubscriptionemail)\" MAILFROMDNSDOMAINNAME=\"$(cat /usr/local/bin/mailfromdomain)\" pwmSESIAMUSERNAME=\"$(cat /usr/local/bin/pwmsesiamusername)\" salt-call --local --retcode-passthrough state.apply pwm",
                       "\n"
                     ]
                   ]
                 },
                 "ignoreErrors": "false"
-              },
-              "92-get-httpd-logging-config": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "aws s3 cp s3://",
-                      {
-                        "Ref": "pwmConfigBucketName"
-                      },
-                      "/pwmhttpd.conf /etc/httpd/conf.d/pwmhttpd.conf",
-                      "\n"
-                    ]
-                  ]
-                }
               },
               "91-yumupdate": {
                 "command": {
