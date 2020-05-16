@@ -1398,17 +1398,6 @@
                   ]
                 }
               },
-              "30-run-install-script": {
-                "command": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "bash inspectorinstall",
-                      "\n"
-                    ]
-                  ]
-                }
-              },
               "40-enable-gpgcheck": {
                 "command": {
                   "Fn::Join": [
