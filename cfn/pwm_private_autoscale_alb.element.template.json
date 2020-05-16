@@ -673,9 +673,6 @@
                   }
                 ]
               },
-              "e-cloudwatchagentsetup",
-              "f-inspectoragentsetup",
-              "g-ssmagentsetup",
               "h-finalize"
             ]
           },
