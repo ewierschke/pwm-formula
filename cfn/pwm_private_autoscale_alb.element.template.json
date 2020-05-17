@@ -567,7 +567,7 @@
           "Count": {
             "Ref": "DesiredCapacity"
           },
-          "Timeout": "PT25M"
+          "Timeout": "PT40M"
         }
       },
       "Properties": {
