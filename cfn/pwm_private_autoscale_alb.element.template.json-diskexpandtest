@@ -775,7 +775,7 @@
                   "Fn::Join": [
                     "",
                     [
-                      "PYPI_URL=https://pypi.org/simple && export LC_ALL=en_US.UTF-8 && export LANG=en_US.UTF-8 && python3 -m ensurepip --upgrade --default-pip && pip install --index-url=\"$PYPI_URL\" --upgrade 'pip<20' setuptools && pip install --index-url=\"$PYPI_URL\" --upgrade watchmaker && watchmaker --log-level debug -n --log-dir=/var/log/watchmaker",
+                      "PYPI_URL=https://pypi.org/simple && export LC_ALL=en_US.UTF-8 && export LANG=en_US.UTF-8 && python3 -m ensurepip --upgrade --default-pip && pip install --index-url=\"$PYPI_URL\" --upgrade pip setuptools && pip install --index-url=\"$PYPI_URL\" --upgrade watchmaker && watchmaker --log-level debug -n --log-dir=/var/log/watchmaker",
                       "\n"
                     ]
                   ]
@@ -1521,7 +1521,7 @@
           {
             "DeviceName": "/dev/sda1",
             "Ebs": {
-              "VolumeSize": "20",
+              "VolumeSize": "30",
               "VolumeType": "gp2",
               "DeleteOnTermination": "true"
             }
@@ -1549,19 +1549,59 @@
             "Fn::Join": [
               "",
               [
+                "Content-Type: multipart/mixed; boundary=\"//\"\n",
+                "MIME-Version: 1.0\n\n",
+                "--//\n",
+                "Content-Type: text/cloud-config; charset=\"us-ascii\"\n",
+                "MIME-Version: 1.0\n",
+                "Content-Transfer-Encoding: 7bit\n",
+                "Content-Disposition: attachment; filename=\"cloud-config.txt\"\n\n",
+                "#cloud-config\n",
+                "growpart:\n",
+                "  mode: auto\n",
+                "  devices: ['/dev/sda2']\n",
+                "  ignore_growroot_disabled: false\n",
+                "runcmd:\n",
+                "  - pvresize /dev/sda2\n",
+                "  - lvresize -r -l +100%FREE VolGroup00/rootVol\n\n",
+                "--//\n",
+                "Content-Type: text/x-shellscript; charset=\"us-ascii\"\n",
+                "MIME-Version: 1.0\n",
+                "Content-Transfer-Encoding: 7bit\n",
+                "Content-Disposition: attachment; filename=\"user-data.txt\"\n\n",
                 "#!/bin/bash -xe\n\n",
+                "pvresize /dev/sda2\n",
+                "lvresize -r -l +100%FREE VolGroup00/rootVol\n",
                 "# Export cert bundle ENVs\n",
                 "export AWS_CA_BUNDLE=/etc/pki/tls/certs/ca-bundle.crt\n",
                 "export REQUESTS_CA_BUNDLE=/etc/pki/tls/certs/ca-bundle.crt\n\n",
                 "# Get pip\n",
-                "yum -y install python3-pip\n\n",
+                "curl --silent --show-error --retry 5 -L https://bootstrap.pypa.io/get-pip.py | python - --index-url=https://pypi.org/simple\n\n",
+                "# Add pip to path\n",
+                "hash pip 2> /dev/null || ",
+                "PATH=\"${PATH}:/usr/local/bin\"",
+                "\n\n",
                 "# Upgrade pip and setuptools\n",
-                "pip3 install",
-                " --upgrade 'pip<20' setuptools\n\n",
-                "if [[ $(rpm --quiet -q aws-cfn-bootstrap || pip3 show --quiet aws-cfn-bootstrap)$? -ne 0 ]]\n",
+                "PYPI_URL=https://pypi.org/simple\n",
+                "PYPI_HOST=$(echo $PYPI_URL |sed -e \"s/[^/]*\\/\\/\\([^@]*@\\)\\?\\([^:/]*\\).*/\\2/\")\n",
+                "pip install",
+                " --index-url=\"$PYPI_URL\"",
+                " --trusted-host=\"$PYPI_HOST\"",
+                " --upgrade pip setuptools\n\n",
+                "#NEW# Fix python urllib3 warnings\n",
+                "yum -y install gcc python-devel libffi-devel openssl-devel\n",
+                "pip install",
+                " --index-url=\"$PYPI_URL\"",
+                " --upgrade cffi\n",
+                "pip install",
+                " --index-url=\"$PYPI_URL\"",
+                " --upgrade pyopenssl ndg-httpsclient pyasn1 'cryptography<2.2;python_version<\"2.7\"' 'cryptography;python_version>=\"2.7\"'",
+                "\n\n",
+                "if [[ $(rpm --quiet -q aws-cfn-bootstrap || pip show --quiet aws-cfn-bootstrap)$? -ne 0 ]]\n",
                 "then\n",
                 "  # Get cfn utils\n",
-                "  pip3 install",
+                "  pip install",
+                " --index-url=\"$PYPI_URL\"",
                 " --upgrade --upgrade-strategy only-if-needed https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\n\n",
                 "  # Fixup cfn utils\n",
                 "  INITDIR=$(find -L /opt/aws/apitools/cfn-init/init -name redhat",
@@ -1611,7 +1651,8 @@
                 },
                 ";",
                 " exit 1",
-                " )\n\n"
+                " )\n\n",
+                "--//"
               ]
             ]
           }
