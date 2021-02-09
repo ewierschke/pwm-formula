@@ -673,6 +673,8 @@
                   }
                 ]
               },
+              "e-cloudwatchagentsetup",
+              "f-inspectoragentsetup",
               "h-finalize"
             ]
           },
@@ -748,6 +750,17 @@
           },
           "b-wamandpwm": {
             "commands": {
+              "05-aws-symlink": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "ln -s /usr/local/aws-cli/v1/bin/aws /bin/aws",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
               "10-install-epel": {
                 "command": {
                   "Fn::Join": [
@@ -1349,14 +1362,15 @@
                   "Fn::Join": [
                     "",
                     [
-                      "/opt/aws/amazon-cloudwatch-agent/bin/",
-                      "amazon-cloudwatch-agent-ctl",
-                      " -a fetch-config -m ec2 -c",
-                      " file:/opt/aws/amazon-cloudwatch-agent/etc/",
-                      "amazon-cloudwatch-agent.json -s"
+                      "/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s"
                     ]
                   ]
                 }
+              }
+            },
+            "packages": {
+              "yum": {
+                "unzip": []
               }
             }
           },
@@ -1390,6 +1404,17 @@
                     "",
                     [
                       "sed -i 's:localpkg_gpgcheck = 1:localpkg_gpgcheck = 0:g' /etc/yum.conf",
+                      "\n"
+                    ]
+                  ]
+                }
+              },
+              "30-run-install-script": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "bash inspectorinstall",
                       "\n"
                     ]
                   ]
@@ -1521,7 +1546,7 @@
           {
             "DeviceName": "/dev/sda1",
             "Ebs": {
-              "VolumeSize": "20",
+              "VolumeSize": "30",
               "VolumeType": "gp2",
               "DeleteOnTermination": "true"
             }
@@ -1549,7 +1574,43 @@
             "Fn::Join": [
               "",
               [
+                "Content-Type: multipart/mixed; boundary=\"===============3585321300151562773==\"\n",
+                "MIME-Version: 1.0\n",
+                "\n",
+                "--===============3585321300151562773==\n",
+                "Content-Type: text/cloud-config; charset=\"us-ascii\"\n",
+                "MIME-Version: 1.0\n",
+                "Content-Transfer-Encoding: 7bit\n",
+                "Content-Disposition: attachment; filename=\"cloud.cfg\"\n",
+                "\n",
+                "#cloud-config\n",
+                "\n",
+                "growpart:\n",
+                "  mode: auto\n",
+                "  devices: [ '/dev/xvda', '/dev/xvda2', '/dev/nvme0n1p2' ]\n",
+                "  ignore_growroot_disabled: false\n",
+                "\n",
+                "--===============3585321300151562773==\n",
+                "Content-Type: text/x-shellscript; charset=\"us-ascii\"\n",
+                "MIME-Version: 1.0\n",
+                "Content-Transfer-Encoding: 7bit\n",
+                "Content-Disposition: attachment; filename=\"user-data.txt\"\n",
+                "\n",
                 "#!/bin/bash -xe\n\n",
+                "# Expand root volume (100), based on any additional capacity available\n",
+                "# If no addtional space allocated (> 20), command run w/o expanding\n",
+                "# lvextend command return code is ignored/masked below -- basically brute force\n",
+                "if [[ -x $( which pvs ) ]]\n",
+                "then\n",
+                "   LVMPVS=( $( pvs --noheadings -o pv_name ) )\n",
+                "   for PV in \"${LVMPVS[@]}\"\n",
+                "   do\n",
+                "      pvresize \"${PV}\"\n",
+                "   done\n",
+                "fi\n",
+                "# Brute force expansion of root\n",
+                "lvextend -r -l +100%FREE /dev/VolGroup00/rootVol || true\n",
+                "\n",
                 "# Export cert bundle ENVs\n",
                 "export AWS_CA_BUNDLE=/etc/pki/tls/certs/ca-bundle.crt\n",
                 "export REQUESTS_CA_BUNDLE=/etc/pki/tls/certs/ca-bundle.crt\n\n",
@@ -1611,7 +1672,8 @@
                 },
                 ";",
                 " exit 1",
-                " )\n\n"
+                " )\n\n",
+                "--===============3585321300151562773==--"
               ]
             ]
           }
