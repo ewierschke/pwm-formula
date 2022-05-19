@@ -32,7 +32,23 @@
         "UnhealthyThresholdCount": "10",
         "VpcId": {
           "Ref": "VPC"
-        }
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  "pwm-",
+                  {
+                    "Ref": "AWS::StackName"
+                  }
+                ]
+              ]
+            }
+          }
+        ]
       },
       "Type": "AWS::ElasticLoadBalancingV2::TargetGroup"
     }

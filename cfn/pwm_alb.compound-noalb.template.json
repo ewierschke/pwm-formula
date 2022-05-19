@@ -1,0 +1,498 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Conditions": {
+        "UseCMDBSecGroup": {
+            "Fn::Not": [
+                {
+                    "Fn::Equals": [
+                        {
+                            "Ref": "CMDBSecurityGroup"
+                        },
+                        ""
+                    ]
+                }
+            ]
+        }
+    },
+    "Description": "This template creates an instance of pwm for account management, with no Application Load Balancer.",
+    "Metadata": {
+        "AWS::CloudFormation::Interface": {
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "Network Configuration"
+                    },
+                    "Parameters": [
+                        "VPC",
+                        "CMDBSecurityGroup",
+                        "PrivateSubnetIDs"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "EC2 Configuration"
+                    },
+                    "Parameters": [
+                        "AdminIAMGroup",
+                        "AmiId",
+                        "DiscoIAMGroup",
+                        "InstanceType",
+                        "KeyPairName"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "AutoScale Configuration"
+                    },
+                    "Parameters": [
+                        "DesiredCapacity",
+                        "MaxCapacity",
+                        "MinCapacity",
+                        "SNSSubscriptionEmail"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "pwm Application Configuration"
+                    },
+                    "Parameters": [
+                        "ConfigureOstNewUserNotificationviaAPI",
+                        "ConfigureOstNewUserNotificationviaEmail",
+                        "FriendlyEnvironmentName",
+                        "HelpdeskAPIKey",
+                        "MailFromDNSDomainName",
+                        "MailFrompwmEmailAddress",
+                        "NewUserMailToEmailAddress",
+                        "pwmConfigBucketName",
+                        "pwmPublicURL",
+                        "ResourceDNSDomainName"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "PasswordExpiration Application Configuration"
+                    },
+                    "Parameters": [
+                        "ConfigureADPasswordExpireNotify",
+                        "HelpdeskPublicURL",
+                        "HelpdeskEmailAddress",
+                        "MailFromEmailAddress",
+                        "ADSvcAccountUPN",
+                        "ADSvcAccountPassword",
+                        "ADHostname",
+                        "AdminReportMailToEmailAddress",
+                        "ADOUPath"
+                    ]
+                }
+            ]
+        }
+    },
+    "Outputs": {
+        "pwmSecurityGroupId": {
+            "Description": "Security Group ID for the pwm instances",
+            "Value": {
+                "Fn::GetAtt": [
+                    "pwmSecurityGroupStack",
+                    "Outputs.pwmSecurityGroupId"
+                ]
+            }
+        }
+    },
+    "Parameters": {
+        "ADHostname": {
+            "AllowedPattern": "[a-zA-Z0-9]+\\..+",
+            "Default": "ad.example.com",
+            "Description": "Hostname (FQDN) of the AD server to query for users to notify of password expirations",
+            "MaxLength": "25",
+            "MinLength": "3",
+            "Type": "String"
+        },
+        "AdminIAMGroup": {
+            "Description": "ID of the IAM group to be granted SSH Admin access to pwm instances",
+            "Type": "String"
+        },
+        "AdminReportMailToEmailAddress": {
+            "AllowedPattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$",
+            "Default": "admin@example.com",
+            "Description": "Email address to which to send Admin report of password expirations",
+            "MaxLength": "50",
+            "MinLength": "3",
+            "Type": "String"
+        },
+        "ADOUPath": {
+            "Default": "CN=Users,DC=ad,DC=example,DC=com",
+            "Description": "Distinguished Name (DN) of the OU path containing users to which to send password expiration notices",
+            "MinLength": "1",
+            "Type": "String"
+        },
+        "ADSvcAccountPassword": {
+            "AllowedPattern": "(?=^.{6,255}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
+            "Default": "Password123",
+            "Description": "Password of the Service Account used to query LDAP directory. Must be at least 8 characters containing letters, numbers and symbols",
+            "MaxLength": "32",
+            "MinLength": "8",
+            "NoEcho": "true",
+            "Type": "String"
+        },
+        "ADSvcAccountUPN": {
+            "Default": "svc_account@example.com",
+            "Description": "UPN of the service account used to query LDAP directory.",
+            "Type": "String"
+        },
+        "AmiId": {
+            "Description": "AMI ID",
+            "Type": "String"
+        },
+        "CMDBSecurityGroup": {
+            "AllowedPattern": "^$|^sg-(?=(?:.{8}|.{17})$)[a-z0-9]*$",
+            "Default": "",
+            "Description": "Security Group ID of CMDB system from the peered account (Example: sg-12345678).",
+            "Type": "String"
+        },
+        "ConfigureADPasswordExpireNotify": {
+            "AllowedValues": [
+                "no",
+                "yes"
+            ],
+            "Default": "yes",
+            "Description": "Select yes to execute state that configures AD password expiration notification emails",
+            "Type": "String"
+        },
+        "ConfigureOstNewUserNotificationviaAPI": {
+            "AllowedValues": [
+                "no",
+                "yes"
+            ],
+            "Default": "yes",
+            "Description": "Select yes to execute state that configures AD password expiration notification emails",
+            "Type": "String"
+        },
+        "ConfigureOstNewUserNotificationviaEmail": {
+            "AllowedValues": [
+                "no",
+                "yes"
+            ],
+            "Default": "no",
+            "Description": "Select yes to execute state that configures AD password expiration notification emails",
+            "Type": "String"
+        },
+        "DesiredCapacity": {
+            "Default": "1",
+            "Description": "The number of pwm instances the autoscale group will spin up initially",
+            "MinLength": "1",
+            "Type": "String"
+        },
+        "DiscoIAMGroup": {
+            "Default": "",
+            "Description": "ID of the IAM group to be granted SSH Discovery access to pwm instances",
+            "Type": "String"
+        },
+        "FriendlyEnvironmentName": {
+            "Default": "EXAMPLE",
+            "Description": "Friendly name of the Environment in which pwm is being installed, for use in emails and branding",
+            "MaxLength": "25",
+            "MinLength": "3",
+            "Type": "String"
+        },
+        "HelpdeskAPIKey": {
+            "Default": "THISISAFAKEAPIKEY",
+            "Description": "When ConfigureOstNewUserNotificationviaAPI is configured to yes, this API Key is used to submit new user tickets",
+            "NoEcho": "true",
+            "Type": "String"
+        },
+        "HelpdeskEmailAddress": {
+            "AllowedPattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$",
+            "Default": "help@example.com",
+            "Description": "Email address used by helpdesk system to be included in notification emails",
+            "MaxLength": "50",
+            "MinLength": "3",
+            "Type": "String"
+        },
+        "HelpdeskPublicURL": {
+            "Description": "Public URL of helpdesk system to be included in notification emails",
+            "Type": "String"
+        },
+        "InstanceType": {
+            "AllowedValues": [
+                "t3.micro",
+                "t2.micro",
+                "t2.small",
+                "t2.medium",
+                "t2.large",
+                "t2.xlarge",
+                "c4.large",
+                "c4.xlarge",
+                "m4.large",
+                "m4.xlarge"
+            ],
+            "Default": "t3.micro",
+            "Description": "Amazon EC2 instance type for the pwm Instances",
+            "Type": "String"
+        },
+        "KeyPairName": {
+            "Description": "Public/private key pairs allow you to securely connect to your instance after it launches",
+            "Type": "AWS::EC2::KeyPair::KeyName"
+        },
+        "MinCapacity": {
+            "Default": "1",
+            "Description": "The minimum number of pwm instances for the autoscale group",
+            "MinLength": "1",
+            "Type": "String"
+        },
+        "MailFromDNSDomainName": {
+            "AllowedPattern": "[a-zA-Z0-9]+\\..+",
+            "Default": "example.com",
+            "Description": "Fully qualified domain name (FQDN) of the domain e.g. example.com, from which email will originate, usually the same as ResourceDNSDomainName",
+            "MaxLength": "25",
+            "MinLength": "3",
+            "Type": "String"
+        },
+        "MailFromEmailAddress": {
+            "Default": "noreply@example.com",
+            "Description": "Email address provided in the from field in notification emails",
+            "MaxLength": "50",
+            "MinLength": "3",
+            "Type": "String"
+        },
+        "MailFrompwmEmailAddress": {
+            "Default": "pwm@example.com",
+            "Description": "Email address used in API submissions to the helpdesk system via API",
+            "MaxLength": "50",
+            "MinLength": "3",
+            "Type": "String"
+        },
+        "MaxCapacity": {
+            "Default": "1",
+            "Description": "The maximum number of pwm instances for the autoscale group",
+            "MinLength": "1",
+            "Type": "String"
+        },
+        "NewUserMailToEmailAddress": {
+            "AllowedPattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$",
+            "Default": "help@example.com",
+            "Description": "Email address to send new user created notification emails",
+            "MinLength": "3",
+            "Type": "String"
+        },
+        "PrivateSubnetIDs": {
+            "Description": "List of Private Subnet IDs where the pwm instances will run. (only select one, load balancing not tested)",
+            "Type": "List<AWS::EC2::Subnet::Id>"
+        },
+        "pwmConfigBucketName": {
+            "Description": "Name of the existing S3 bucket where the pwm config should be pulled and pushed",
+            "Type": "String"
+        },
+        "pwmPublicURL": {
+            "Description": "Public URL to this pwm instance to be included in notification emails",
+            "Type": "String"
+        },
+        "ResourceDNSDomainName": {
+            "AllowedPattern": "[a-zA-Z0-9]+\\..+",
+            "Default": "example.com",
+            "Description": "Fully qualified domain name (FQDN) of the domain e.g. example.com, where environment resources reside, usually the same as MailFromDNSDomainName",
+            "MaxLength": "25",
+            "MinLength": "3",
+            "Type": "String"
+        },
+        "SNSSubscriptionEmail": {
+            "AllowedPattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$",
+            "Default": "deployer@example.com",
+            "Description": "Email address to which AWS SNS events are sent.",
+            "MinLength": "3",
+            "Type": "String"
+        },
+        "VPC": {
+            "Description": "VPC ID",
+            "Type": "AWS::EC2::VPC::Id"
+        },
+        "pwmSESIAMUserName": {
+            "Description": "IAM Username used for SES email sending (must be unique per deployment)",
+            "Type": "String"
+        },
+        "pwmScapOutputBucketName": {
+            "Description": "Name of the S3 bucket where the scap scan output will be copied",
+            "Type": "String"
+        }
+    },
+    "Resources": {
+        "pwmAutoScaleStack": {
+            "DependsOn": [
+                "pwmSecurityGroupStack",
+                "pwmSNSTopicSubscriptStack"
+            ],
+            "Properties": {
+                "Parameters": {
+                    "ADHostname": {
+                        "Ref": "ADHostname"
+                    },
+                    "AdminIAMGroup": {
+                        "Ref": "AdminIAMGroup"
+                    },
+                    "AdminReportMailToEmailAddress": {
+                        "Ref": "AdminReportMailToEmailAddress"
+                    },
+                    "ADOUPath": {
+                        "Ref": "ADOUPath"
+                    },
+                    "ADSvcAccountPassword": {
+                        "Ref": "ADSvcAccountPassword"
+                    },
+                    "ADSvcAccountUPN": {
+                        "Ref": "ADSvcAccountUPN"
+                    },
+                    "AmiId": {
+                        "Ref": "AmiId"
+                    },
+                    "ConfigureADPasswordExpireNotify": {
+                        "Ref": "ConfigureADPasswordExpireNotify"
+                    },
+                    "ConfigureOstNewUserNotificationviaAPI": {
+                        "Ref": "ConfigureOstNewUserNotificationviaAPI"
+                    },
+                    "ConfigureOstNewUserNotificationviaEmail": {
+                        "Ref": "ConfigureOstNewUserNotificationviaEmail"
+                    },
+                    "DesiredCapacity": {
+                        "Ref": "DesiredCapacity"
+                    },
+                    "DiscoIAMGroup": {
+                        "Ref": "DiscoIAMGroup"
+                    },
+                    "FriendlyEnvironmentName": {
+                        "Ref": "FriendlyEnvironmentName"
+                    },
+                    "HelpdeskAPIKey": {
+                        "Ref": "HelpdeskAPIKey"
+                    },
+                    "HelpdeskEmailAddress": {
+                        "Ref": "HelpdeskEmailAddress"
+                    },
+                    "HelpdeskPublicURL": {
+                        "Ref": "HelpdeskPublicURL"
+                    },
+                    "InstanceType": {
+                        "Ref": "InstanceType"
+                    },
+                    "KeyPairName": {
+                        "Ref": "KeyPairName"
+                    },
+                    "MailFromDNSDomainName": {
+                        "Ref": "MailFromDNSDomainName"
+                    },
+                    "MailFromEmailAddress": {
+                        "Ref": "MailFromEmailAddress"
+                    },
+                    "MailFrompwmEmailAddress": {
+                        "Ref": "MailFrompwmEmailAddress"
+                    },
+                    "MaxCapacity": {
+                        "Ref": "MaxCapacity"
+                    },
+                    "MinCapacity": {
+                        "Ref": "MinCapacity"
+                    },
+                    "NewUserMailToEmailAddress": {
+                        "Ref": "NewUserMailToEmailAddress"
+                    },
+                    "PrivateSubnetIDs": {
+                        "Fn::Join": [
+                            ",",
+                            {
+                                "Ref": "PrivateSubnetIDs"
+                            }
+                        ]
+                    },
+                    "pwmALBTargetGroupName": {
+                        "Fn::GetAtt": [
+                            "pwmALBTargetGroupStack",
+                            "Outputs.TargetGroupName"
+                        ]
+                    },
+                    "pwmConfigBucketName": {
+                        "Ref": "pwmConfigBucketName"
+                    },
+                    "pwmPublicURL": {
+                        "Ref": "pwmPublicURL"
+                    },
+                    "pwmSNSTopicARN": {
+                        "Fn::GetAtt": [
+                            "pwmSNSTopicSubscriptStack",
+                            "Outputs.SNSTopicARN"
+                        ]
+                    },
+                    "ResourceDNSDomainName": {
+                        "Ref": "ResourceDNSDomainName"
+                    },
+                    "SNSSubscriptionEmail": {
+                        "Ref": "SNSSubscriptionEmail"
+                    },
+                    "pwmSESIAMUserName": {
+                        "Ref": "pwmSESIAMUserName"
+                    },
+                    "pwmScapOutputBucketName": {
+                        "Ref": "pwmScapOutputBucketName"
+                    },
+                    "SecurityGroupIdpwmInstance": {
+                        "Fn::Join": [
+                            ",",
+                            [
+                                {
+                                    "Fn::GetAtt": [
+                                        "pwmSecurityGroupStack",
+                                        "Outputs.pwmSecurityGroupId"
+                                    ]
+                                }
+                            ]
+                        ]
+                    }
+                },
+                "TemplateURL": "https://s3.amazonaws.com/pwm-formula/cfn/pwmbranch/pwm_private_autoscale_alb.element.template.json"
+            },
+            "Type": "AWS::CloudFormation::Stack"
+        },
+        "pwmALBTargetGroupStack": {
+            "Properties": {
+                "Parameters": {
+                    "VPC": {
+                        "Ref": "VPC"
+                    }
+                },
+                "TemplateURL": "https://s3.amazonaws.com/pwm-formula/cfn/pwm_alb_targetgroup.element.template.json"
+            },
+            "Type": "AWS::CloudFormation::Stack"
+        },
+        "pwmSecurityGroupStack": {
+            "Properties": {
+                "Parameters": {
+                    "CMDBSecurityGroup": {
+                        "Ref": "CMDBSecurityGroup"
+                    },
+                    "ConnectCMDB": {
+                        "Fn::If": [
+                            "UseCMDBSecGroup",
+                            "true",
+                            "false"
+                        ]
+                    },
+                    "UseELB": "false",
+                    "VPC": {
+                        "Ref": "VPC"
+                    }
+                },
+                "TemplateURL": "https://s3.amazonaws.com/pwm-formula/cfn/pwm_security_group.element.template.json"
+            },
+            "Type": "AWS::CloudFormation::Stack"
+        },
+        "pwmSNSTopicSubscriptStack": {
+            "Properties": {
+                "Parameters": {
+                    "SNSSubscriptionEmail": {
+                        "Ref": "SNSSubscriptionEmail"
+                    }
+                },
+                "TemplateURL": "https://s3.amazonaws.com/pwm-formula/cfn/pwm_sns_topic_subscript.element.template.json"
+            },
+            "Type": "AWS::CloudFormation::Stack"
+        }
+    }
+}

@@ -257,6 +257,7 @@
     },
     "InstanceType": {
       "AllowedValues": [
+        "t3.micro",
         "t2.micro",
         "t2.small",
         "t2.medium",
@@ -267,7 +268,7 @@
         "m4.large",
         "m4.xlarge"
       ],
-      "Default": "t2.micro",
+      "Default": "t3.micro",
       "Description": "Amazon EC2 instance type for the pwm Instances",
       "Type": "String"
     },
